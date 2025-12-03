@@ -6,12 +6,8 @@
 #include "system.h"
 
 #include <time.h>
-#include <rpm/rpmstring.h>
-#include <rpm/rpmlog.h>
 
 #include "rpmpgp_internal.h"
-
-#include "debug.h"
 
 typedef uint8_t pgpTime_t[4];
 

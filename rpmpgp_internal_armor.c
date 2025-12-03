@@ -5,8 +5,6 @@
 
 #include "system.h"
 
-#include <rpm/rpmstring.h>
-#include <rpm/rpmlog.h>
 #include <rpm/rpmbase64.h>
 
 #include "rpmpgp_internal.h"
@@ -20,8 +18,7 @@
  * @param len		no. of bytes
  * @return		crc of buffer
  */
-static inline
-unsigned int pgpCRC(const uint8_t *octets, size_t len)
+static unsigned int pgpCRC(const uint8_t *octets, size_t len)
 {
     unsigned int crc = CRC24_INIT;
     size_t i;

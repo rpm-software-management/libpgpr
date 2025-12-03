@@ -8,7 +8,6 @@
 #include <openssl/dsa.h>
 #include <openssl/ec.h>
 
-#include <rpm/rpmcrypto.h>
 #include "rpmpgp_internal.h"
 
 static const EVP_MD *getEVPMD(int hashalgo)

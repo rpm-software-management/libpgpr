@@ -2,9 +2,7 @@
 
 #include <gcrypt.h>
 
-#include <rpm/rpmcrypto.h>
 #include "rpmpgp_internal.h"
-#include "debug.h"
 
 static int hashalgo2gcryalgo(int hashalgo)
 {
