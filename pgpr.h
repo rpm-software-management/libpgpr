@@ -158,7 +158,7 @@ int pgprDigParamsSignatureType(pgprDigParams _digp);
 
 int pgprDigParamsPubkeyAlgo(pgprDigParams digp);
 
-int pgprDigParamsCurve(pgprDigParams digp);
+int pgprDigParamsPubkeyAlgoInfo(pgprDigParams digp);
 
 int pgprDigParamsHashAlgo(pgprDigParams digp);
 

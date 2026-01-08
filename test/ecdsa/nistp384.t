@@ -4,6 +4,7 @@ RUN keyinfo nistp384.key
 Version: 4
 CreationTime: 1767801058
 Algorithm: 19
+AlgorithmInfo: 2
 UserID: nistp384 <nistp384@pgpr.lib>
 KeyFP: f536b835725986076ad6c8539d6d38f95bc65067
 KeyID: 9d6d38f95bc65067

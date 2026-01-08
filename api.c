@@ -72,9 +72,9 @@ int pgprDigParamsHashAlgo(pgprDigParams digp)
     return digp ? digp->hash_algo : -1;
 }
 
-int pgprDigParamsCurve(pgprDigParams digp)
+int pgprDigParamsPubkeyAlgoInfo(pgprDigParams digp)
 {
-    return digp && digp->alg ? digp->alg->curve : -1;
+    return digp && digp->alg ? digp->alg->info: -1;
 }
 
 const uint8_t *pgprDigParamsKeyID(pgprDigParams digp)

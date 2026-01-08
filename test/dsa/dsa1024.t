@@ -4,6 +4,7 @@ RUN keyinfo dsa1024.key
 Version: 4
 CreationTime: 1767796315
 Algorithm: 17
+AlgorithmInfo: 1024
 UserID: dsa1024 <dsa1024@pgpr.lib>
 KeyFP: 261a5cda960091e4c8873818bc27616c17e01afb
 KeyID: bc27616c17e01afb

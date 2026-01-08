@@ -165,6 +165,7 @@ keyinfo(int argc, char **argv)
     printf("Version: %d\n", pgprDigParamsVersion(key));
     printf("CreationTime: %d\n", pgprDigParamsCreationTime(key));
     printf("Algorithm: %d\n", pgprDigParamsPubkeyAlgo(key));
+    printf("AlgorithmInfo: %d\n", pgprDigParamsPubkeyAlgoInfo(key));
     printf("UserID: %s\n", nullify(pgprDigParamsUserID(key)));
     keyfp = pgprDigParamsKeyFingerprint(key, &keyfp_len, NULL);
     if (keyfp) {

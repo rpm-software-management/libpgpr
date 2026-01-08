@@ -156,6 +156,7 @@ static pgprRC pgprSetKeyMpiRSA(pgprDigAlg pgprkey, int num, const uint8_t *p, in
         if (key->n)
             return 1;	/* This should only ever happen once per key */
 	key->nbytes = mlen - 2;
+	pgprkey->info = 8 * (((mlen - 2) + 7) & ~7);
         /* Create a BIGNUM from the pointer.
            Note: this assumes big-endian data as required by PGPR */
         key->n = BN_bin2bn(p + 2, mlen - 2, NULL);
@@ -361,6 +362,7 @@ static pgprRC pgprSetKeyMpiDSA(pgprDigAlg pgprkey, int num, const uint8_t *p, in
         /* Prime */
         if (key->p)
             return rc;	/* This should only ever happen once per key */
+	pgprkey->info = 8 * (((mlen - 2) + 7) & ~7);
         key->p = BN_bin2bn(p + 2, mlen - 2, NULL);
 	if (key->p)
 	    rc = PGPR_OK;
@@ -843,6 +845,7 @@ void pgprDigAlgInitPubkey(pgprDigAlg ka, int algo, int curve)
         ka->free = pgprFreeKeyECDSA;
         ka->mpis = 1;
         ka->curve = curve;
+        ka->info = curve;
 	break;
 #ifdef EVP_PKEY_ED25519
     case PGPRPUBKEYALGO_EDDSA:
@@ -852,6 +855,7 @@ void pgprDigAlgInitPubkey(pgprDigAlg ka, int algo, int curve)
         ka->free = pgprFreeKeyEDDSA;
         ka->mpis = 1;
         ka->curve = curve;
+        ka->info = curve;
         break;
 #endif
     default:

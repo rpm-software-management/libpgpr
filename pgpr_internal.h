@@ -30,6 +30,7 @@ struct pgprDigAlg_s {
     verifyfunc verify;
     freefunc free;
     int curve;
+    int info;
     int mpis;
     void *data;			/*!< algorithm specific private data */
 };

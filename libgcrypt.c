@@ -61,6 +61,7 @@ static pgprRC pgprSetKeyMpiRSA(pgprDigAlg pgprkey, int num, const uint8_t *p, in
 
     switch (num) {
     case 0:
+	pgprkey->info = 8 * (((mlen - 2) + 7) & ~7);
 	if (!gcry_mpi_scan(&key->n, GCRYMPI_FMT_PGP, p, mlen, NULL))
 	    rc = PGPR_OK;
 	break;
@@ -162,6 +163,7 @@ static pgprRC pgprSetKeyMpiDSA(pgprDigAlg pgprkey, int num, const uint8_t *p, in
 
     switch (num) {
     case 0:
+	pgprkey->info = 8 * (((mlen - 2) + 7) & ~7);
 	if (!gcry_mpi_scan(&key->p, GCRYMPI_FMT_PGP, p, mlen, NULL))
 	    rc = PGPR_OK;
 	break;
@@ -406,6 +408,7 @@ void pgprDigAlgInitPubkey(pgprDigAlg ka, int algo, int curve)
         ka->free = pgprFreeKeyECC;
         ka->mpis = 1;
         ka->curve = curve;
+        ka->info = curve;
         break;
     default:
         break;

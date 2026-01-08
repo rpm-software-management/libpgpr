@@ -4,6 +4,7 @@ RUN keyinfo rsa2048.key
 Version: 4
 CreationTime: 1765791915
 Algorithm: 1
+AlgorithmInfo: 2048
 UserID: rsa2048 <rsa2048@pgpr.lib>
 KeyFP: 69a80f54946ae787b3fd9f4e8d4f6ec4c9566211
 KeyID: 8d4f6ec4c9566211
