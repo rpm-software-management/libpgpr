@@ -1,23 +1,22 @@
-#include "system.h"
-
 #include <gcrypt.h>
 
-#include "rpmpgp_internal.h"
+#include "pgpr.h"
+#include "pgpr_internal.h"
 
 static int hashalgo2gcryalgo(int hashalgo)
 {
     switch (hashalgo) {
-    case RPM_HASH_MD5:
+    case PGPRHASHALGO_MD5:
 	return GCRY_MD_MD5;
-    case RPM_HASH_SHA1:
+    case PGPRHASHALGO_SHA1:
 	return GCRY_MD_SHA1;
-    case RPM_HASH_SHA224:
+    case PGPRHASHALGO_SHA224:
 	return GCRY_MD_SHA224;
-    case RPM_HASH_SHA256:
+    case PGPRHASHALGO_SHA256:
 	return GCRY_MD_SHA256;
-    case RPM_HASH_SHA384:
+    case PGPRHASHALGO_SHA384:
 	return GCRY_MD_SHA384;
-    case RPM_HASH_SHA512:
+    case PGPRHASHALGO_SHA512:
 	return GCRY_MD_SHA512;
     default:
 	return 0;
@@ -26,60 +25,60 @@ static int hashalgo2gcryalgo(int hashalgo)
 
 /****************************** RSA **************************************/
 
-struct pgpDigSigRSA_s {
+struct pgprDigSigRSA_s {
     gcry_mpi_t s;
 };
 
-struct pgpDigKeyRSA_s {
+struct pgprDigKeyRSA_s {
     gcry_mpi_t n;
     gcry_mpi_t e;
 };
 
-static rpmpgpRC pgpSetSigMpiRSA(pgpDigAlg pgpsig, int num, const uint8_t *p, int mlen)
+static pgprRC pgprSetSigMpiRSA(pgprDigAlg pgprsig, int num, const uint8_t *p, int mlen)
 {
-    struct pgpDigSigRSA_s *sig = pgpsig->data;
-    rpmpgpRC rc = RPMPGP_ERROR_BAD_SIGNATURE;
+    struct pgprDigSigRSA_s *sig = pgprsig->data;
+    pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;
 
     if (!sig)
-	sig = pgpsig->data = xcalloc(1, sizeof(*sig));
+	sig = pgprsig->data = pgprCalloc(1, sizeof(*sig));
 
     switch (num) {
     case 0:
 	if (!gcry_mpi_scan(&sig->s, GCRYMPI_FMT_PGP, p, mlen, NULL))
-	    rc = RPMPGP_OK;
+	    rc = PGPR_OK;
 	break;
     }
     return rc;
 }
 
-static rpmpgpRC pgpSetKeyMpiRSA(pgpDigAlg pgpkey, int num, const uint8_t *p, int mlen)
+static pgprRC pgprSetKeyMpiRSA(pgprDigAlg pgprkey, int num, const uint8_t *p, int mlen)
 {
-    struct pgpDigKeyRSA_s *key = pgpkey->data;
-    rpmpgpRC rc = RPMPGP_ERROR_BAD_PUBKEY;
+    struct pgprDigKeyRSA_s *key = pgprkey->data;
+    pgprRC rc = PGPR_ERROR_BAD_PUBKEY;
 
     if (!key)
-	key = pgpkey->data = xcalloc(1, sizeof(*key));
+	key = pgprkey->data = pgprCalloc(1, sizeof(*key));
 
     switch (num) {
     case 0:
 	if (!gcry_mpi_scan(&key->n, GCRYMPI_FMT_PGP, p, mlen, NULL))
-	    rc = RPMPGP_OK;
+	    rc = PGPR_OK;
 	break;
     case 1:
 	if (!gcry_mpi_scan(&key->e, GCRYMPI_FMT_PGP, p, mlen, NULL))
-	    rc = RPMPGP_OK;
+	    rc = PGPR_OK;
 	break;
     }
     return rc;
 }
 
-static rpmpgpRC pgpVerifySigRSA(pgpDigAlg pgpkey, pgpDigAlg pgpsig, uint8_t *hash, size_t hashlen, int hash_algo)
+static pgprRC pgprVerifySigRSA(pgprDigAlg pgprkey, pgprDigAlg pgprsig, const uint8_t *hash, size_t hashlen, int hash_algo)
 {
-    struct pgpDigKeyRSA_s *key = pgpkey->data;
-    struct pgpDigSigRSA_s *sig = pgpsig->data;
+    struct pgprDigKeyRSA_s *key = pgprkey->data;
+    struct pgprDigSigRSA_s *sig = pgprsig->data;
     gcry_sexp_t sexp_sig = NULL, sexp_data = NULL, sexp_pkey = NULL;
     int gcry_hash_algo = hashalgo2gcryalgo(hash_algo);
-    rpmpgpRC rc = RPMPGP_ERROR_SIGNATURE_VERIFICATION;
+    pgprRC rc = PGPR_ERROR_SIGNATURE_VERIFICATION;
 
     if (!sig || !key || !gcry_hash_algo)
 	return rc;
@@ -89,103 +88,105 @@ static rpmpgpRC pgpVerifySigRSA(pgpDigAlg pgpkey, pgpDigAlg pgpsig, uint8_t *has
     gcry_sexp_build(&sexp_pkey, NULL, "(public-key (rsa (n %M) (e %M)))", key->n, key->e);
     if (sexp_sig && sexp_data && sexp_pkey)
 	if (gcry_pk_verify(sexp_sig, sexp_data, sexp_pkey) == 0)
-	    rc = RPMPGP_OK;
+	    rc = PGPR_OK;
     gcry_sexp_release(sexp_sig);
     gcry_sexp_release(sexp_data);
     gcry_sexp_release(sexp_pkey);
     return rc;
 }
 
-static void pgpFreeSigRSA(pgpDigAlg pgpsig)
+static void pgprFreeSigRSA(pgprDigAlg pgprsig)
 {
-    struct pgpDigSigRSA_s *sig = pgpsig->data;
+    struct pgprDigSigRSA_s *sig = pgprsig->data;
     if (sig) {
         gcry_mpi_release(sig->s);
-	pgpsig->data = _free(sig);
+	free(sig);
+	pgprsig->data = NULL;
     }
 }
 
-static void pgpFreeKeyRSA(pgpDigAlg pgpkey)
+static void pgprFreeKeyRSA(pgprDigAlg pgprkey)
 {
-    struct pgpDigKeyRSA_s *key = pgpkey->data;
+    struct pgprDigKeyRSA_s *key = pgprkey->data;
     if (key) {
         gcry_mpi_release(key->n);
         gcry_mpi_release(key->e);
-	pgpkey->data = _free(key);
+	free(key);
+	pgprkey->data = NULL;
     }
 }
 
 
 /****************************** DSA **************************************/
 
-struct pgpDigSigDSA_s {
+struct pgprDigSigDSA_s {
     gcry_mpi_t r;
     gcry_mpi_t s;
 };
 
-struct pgpDigKeyDSA_s {
+struct pgprDigKeyDSA_s {
     gcry_mpi_t p;
     gcry_mpi_t q;
     gcry_mpi_t g;
     gcry_mpi_t y;
 };
 
-static rpmpgpRC pgpSetSigMpiDSA(pgpDigAlg pgpsig, int num, const uint8_t *p, int mlen)
+static pgprRC pgprSetSigMpiDSA(pgprDigAlg pgprsig, int num, const uint8_t *p, int mlen)
 {
-    struct pgpDigSigDSA_s *sig = pgpsig->data;
-    rpmpgpRC rc = RPMPGP_ERROR_BAD_SIGNATURE;
+    struct pgprDigSigDSA_s *sig = pgprsig->data;
+    pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;
 
     if (!sig)
-	sig = pgpsig->data = xcalloc(1, sizeof(*sig));
+	sig = pgprsig->data = pgprCalloc(1, sizeof(*sig));
 
     switch (num) {
     case 0:
 	if (!gcry_mpi_scan(&sig->r, GCRYMPI_FMT_PGP, p, mlen, NULL))
-	    rc = RPMPGP_OK;
+	    rc = PGPR_OK;
 	break;
     case 1:
 	if (!gcry_mpi_scan(&sig->s, GCRYMPI_FMT_PGP, p, mlen, NULL))
-	    rc = RPMPGP_OK;
+	    rc = PGPR_OK;
 	break;
     }
     return rc;
 }
 
-static rpmpgpRC pgpSetKeyMpiDSA(pgpDigAlg pgpkey, int num, const uint8_t *p, int mlen)
+static pgprRC pgprSetKeyMpiDSA(pgprDigAlg pgprkey, int num, const uint8_t *p, int mlen)
 {
-    struct pgpDigKeyDSA_s *key = pgpkey->data;
-    rpmpgpRC rc = RPMPGP_ERROR_BAD_PUBKEY;
+    struct pgprDigKeyDSA_s *key = pgprkey->data;
+    pgprRC rc = PGPR_ERROR_BAD_PUBKEY;
 
     if (!key)
-	key = pgpkey->data = xcalloc(1, sizeof(*key));
+	key = pgprkey->data = pgprCalloc(1, sizeof(*key));
 
     switch (num) {
     case 0:
 	if (!gcry_mpi_scan(&key->p, GCRYMPI_FMT_PGP, p, mlen, NULL))
-	    rc = RPMPGP_OK;
+	    rc = PGPR_OK;
 	break;
     case 1:
 	if (!gcry_mpi_scan(&key->q, GCRYMPI_FMT_PGP, p, mlen, NULL))
-	    rc = RPMPGP_OK;
+	    rc = PGPR_OK;
 	break;
     case 2:
 	if (!gcry_mpi_scan(&key->g, GCRYMPI_FMT_PGP, p, mlen, NULL))
-	    rc = RPMPGP_OK;
+	    rc = PGPR_OK;
 	break;
     case 3:
 	if (!gcry_mpi_scan(&key->y, GCRYMPI_FMT_PGP, p, mlen, NULL))
-	    rc = RPMPGP_OK;
+	    rc = PGPR_OK;
 	break;
     }
     return rc;
 }
 
-static rpmpgpRC pgpVerifySigDSA(pgpDigAlg pgpkey, pgpDigAlg pgpsig, uint8_t *hash, size_t hashlen, int hash_algo)
+static pgprRC pgprVerifySigDSA(pgprDigAlg pgprkey, pgprDigAlg pgprsig, const uint8_t *hash, size_t hashlen, int hash_algo)
 {
-    struct pgpDigKeyDSA_s *key = pgpkey->data;
-    struct pgpDigSigDSA_s *sig = pgpsig->data;
+    struct pgprDigKeyDSA_s *key = pgprkey->data;
+    struct pgprDigSigDSA_s *sig = pgprsig->data;
     gcry_sexp_t sexp_sig = NULL, sexp_data = NULL, sexp_pkey = NULL;
-    rpmpgpRC rc = RPMPGP_ERROR_SIGNATURE_VERIFICATION;
+    pgprRC rc = PGPR_ERROR_SIGNATURE_VERIFICATION;
     size_t qlen;
 
     if (!sig || !key)
@@ -201,80 +202,82 @@ static rpmpgpRC pgpVerifySigDSA(pgpDigAlg pgpkey, pgpDigAlg pgpsig, uint8_t *has
     gcry_sexp_build(&sexp_pkey, NULL, "(public-key (dsa (p %M) (q %M) (g %M) (y %M)))", key->p, key->q, key->g, key->y);
     if (sexp_sig && sexp_data && sexp_pkey)
 	if (gcry_pk_verify(sexp_sig, sexp_data, sexp_pkey) == 0)
-	    rc = RPMPGP_OK;
+	    rc = PGPR_OK;
     gcry_sexp_release(sexp_sig);
     gcry_sexp_release(sexp_data);
     gcry_sexp_release(sexp_pkey);
     return rc;
 }
 
-static void pgpFreeSigDSA(pgpDigAlg pgpsig)
+static void pgprFreeSigDSA(pgprDigAlg pgprsig)
 {
-    struct pgpDigSigDSA_s *sig = pgpsig->data;
+    struct pgprDigSigDSA_s *sig = pgprsig->data;
     if (sig) {
         gcry_mpi_release(sig->r);
         gcry_mpi_release(sig->s);
-	pgpsig->data = _free(sig);
+	free(sig);
+	pgprsig->data = NULL;
     }
 }
 
-static void pgpFreeKeyDSA(pgpDigAlg pgpkey)
+static void pgprFreeKeyDSA(pgprDigAlg pgprkey)
 {
-    struct pgpDigKeyDSA_s *key = pgpkey->data;
+    struct pgprDigKeyDSA_s *key = pgprkey->data;
     if (key) {
         gcry_mpi_release(key->p);
         gcry_mpi_release(key->q);
         gcry_mpi_release(key->g);
         gcry_mpi_release(key->y);
-	pgpkey->data = _free(key);
+	free(key);
+	pgprkey->data = NULL;
     }
 }
 
 
 /****************************** ECC **************************************/
 
-struct pgpDigSigECC_s {
+struct pgprDigSigECC_s {
     gcry_mpi_t r;
     gcry_mpi_t s;
 };
 
-struct pgpDigKeyECC_s {
+struct pgprDigKeyECC_s {
     gcry_mpi_t q;
 };
 
-static rpmpgpRC pgpSetSigMpiECC(pgpDigAlg pgpsig, int num, const uint8_t *p, int mlen)
+static pgprRC pgprSetSigMpiECC(pgprDigAlg pgprsig, int num, const uint8_t *p, int mlen)
 {
-    struct pgpDigSigECC_s *sig = pgpsig->data;
-    rpmpgpRC rc = RPMPGP_ERROR_BAD_SIGNATURE;
+    struct pgprDigSigECC_s *sig = pgprsig->data;
+    pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;
 
     if (!sig)
-	sig = pgpsig->data = xcalloc(1, sizeof(*sig));
+	sig = pgprsig->data = pgprCalloc(1, sizeof(*sig));
 
     switch (num) {
     case 0:
 	if (!gcry_mpi_scan(&sig->r, GCRYMPI_FMT_PGP, p, mlen, NULL))
-	    rc = RPMPGP_OK;
+	    rc = PGPR_OK;
 	break;
     case 1:
 	if (!gcry_mpi_scan(&sig->s, GCRYMPI_FMT_PGP, p, mlen, NULL))
-	    rc = RPMPGP_OK;
+	    rc = PGPR_OK;
 	break;
     }
     return rc;
 }
 
-static rpmpgpRC pgpSetKeyMpiECC(pgpDigAlg pgpkey, int num, const uint8_t *p, int mlen)
+static pgprRC pgprSetKeyMpiECC(pgprDigAlg pgprkey, int num, const uint8_t *p, int mlen)
 {
-    struct pgpDigKeyECC_s *key = pgpkey->data;
-    rpmpgpRC rc = RPMPGP_ERROR_BAD_PUBKEY;
+    struct pgprDigKeyECC_s *key = pgprkey->data;
+    pgprRC rc = PGPR_ERROR_BAD_PUBKEY;
 
     if (!key)
-	key = pgpkey->data = xcalloc(1, sizeof(*key));
+	key = pgprkey->data = pgprCalloc(1, sizeof(*key));
 
     switch (num) {
     case 0:
 	if (!gcry_mpi_scan(&key->q, GCRYMPI_FMT_PGP, p, mlen, NULL))
-	    rc = RPMPGP_OK;
+	    rc = PGPR_OK;
 	break;
     }
     return rc;
@@ -293,17 +296,17 @@ ed25519_zero_extend(gcry_mpi_t x, unsigned char *buf, int bufl)
     return 0;
 }
 
-static rpmpgpRC pgpVerifySigECC(pgpDigAlg pgpkey, pgpDigAlg pgpsig, uint8_t *hash, size_t hashlen, int hash_algo)
+static pgprRC pgprVerifySigECC(pgprDigAlg pgprkey, pgprDigAlg pgprsig, const uint8_t *hash, size_t hashlen, int hash_algo)
 {
-    struct pgpDigKeyECC_s *key = pgpkey->data;
-    struct pgpDigSigECC_s *sig = pgpsig->data;
+    struct pgprDigKeyECC_s *key = pgprkey->data;
+    struct pgprDigSigECC_s *sig = pgprsig->data;
     gcry_sexp_t sexp_sig = NULL, sexp_data = NULL, sexp_pkey = NULL;
-    rpmpgpRC rc = RPMPGP_ERROR_SIGNATURE_VERIFICATION;
+    pgprRC rc = PGPR_ERROR_SIGNATURE_VERIFICATION;
     unsigned char buf_r[32], buf_s[32];
 
     if (!sig || !key)
 	return rc;
-    if (pgpkey->curve == PGPCURVE_ED25519) {
+    if (pgprkey->curve == PGPRCURVE_ED25519) {
 	if (ed25519_zero_extend(sig->r, buf_r, 32) || ed25519_zero_extend(sig->s, buf_s, 32))
 	    return rc;
 	gcry_sexp_build(&sexp_sig, NULL, "(sig-val (eddsa (r %b) (s %b)))", 32, (const char *)buf_r, 32, (const char *)buf_s, 32);
@@ -311,24 +314,24 @@ static rpmpgpRC pgpVerifySigECC(pgpDigAlg pgpkey, pgpDigAlg pgpsig, uint8_t *has
 	gcry_sexp_build(&sexp_pkey, NULL, "(public-key (ecc (curve \"Ed25519\") (flags eddsa) (q %M)))", key->q);
 	if (sexp_sig && sexp_data && sexp_pkey)
 	    if (gcry_pk_verify(sexp_sig, sexp_data, sexp_pkey) == 0)
-		rc = RPMPGP_OK;
+		rc = PGPR_OK;
 	gcry_sexp_release(sexp_sig);
 	gcry_sexp_release(sexp_data);
 	gcry_sexp_release(sexp_pkey);
 	return rc;
     }
-    if (pgpkey->curve == PGPCURVE_NIST_P_256 || pgpkey->curve == PGPCURVE_NIST_P_384 || pgpkey->curve == PGPCURVE_NIST_P_521) {
+    if (pgprkey->curve == PGPRCURVE_NIST_P_256 || pgprkey->curve == PGPRCURVE_NIST_P_384 || pgprkey->curve == PGPRCURVE_NIST_P_521) {
 	gcry_sexp_build(&sexp_sig, NULL, "(sig-val (ecdsa (r %M) (s %M)))", sig->r, sig->s);
 	gcry_sexp_build(&sexp_data, NULL, "(data (value %b))", (int)hashlen, (const char *)hash);
-	if (pgpkey->curve == PGPCURVE_NIST_P_256)
+	if (pgprkey->curve == PGPRCURVE_NIST_P_256)
 	    gcry_sexp_build(&sexp_pkey, NULL, "(public-key (ecc (curve \"NIST P-256\") (q %M)))", key->q);
-	else if (pgpkey->curve == PGPCURVE_NIST_P_384)
+	else if (pgprkey->curve == PGPRCURVE_NIST_P_384)
 	    gcry_sexp_build(&sexp_pkey, NULL, "(public-key (ecc (curve \"NIST P-384\") (q %M)))", key->q);
-	else if (pgpkey->curve == PGPCURVE_NIST_P_521)
+	else if (pgprkey->curve == PGPRCURVE_NIST_P_521)
 	    gcry_sexp_build(&sexp_pkey, NULL, "(public-key (ecc (curve \"NIST P-521\") (q %M)))", key->q);
 	if (sexp_sig && sexp_data && sexp_pkey)
 	    if (gcry_pk_verify(sexp_sig, sexp_data, sexp_pkey) == 0)
-		rc = RPMPGP_OK;
+		rc = PGPR_OK;
 	gcry_sexp_release(sexp_sig);
 	gcry_sexp_release(sexp_data);
 	gcry_sexp_release(sexp_pkey);
@@ -337,29 +340,31 @@ static rpmpgpRC pgpVerifySigECC(pgpDigAlg pgpkey, pgpDigAlg pgpsig, uint8_t *has
     return rc;
 }
 
-static void pgpFreeSigECC(pgpDigAlg pgpsig)
+static void pgprFreeSigECC(pgprDigAlg pgprsig)
 {
-    struct pgpDigSigECC_s *sig = pgpsig->data;
+    struct pgprDigSigECC_s *sig = pgprsig->data;
     if (sig) {
 	gcry_mpi_release(sig->r);
 	gcry_mpi_release(sig->s);
-	pgpsig->data = _free(sig);
+	free(sig);
+	pgprsig->data = NULL;
     }
 }
 
-static void pgpFreeKeyECC(pgpDigAlg pgpkey)
+static void pgprFreeKeyECC(pgprDigAlg pgprkey)
 {
-    struct pgpDigKeyECC_s *key = pgpkey->data;
+    struct pgprDigKeyECC_s *key = pgprkey->data;
     if (key) {
 	gcry_mpi_release(key->q);
-	pgpkey->data = _free(key);
+	free(key);
+	pgprkey->data = NULL;
     }
 }
 
 
-static int pgpSupportedCurve(int algo, int curve)
+static int pgprSupportedCurve(int algo, int curve)
 {
-    if (algo == PGPPUBKEYALGO_EDDSA && curve == PGPCURVE_ED25519) {
+    if (algo == PGPRPUBKEYALGO_EDDSA && curve == PGPRCURVE_ED25519) {
 	static int supported_ed25519;
 	if (!supported_ed25519) {
 	    gcry_sexp_t sexp = NULL;
@@ -371,34 +376,34 @@ static int pgpSupportedCurve(int algo, int curve)
 	}
 	return supported_ed25519 > 0;
     }
-    if (algo == PGPPUBKEYALGO_ECDSA && curve == PGPCURVE_NIST_P_256)
+    if (algo == PGPRPUBKEYALGO_ECDSA && curve == PGPRCURVE_NIST_P_256)
 	return 1;
-    if (algo == PGPPUBKEYALGO_ECDSA && curve == PGPCURVE_NIST_P_384)
+    if (algo == PGPRPUBKEYALGO_ECDSA && curve == PGPRCURVE_NIST_P_384)
 	return 1;
-    if (algo == PGPPUBKEYALGO_ECDSA && curve == PGPCURVE_NIST_P_521)
+    if (algo == PGPRPUBKEYALGO_ECDSA && curve == PGPRCURVE_NIST_P_521)
 	return 1;
     return 0;
 }
 
-void pgpDigAlgInitPubkey(pgpDigAlg ka, int algo, int curve)
+void pgprDigAlgInitPubkey(pgprDigAlg ka, int algo, int curve)
 {
     switch (algo) {
-    case PGPPUBKEYALGO_RSA:
-        ka->setmpi = pgpSetKeyMpiRSA;
-        ka->free = pgpFreeKeyRSA;
+    case PGPRPUBKEYALGO_RSA:
+        ka->setmpi = pgprSetKeyMpiRSA;
+        ka->free = pgprFreeKeyRSA;
         ka->mpis = 2;
         break;
-    case PGPPUBKEYALGO_DSA:
-        ka->setmpi = pgpSetKeyMpiDSA;
-        ka->free = pgpFreeKeyDSA;
+    case PGPRPUBKEYALGO_DSA:
+        ka->setmpi = pgprSetKeyMpiDSA;
+        ka->free = pgprFreeKeyDSA;
         ka->mpis = 4;
         break;
-    case PGPPUBKEYALGO_ECDSA:
-    case PGPPUBKEYALGO_EDDSA:
-	if (!pgpSupportedCurve(algo, curve))
+    case PGPRPUBKEYALGO_ECDSA:
+    case PGPRPUBKEYALGO_EDDSA:
+	if (!pgprSupportedCurve(algo, curve))
 	    break;
-        ka->setmpi = pgpSetKeyMpiECC;
-        ka->free = pgpFreeKeyECC;
+        ka->setmpi = pgprSetKeyMpiECC;
+        ka->free = pgprFreeKeyECC;
         ka->mpis = 1;
         ka->curve = curve;
         break;
@@ -407,29 +412,96 @@ void pgpDigAlgInitPubkey(pgpDigAlg ka, int algo, int curve)
     }
 }
 
-void pgpDigAlgInitSignature(pgpDigAlg sa, int algo)
+void pgprDigAlgInitSignature(pgprDigAlg sa, int algo)
 {
     switch (algo) {
-    case PGPPUBKEYALGO_RSA:
-        sa->setmpi = pgpSetSigMpiRSA;
-        sa->free = pgpFreeSigRSA;
-        sa->verify = pgpVerifySigRSA;
+    case PGPRPUBKEYALGO_RSA:
+        sa->setmpi = pgprSetSigMpiRSA;
+        sa->free = pgprFreeSigRSA;
+        sa->verify = pgprVerifySigRSA;
         sa->mpis = 1;
         break;
-    case PGPPUBKEYALGO_DSA:
-        sa->setmpi = pgpSetSigMpiDSA;
-        sa->free = pgpFreeSigDSA;
-        sa->verify = pgpVerifySigDSA;
+    case PGPRPUBKEYALGO_DSA:
+        sa->setmpi = pgprSetSigMpiDSA;
+        sa->free = pgprFreeSigDSA;
+        sa->verify = pgprVerifySigDSA;
         sa->mpis = 2;
         break;
-    case PGPPUBKEYALGO_ECDSA:
-    case PGPPUBKEYALGO_EDDSA:
-        sa->setmpi = pgpSetSigMpiECC;
-        sa->free = pgpFreeSigECC;
-        sa->verify = pgpVerifySigECC;
+    case PGPRPUBKEYALGO_ECDSA:
+    case PGPRPUBKEYALGO_EDDSA:
+        sa->setmpi = pgprSetSigMpiECC;
+        sa->free = pgprFreeSigECC;
+        sa->verify = pgprVerifySigECC;
         sa->mpis = 2;
         break;
     default:
         break;
     }
 }
+
+#ifndef PGPR_RPM_INTREE
+int pgprInitCrypto(void)
+{
+    gcry_check_version(NULL);
+    gcry_control(GCRYCTL_INITIALIZATION_FINISHED, 0);
+    return 0;
+}
+
+int pgprFreeCrypto(void)
+{
+    return 0;
+}
+
+pgprDigCtx pgprDigestInit(int hashalgo)
+{
+    gcry_md_hd_t h = NULL;
+    int gcryalgo = hashalgo2gcryalgo(hashalgo);
+    if (!gcryalgo || gcry_md_open(&h, gcryalgo, 0) != 0)
+	return NULL;
+    return h;
+}
+
+int pgprDigestUpdate(pgprDigCtx ctx, const void * data, size_t len)
+{
+    gcry_md_hd_t h = ctx;
+    if (!ctx)
+	return -1;
+    gcry_md_write(h, data, len);
+    return 0;
+}
+
+int pgprDigestFinal(pgprDigCtx ctx, void ** datap, size_t *lenp)
+{
+    int gcryalgo;
+    unsigned char *digest;
+    unsigned int digestlen;
+    gcry_md_hd_t h = ctx;
+    
+    if (!h || (gcryalgo = gcry_md_get_algo(h)) == 0)
+	return -1;
+    digestlen = gcry_md_get_algo_dlen(gcryalgo);
+    if (digestlen == 0 || (digest = gcry_md_read(h, 0)) == NULL)
+	return -1;
+    if (lenp)
+	*lenp = digestlen;
+    if (datap)
+	*datap = pgprMemdup(digest, digestlen);
+    gcry_md_close(h);
+    return 0;
+}
+
+pgprDigCtx pgprDigestDup(pgprDigCtx oldctx)
+{
+    gcry_md_hd_t oldh = oldctx;
+    gcry_md_hd_t h = NULL;
+    if (oldh && gcry_md_copy(&h, oldh) != 0)
+	h = NULL;
+    return h;
+}
+
+size_t pgprDigestLength(int hashalgo)
+{
+    int gcryalgo = hashalgo2gcryalgo(hashalgo);
+    return gcryalgo ? gcry_md_get_algo_dlen(gcryalgo) : 0;
+}
+#endif

@@ -1,20 +1,45 @@
-# At least for now, this is can't be built as a standalone project. Ie,
-# it can only be built as a part of rpm build tree.
-add_library(rpmpgp_legacy OBJECT)
 
-option(WITH_LEGACY_OPENPGP "Use legacy OpenPGP parser (DEPRECATED)" OFF)
+IF (RPM_LIBVERSION)
+INCLUDE (CMakeLists-rpm.txt)
+ELSE (RPM_LIBVERSION)
 
-target_sources(rpmpgp_legacy PRIVATE
-	rpmpgp_internal.h rpmpgp_internal.c rpmpgp_internal_armor.c
-	rpmpgp_internal_api.c rpmpgp_internal_lint.c
-	rpmpgp_internal_pubkey.c rpmpgp_internal_merge.c
+CMAKE_MINIMUM_REQUIRED (VERSION 3.5)
+
+PROJECT (libpgpr C)
+
+SET(LIBPGPR_SOVERSION "1")
+
+INCLUDE (FindPkgConfig)
+
+OPTION (WITH_OPENSSL "Use openssl instead of libgcrypt for internal crypto" OFF)
+
+SET (libpgpr_SRCS
+    api.c pgp.c armor.c lint.c pubkey.c merge.c util.c
 )
+
 if (WITH_OPENSSL)
-	find_package(OpenSSL 1.0.2 REQUIRED)
-	target_sources(rpmpgp_legacy PRIVATE rpmpgp_internal_openssl.c)
+    SET (libpgpr_SRCS ${libpgpr_SRCS} openssl.c)
 else()
-	target_sources(rpmpgp_legacy PRIVATE rpmpgp_internal_libgcrypt.c)
+    SET (libpgpr_SRCS ${libpgpr_SRCS} libgcrypt.c)
 endif()
-target_include_directories(rpmpgp_legacy PRIVATE ${CMAKE_SOURCE_DIR}/rpmio)
-target_include_directories(rpmpgp_legacy PRIVATE ${Intl_INCLUDE_DIRS})
+
+
+ADD_LIBRARY (libpgpr SHARED ${libpgpr_SRCS})
+
+SET_TARGET_PROPERTIES(libpgpr PROPERTIES OUTPUT_NAME "pgpr")
+SET_TARGET_PROPERTIES(libpgpr PROPERTIES SOVERSION ${LIBPGPR_SOVERSION})
+
+
+if (WITH_OPENSSL)
+    FIND_PACKAGE(OpenSSL 1.0.2 REQUIRED)
+    TARGET_LINK_LIBRARIES(libpgpr PRIVATE OpenSSL::Crypto)
+else()
+    PKG_CHECK_MODULES(LIBGCRYPT REQUIRED IMPORTED_TARGET libgcrypt)
+    TARGET_LINK_LIBRARIES(libpgpr PRIVATE PkgConfig::LIBGCRYPT)
+endif()
+
+ENABLE_TESTING ()
+ADD_SUBDIRECTORY (test)
+
+ENDIF (RPM_LIBVERSION)
 

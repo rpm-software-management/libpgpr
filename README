@@ -1,10 +1,12 @@
 
-This is the former internal RPM OpenPGP parser, split out of the rpm
-tree after twenty years of service.
+This is a small library that can be used to verify gpg signatures.
+It is based on the former internal RPM OpenPGP parser, split out
+of the rpm tree after twenty years of service.
 
-This is not a standalone project, it can only be built as a part of RPM.
-To build, check this repository into the rpmio/ directory of RPM's
-sources and re-run cmake with `-DWITH_SEQUOIA=OFF -DWITH_LEGACY_OPENPGP=ON`
+This software can also be built as part of RPM (in-tree build).
+For this to work it needs to be unpacked into the rpmio/ directory
+of rpm's sources and rpm's cmake needs to be run with
+`-DWITH_SEQUOIA=OFF -DWITH_LEGACY_OPENPGP=ON`
 
 Use entirely at your own risk, the RPM project does not provide support
 for this parser.

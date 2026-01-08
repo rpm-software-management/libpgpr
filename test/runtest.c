@@ -1,0 +1,256 @@
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <errno.h>
+#include <sys/wait.h>
+
+static char *slurp(const char *fn, size_t *lenp)
+{
+    size_t len = 0;
+    char *buf = 0;
+    int l;
+    FILE *fp;
+
+    if ((fp = fopen(fn, "r")) == 0) {
+	perror(fn);
+	exit(1);
+    }
+    while (1) {
+	buf = realloc(buf, len + 65536);
+	if (!buf)
+	    abort();
+	l = fread(buf + len, 1, 65536, fp);
+	if (l < 0) {
+	    perror("fread");
+	    exit(1);
+	}
+	if (l == 0)
+	    break;
+	len += l;
+    }
+    fclose(fp);
+    buf = realloc(buf, len + 1);
+    if (!buf)
+	abort();
+    buf[len] = 0;
+    if (lenp)
+	*lenp = len;
+    return buf;
+}
+
+void
+do_run(char **args, char **out_p, size_t *outl_p)
+{
+    int fds[2];
+    pid_t pid;
+    char *out = NULL;
+    size_t outl = 0;
+    ssize_t l;
+    int status;
+
+    if (pipe(fds)) {
+	perror("pipe");
+	exit(1);
+    }
+    pid = fork();
+    if (pid == (pid_t)-1) {
+	perror("fork");
+	exit(1);
+    }
+    if (pid == 0) {
+	close(fds[0]);
+	if (fds[1] != 1) {
+	    if (dup2(fds[1], 1) == -1) {
+		perror("dup2");
+		exit(1);
+	    }
+	}
+	close(2);
+	if (dup2(1, 2) == -1) {
+	    perror("dup2");
+	    exit(1);
+	}
+	execvp(args[0], args);
+	perror(args[0]);
+	_exit(1);
+    }
+    close(fds[1]);
+    for (;;) {
+        out = realloc(out, outl + 1024);
+	l = read(fds[0], out + outl, 1024);
+	if (l == 0)
+	    break;
+	if (l < 0) {
+	    if (errno == EINTR)
+		continue;
+	    perror("read");
+	    exit(1);
+	}
+	outl += l;
+    }
+    close(fds[0]);
+    for (;;) {
+        pid_t p = waitpid(pid, &status, 0);
+	if (p == (pid_t)-1) {
+	    if (errno == EINTR)
+		continue;
+	    perror("waitpid");
+	    exit(1);
+	}
+	if (p != pid) {
+	    fprintf(stderr, "weird pid returned by waitpid\n");
+	    exit(1);
+	}
+	break;
+    }
+    if (outl && out[outl - 1] != '\n') {
+        out = realloc(out, outl + 8);
+	memcpy(out + outl, "[noeof]\n", 8);
+	outl += 8;
+    }
+    if (status != 0) {
+	char exitline[256];
+	size_t exitlinelen;
+	sprintf(exitline, "Exit status: %d\n", WIFEXITED(status) ? WEXITSTATUS(status) : status);
+	exitlinelen = strlen(exitline);
+        out = realloc(out, outl + exitlinelen);
+	memmove(out + exitlinelen, out, outl);
+	memcpy(out, exitline, exitlinelen);
+	outl += exitlinelen;
+    }
+    *out_p = out;
+    *outl_p = outl;
+}
+
+static inline size_t
+linelen(char *o, size_t l)
+{
+    void *p = memchr(o, '\n', l);
+    return p ? (char *)p - o + 1: l;
+}
+
+int
+do_diff(char *out, size_t outl, char *exp, size_t expl)
+{
+    int hasdiff = 0;
+    size_t ol, el, nol, nel;
+
+    while (outl || expl) {
+	ol = linelen(out, outl);
+	el = linelen(exp, expl);
+	if (ol == el && memcmp(out, exp, ol) == 0) {
+	    out += ol;
+	    exp += el;
+	    outl -= ol;
+	    expl -= el;
+	    continue;
+	}
+	hasdiff = 1;
+	nol = linelen(out + ol, outl - ol);
+	nel = linelen(exp + el, expl - el);
+	if (el == nol && memcmp(exp, out + ol, el) == 0) {
+	    printf("+%.*s", ol, out);
+	    out += ol;
+	    outl -= ol;
+	    continue;
+	}
+	if (ol == nel && memcmp(out, exp + el, ol) == 0) {
+	    printf("-%.*s", el, exp);
+	    exp += el;
+	    expl -= el;
+	    continue;
+	}
+	if (el) {
+	    printf("-%.*s", el, exp);
+	    exp += el;
+	    expl -= el;
+	} else {
+	    printf("+%.*s", ol, out);
+	    out += ol;
+	    outl -= ol;
+	}
+    }
+    return hasdiff;
+}
+
+int main(int argc, char **argv)
+{
+    char *testcase = NULL;
+    char *line, *nextline, *p, *cmd;
+    size_t cmdlen;
+    int failed;
+
+    if (argc != 2) {
+	fprintf(stderr, "Usage: runtest <test.t>\n");
+	exit(1);
+    }
+    testcase = slurp(argv[1], NULL);
+    for (line = testcase; *line; line = nextline) {
+	if ((p = strchr(line, '\n')) != 0) {
+	    *p++ = 0;
+	    nextline = p;
+	} else {
+	    nextline = line + strlen(line);
+	}
+	while (*line == ' ' || *line == '\t')
+	    line++;
+	if (!*line || *line == '#')
+	    continue;
+	cmd = line;
+	while (*line && *line != ' ' && *line != '\t')
+	    line++;
+	cmdlen = line - cmd;
+	if (cmdlen == 4 && strncmp(cmd, "TEST", 4) == 0) {
+	    cmd += cmdlen;
+	    while (*cmd == ' ' || *cmd == '\t')
+		cmd++;
+	    printf("Testing %s\n", cmd);
+	} else if (cmdlen == 3 && strncmp(cmd, "RUN", 3) == 0) {
+	    char *saveptr = NULL;
+	    char *arg;
+	    char *args[20];
+	    int nargs = 0;
+	    char *out = 0;
+	    size_t outl = 0;
+	    char *exp = 0;
+	    size_t expl = 0;
+
+	    //args[nargs++] = strdup("testpgpr");
+	    args[nargs++] = strdup("/home/rpmpgp_legacy/_build/test/testpgpr");
+	    cmd += cmdlen;
+	    while (*cmd == ' ' || *cmd == '\t')
+		cmd++;
+	    while ((arg = strtok_r(cmd, " \t", &saveptr)) != NULL) {
+		if (nargs == 18) {
+		    fprintf(stderr, "too many args to RUN\n");
+		    exit(1);
+		}
+		args[nargs++] = strdup(arg);
+		cmd = NULL;
+	    }
+	    args[nargs] = 0;
+	    do_run(args, &out, &outl);
+	    if (strncmp(nextline, "---\n", 4) == 0) {
+		exp = nextline + 4;
+		nextline += 4;
+		while (*nextline) {
+		    if (strncmp(nextline, "---\n", 4) == 0)
+			break;
+		    if ((p = strchr(nextline, '\n')) != 0) {
+			nextline = p + 1;
+		    } else {
+			nextline += strlen(nextline);
+		    }
+		}
+		expl = nextline - exp;
+		if (*nextline)
+		    nextline += 4;	/* the ---\n above */
+	    }
+	    if (do_diff(out, outl, exp, expl))
+		failed++;
+	}
+    }
+    return failed ? 1 : 0;
+}
