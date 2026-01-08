@@ -127,7 +127,7 @@ typedef enum pgprHashAlgo_e {
 /*
  * ECC Curves
  *
- * The following curve ids are private to pgpr. PGPuses
+ * The following curve ids are private to pgpr. PGP uses
  * oids to identify a curve.
  */
 typedef enum pgprCurveId_e {
@@ -135,9 +135,14 @@ typedef enum pgprCurveId_e {
     PGPRCURVE_NIST_P_384	=  2,	/*!< NIST P-384 */
     PGPRCURVE_NIST_P_521	=  3,	/*!< NIST P-521 */
     PGPRCURVE_BRAINPOOL_P256R1	=  4,	/*!< brainpoolP256r1 */
-    PGPRCURVE_BRAINPOOL_P512R1	=  5,	/*!< brainpoolP512r1 */
-    PGPRCURVE_ED25519		=  6,	/*!< Ed25519 */
-    PGPRCURVE_CURVE25519	=  7,	/*!< Curve25519 */
+    PGPRCURVE_BRAINPOOL_P384R1	=  5,	/*!< brainpoolP384r1 */
+    PGPRCURVE_BRAINPOOL_P512R1	=  6,	/*!< brainpoolP512r1 */
+    PGPRCURVE_ED25519		=  7,	/*!< Ed25519 */
+    PGPRCURVE_CURVE25519	=  8,	/*!< Curve25519 */
+    PGPRCURVE_ED25519_ALT	=  9,	/*!< Ed25519 alternate */
+    PGPRCURVE_CURVE25519_ALT	=  10,	/*!< Curve25519 alternate */
+    PGPRCURVE_ED448		=  11,	/*!< Ed448 */
+    PGPRCURVE_X448		=  12,	/*!< X448 */
 } pgprCurveId;
 
 

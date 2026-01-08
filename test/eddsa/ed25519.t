@@ -4,7 +4,7 @@ RUN keyinfo ed25519.key
 Version: 4
 CreationTime: 1767801366
 Algorithm: 22
-AlgorithmInfo: 6
+AlgorithmInfo: 7
 UserID: ed25519 <ed25519@pgpr.lib>
 KeyFP: 844901a5768d219988920a2baa242b58f33d6457
 KeyID: aa242b58f33d6457

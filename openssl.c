@@ -723,7 +723,7 @@ static int constructEDDSASigningKey(struct pgprDigKeyEDDSA_s *key, int curve)
 {
     if (key->evp_pkey)
 	return 1;	/* We've already constructed it, so just reuse it */
-    if (curve == PGPRCURVE_ED25519)
+    if (curve == PGPRCURVE_ED25519 || curve == PGPRCURVE_ED25519_ALT)
 	key->evp_pkey = EVP_PKEY_new_raw_public_key(EVP_PKEY_ED25519, NULL, key->q, key->qlen);
     return key->evp_pkey ? 1 : 0;
 }
@@ -813,7 +813,7 @@ done:
 static int pgprSupportedCurve(int algo, int curve)
 {
 #ifdef EVP_PKEY_ED25519
-    if (algo == PGPRPUBKEYALGO_EDDSA && curve == PGPRCURVE_ED25519)
+    if (algo == PGPRPUBKEYALGO_EDDSA && (curve == PGPRCURVE_ED25519 || curve == PGPRCURVE_ED25519_ALT))
 	return 1;
 #endif
     if (algo == PGPRPUBKEYALGO_ECDSA && curve == PGPRCURVE_NIST_P_256)

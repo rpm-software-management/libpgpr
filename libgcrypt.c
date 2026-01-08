@@ -308,7 +308,7 @@ static pgprRC pgprVerifySigECC(pgprDigAlg pgprkey, pgprDigAlg pgprsig, const uin
 
     if (!sig || !key)
 	return rc;
-    if (pgprkey->curve == PGPRCURVE_ED25519) {
+    if (pgprkey->curve == PGPRCURVE_ED25519 || pgprkey->curve == PGPRCURVE_ED25519_ALT) {
 	if (ed25519_zero_extend(sig->r, buf_r, 32) || ed25519_zero_extend(sig->s, buf_s, 32))
 	    return rc;
 	gcry_sexp_build(&sexp_sig, NULL, "(sig-val (eddsa (r %b) (s %b)))", 32, (const char *)buf_r, 32, (const char *)buf_s, 32);
@@ -366,7 +366,7 @@ static void pgprFreeKeyECC(pgprDigAlg pgprkey)
 
 static int pgprSupportedCurve(int algo, int curve)
 {
-    if (algo == PGPRPUBKEYALGO_EDDSA && curve == PGPRCURVE_ED25519) {
+    if (algo == PGPRPUBKEYALGO_EDDSA && (curve == PGPRCURVE_ED25519 || curve == PGPRCURVE_ED25519_ALT)) {
 	static int supported_ed25519;
 	if (!supported_ed25519) {
 	    gcry_sexp_t sexp = NULL;
