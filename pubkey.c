@@ -7,34 +7,49 @@
 #include "pgpr.h"
 #include "pgpr_internal.h"
 
-static pgprRC hashKey(pgprDigCtx ctx, const pgprPkt *pkt, int exptag)
+static pgprRC hashKey(pgprDigCtx ctx, const pgprPkt *pkt, int exptag, int version)
 {
     pgprRC rc = PGPR_ERROR_INTERNAL;
     if (pkt && pkt->tag == exptag) {
-	uint8_t head[] = {
-	    0x99,
-	    (pkt->blen >> 8),
-	    (pkt->blen     ),
-	};
-	pgprDigestUpdate(ctx, head, 3);
+	if (version == 4) {
+	    uint8_t head[] = {
+		0x99,
+		(pkt->blen >> 8),
+		(pkt->blen     ),
+	    };
+	    pgprDigestUpdate(ctx, head, 3);
+	} else if (version == 5) {
+	    uint8_t head[] = {
+		0x9a,
+		(pkt->blen >> 24),
+		(pkt->blen >> 16),
+		(pkt->blen >> 8),
+		(pkt->blen     ),
+	    };
+	    pgprDigestUpdate(ctx, head, 5);
+	} else if (version != 3)
+	    return rc;
 	pgprDigestUpdate(ctx, pkt->body, pkt->blen);
 	rc = PGPR_OK;
     }
     return rc;
 }
 
-static pgprRC hashUserID(pgprDigCtx ctx, const pgprPkt *pkt, int exptag)
+static pgprRC hashUserID(pgprDigCtx ctx, const pgprPkt *pkt, int exptag, int version)
 {
     pgprRC rc = PGPR_ERROR_INTERNAL;
     if (pkt && pkt->tag == exptag) {
-	uint8_t head[] = {
-	    exptag == PGPRTAG_USER_ID ? 0xb4 : 0xd1,
-	    (pkt->blen >> 24),
-	    (pkt->blen >> 16),
-	    (pkt->blen >>  8),
-	    (pkt->blen     ),
-	};
-	pgprDigestUpdate(ctx, head, 5);
+	if (version == 4 || version == 5) {
+	    uint8_t head[] = {
+		exptag == PGPRTAG_USER_ID ? 0xb4 : 0xd1,
+		(pkt->blen >> 24),
+		(pkt->blen >> 16),
+		(pkt->blen >>  8),
+		(pkt->blen      ),
+	    };
+	    pgprDigestUpdate(ctx, head, 5);
+	} else if (version != 3)
+	    return rc;
 	pgprDigestUpdate(ctx, pkt->body, pkt->blen);
 	rc = PGPR_OK;
     }
@@ -56,22 +71,22 @@ static pgprRC pgprVerifySelf(pgprDigParams key, pgprDigParams selfsig,
     case PGPRSIGTYPE_SUBKEY_BINDING:
     case PGPRSIGTYPE_SUBKEY_REVOKE:
     case PGPRSIGTYPE_PRIMARY_BINDING:
-	rc = hashKey(ctx, mainpkt, PGPRTAG_PUBLIC_KEY);
+	rc = hashKey(ctx, mainpkt, PGPRTAG_PUBLIC_KEY, selfsig->version);
 	if (rc == PGPR_OK)
-	    rc = hashKey(ctx, sectionpkt, PGPRTAG_PUBLIC_SUBKEY);
+	    rc = hashKey(ctx, sectionpkt, PGPRTAG_PUBLIC_SUBKEY, selfsig->version);
 	break;
     case PGPRSIGTYPE_GENERIC_CERT:
     case PGPRSIGTYPE_PERSONA_CERT:
     case PGPRSIGTYPE_CASUAL_CERT:
     case PGPRSIGTYPE_POSITIVE_CERT:
     case PGPRSIGTYPE_CERT_REVOKE:
-	rc = hashKey(ctx, mainpkt, PGPRTAG_PUBLIC_KEY);
+	rc = hashKey(ctx, mainpkt, PGPRTAG_PUBLIC_KEY, selfsig->version);
 	if (rc == PGPR_OK)
-	    rc = hashUserID(ctx, sectionpkt, sectionpkt->tag == PGPRTAG_USER_ATTRIBUTE ? PGPRTAG_USER_ATTRIBUTE : PGPRTAG_USER_ID);
+	    rc = hashUserID(ctx, sectionpkt, sectionpkt->tag == PGPRTAG_USER_ATTRIBUTE ? PGPRTAG_USER_ATTRIBUTE : PGPRTAG_USER_ID, selfsig->version);
 	break;
     case PGPRSIGTYPE_SIGNED_KEY:
     case PGPRSIGTYPE_KEY_REVOKE:
-	rc = hashKey(ctx, mainpkt, PGPRTAG_PUBLIC_KEY);
+	rc = hashKey(ctx, mainpkt, PGPRTAG_PUBLIC_KEY, selfsig->version);
 	break;
     default:
 	break;
