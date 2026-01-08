@@ -70,6 +70,7 @@ struct pgprDigParams_s {
 
     uint8_t * hash;
     uint32_t hashlen;
+    uint32_t saltlen;
     uint8_t signhash16[2];
 
     size_t mpi_offset;		/* start of mpi data */

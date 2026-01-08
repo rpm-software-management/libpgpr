@@ -18,9 +18,9 @@ static pgprRC hashKey(pgprDigCtx ctx, const pgprPkt *pkt, int exptag, int versio
 		(pkt->blen     ),
 	    };
 	    pgprDigestUpdate(ctx, head, 3);
-	} else if (version == 5) {
+	} else if (version == 5 || version == 6) {
 	    uint8_t head[] = {
-		0x9a,
+		version == 5 ? 0x9a : 0x9b,
 		(pkt->blen >> 24),
 		(pkt->blen >> 16),
 		(pkt->blen >> 8),
@@ -39,7 +39,7 @@ static pgprRC hashUserID(pgprDigCtx ctx, const pgprPkt *pkt, int exptag, int ver
 {
     pgprRC rc = PGPR_ERROR_INTERNAL;
     if (pkt && pkt->tag == exptag) {
-	if (version == 4 || version == 5) {
+	if (version == 4 || version == 5 || version == 6) {
 	    uint8_t head[] = {
 		exptag == PGPRTAG_USER_ID ? 0xb4 : 0xd1,
 		(pkt->blen >> 24),
@@ -60,12 +60,17 @@ static pgprRC pgprVerifySelf(pgprDigParams key, pgprDigParams selfsig,
 			const pgprPkt *mainpkt, const pgprPkt *sectionpkt)
 {
     int rc = PGPR_ERROR_SELFSIG_VERIFICATION;
-    pgprDigCtx ctx = pgprDigestInit(selfsig->hash_algo);
+    pgprDigCtx ctx;
     uint8_t *hash = NULL;
     size_t hashlen = 0;
 
+    ctx = pgprDigestInit(selfsig->hash_algo);
     if (!ctx)
 	return rc;
+
+    /* hash header */
+    if (selfsig->saltlen)
+	pgprDigestUpdate(ctx, selfsig->hash + selfsig->hashlen, selfsig->saltlen);
 
     switch (selfsig->sigtype) {
     case PGPRSIGTYPE_SUBKEY_BINDING:
@@ -91,7 +96,7 @@ static pgprRC pgprVerifySelf(pgprDigParams key, pgprDigParams selfsig,
     default:
 	break;
     }
-    /* hash signature data and trailer */
+    /* hash trailer */
     if (selfsig->hash)
 	pgprDigestUpdate(ctx, selfsig->hash, selfsig->hashlen);
     pgprDigestFinal(ctx, (void **)&hash, &hashlen);

@@ -15,12 +15,12 @@ typedef struct pgprPktKeyV4_s {
     uint8_t pubkey_algo;	/*!< public key algorithm. */
 } * pgprPktKeyV4;
 
-typedef struct pgprPktKeyV5_s {
+typedef struct pgprPktKeyV56_s {
     uint8_t version;	/*!< version number (4). */
     pgprTime_t time;	/*!< time that the key was created. */
     uint8_t pubkey_algo;	/*!< public key algorithm. */
     uint8_t pubkey_len[4];	/*!< public key material length. */
-} * pgprPktKeyV5;
+} * pgprPktKeyV56;
 
 typedef struct pgprPktSigV3_s {
     uint8_t version;	/*!< version number (3). */
@@ -33,13 +33,13 @@ typedef struct pgprPktSigV3_s {
     uint8_t signhash16[2];	/*!< left 16 bits of signed hash value. */
 } * pgprPktSigV3;
 
-typedef struct pgprPktSigV45_s {
+typedef struct pgprPktSigV456_s {
     uint8_t version;	/*!< version number (4). */
     uint8_t sigtype;	/*!< signature type. */
     uint8_t pubkey_algo;	/*!< public key algorithm. */
     uint8_t hash_algo;	/*!< hash algorithm. */
-    uint8_t hashlen[2];	/*!< length of following hashed material. */
-} * pgprPktSigV45;
+    uint8_t hashlen[2];	/*!< length of following hashed material (4 bytes for v6). */
+} * pgprPktSigV456;
 
 
 static inline unsigned int pgprGrab2(const uint8_t *s)
@@ -406,7 +406,8 @@ pgprRC pgprGetKeyFingerprint(const uint8_t *h, size_t hlen,
 	}
       }	break;
     case 5:
-      {	pgprPktKeyV5 v = (pgprPktKeyV5)h;
+    case 6:
+      {	pgprPktKeyV56 v = (pgprPktKeyV56)h;
 	if (hlen < sizeof(*v))
 	    return rc;
 	/* Does the size and number of MPI's match our expectations? */
@@ -414,7 +415,7 @@ pgprRC pgprGetKeyFingerprint(const uint8_t *h, size_t hlen,
 	    pgprDigCtx ctx = pgprDigestInit(PGPRHASHALGO_SHA256);
 	    uint8_t *d = NULL;
 	    size_t dlen = 0;
-	    uint8_t in[5] = { 0x9a, (hlen >> 24), (hlen >> 16), (hlen >> 8), hlen };
+	    uint8_t in[5] = { h[0] == 6 ? 0x9b : 0x9a, (hlen >> 24), (hlen >> 16), (hlen >> 8), hlen };
 
 	    (void) pgprDigestUpdate(ctx, in, 5);
 	    (void) pgprDigestUpdate(ctx, h, hlen);
@@ -441,7 +442,7 @@ static pgprRC pgprGetKeyIDFromFp(const uint8_t *fp, int fplen, int fpversion, pg
 {
     pgprRC rc = PGPR_ERROR_INTERNAL;
     if (fp && fplen > 8) {
-	if (fpversion == 5)
+	if (fpversion == 5 || fpversion == 6)
 	    memcpy(keyid, fp, 8);
 	else
 	    memcpy(keyid, (fp + (fplen - 8)), 8);
@@ -517,7 +518,7 @@ static pgprRC pgprPrtSubType(const uint8_t *h, size_t hlen, pgprDigParams _digp,
 		memcpy(_digp->signid, p + plen - sizeof(_digp->signid), sizeof(_digp->signid));
 		_digp->saved |= PGPRDIG_SAVED_ID;
 	    }
-	    if (p[1] == 5 && plen - 1 == 33 && !(_digp->saved & PGPRDIG_SAVED_ID)) {
+	    if ((p[1] == 5 || p[1] == 6) && plen - 1 == 33 && !(_digp->saved & PGPRDIG_SAVED_ID)) {
 		memcpy(_digp->signid, p + 2, sizeof(_digp->signid));
 		_digp->saved |= PGPRDIG_SAVED_ID;
 	    }
@@ -629,7 +630,8 @@ pgprRC pgprPrtSigNoParams(pgprTag tag, const uint8_t *h, size_t hlen,
     }	break;
     case 4:
     case 5:
-    {   pgprPktSigV45 v = (pgprPktSigV45)h;
+    case 6:
+    {   pgprPktSigV456 v = (pgprPktSigV456)h;
 	const uint8_t *const hend = h + hlen;
 	uint8_t *trailer;
 	int hashed;
@@ -643,10 +645,17 @@ pgprRC pgprPrtSigNoParams(pgprTag tag, const uint8_t *h, size_t hlen,
 	/* parse both the hashed and unhashed subpackets */
 	p = &v->hashlen[0];
 	for (hashed = 1; hashed >= 0; hashed--) {
-	    if (p > hend || hend - p < 2)
-		return PGPR_ERROR_CORRUPT_PGP_PACKET;
-	    plen = pgprGrab2(p);
-	    p += 2;
+	    if (_digp->version == 6) {
+		if (p > hend || hend - p < 4)
+		    return PGPR_ERROR_CORRUPT_PGP_PACKET;
+		plen = pgprGrab4(p);
+		p += 4;
+	    } else {
+		if (p > hend || hend - p < 2)
+		    return PGPR_ERROR_CORRUPT_PGP_PACKET;
+		plen = pgprGrab2(p);
+		p += 2;
+	    }
 	    if (hend - p < plen)
 		return PGPR_ERROR_CORRUPT_PGP_PACKET;
 	    if (hashed) {
@@ -655,8 +664,10 @@ pgprRC pgprPrtSigNoParams(pgprTag tag, const uint8_t *h, size_t hlen,
 		    _digp->hashlen = sizeof(*v) + plen + 6;
 		else if (_digp->version == 5)
 		    _digp->hashlen = sizeof(*v) + plen + (_digp->sigtype == 0x00 || _digp->sigtype == 0x01 ? 6 : 0) + 10;
+		else if (_digp->version == 6)
+		    _digp->hashlen = sizeof(*v) + 2 + plen + 6;		/* len is 4 bytes */
 		_digp->hash = pgprCalloc(1, _digp->hashlen);
-		memcpy(_digp->hash, v, sizeof(*v) + plen);
+		memcpy(_digp->hash, v, sizeof(*v) + plen + (_digp->version == 6 ? 2 : 0));
 	    }
 	    rc = pgprPrtSubType(p, plen, _digp, hashed);
 	    if (rc != PGPR_OK)
@@ -672,12 +683,27 @@ pgprRC pgprPrtSigNoParams(pgprTag tag, const uint8_t *h, size_t hlen,
 	memcpy(_digp->signhash16, p, sizeof(_digp->signhash16));
 	p += 2;
 
+	if (_digp->version == 6) {
+	    int saltlen;
+	    if (p > hend || hend - p < 1)
+		return PGPR_ERROR_CORRUPT_PGP_PACKET;
+	    saltlen = p[0];
+	    if (saltlen) {
+		if (hend - p < 1 + saltlen)
+		    return PGPR_ERROR_CORRUPT_PGP_PACKET;
+		_digp->hash = pgprRealloc(_digp->hash, _digp->hashlen + saltlen);
+		memcpy(_digp->hash + _digp->hashlen, p + 1, saltlen);
+		_digp->saltlen = saltlen;
+	    }
+	    p += 1 + saltlen;
+	}
+
 	if (p > hend)
 	    return PGPR_ERROR_CORRUPT_PGP_PACKET;
 	_digp->mpi_offset = p - h;
-	if (_digp->version == 4) {
+	if (_digp->version == 4 || _digp->version == 6) {
 	    trailer = _digp->hash + _digp->hashlen - 6;
-	    trailer[0] = 0x04;
+	    trailer[0] = _digp->version;
 	    trailer[1] = 0xff;
 	    trailer[2] = (_digp->hashlen - 6) >> 24;
 	    trailer[3] = (_digp->hashlen - 6) >> 16;
@@ -760,7 +786,8 @@ pgprRC pgprPrtKey(pgprTag tag, const uint8_t *h, size_t hlen,
 	rc = PGPR_OK;
     }	break;
     case 5:
-    {   pgprPktKeyV5 v = (pgprPktKeyV5)h;
+    case 6:
+    {   pgprPktKeyV56 v = (pgprPktKeyV56)h;
 	if (hlen <= sizeof(*v))
 	    return PGPR_ERROR_CORRUPT_PGP_PACKET;
 	if (hlen != sizeof(*v) + pgprGrab4(v->pubkey_len))

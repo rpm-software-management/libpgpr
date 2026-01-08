@@ -113,8 +113,12 @@ uint32_t pgprDigParamsModificationTime(pgprDigParams digp)
 
 const uint8_t *pgprDigParamsHashHeader(pgprDigParams digp, size_t *headerlen)
 {
-    *headerlen = 0;
-    return NULL;
+    if (digp->tag != PGPRTAG_SIGNATURE) {
+	*headerlen = 0;
+	return NULL;
+    }
+    *headerlen = digp->saltlen;
+    return digp->saltlen ? digp->hash + digp->hashlen : NULL;
 }
 
 const uint8_t *pgprDigParamsHashTrailer(pgprDigParams digp, size_t *trailerlen)
