@@ -183,7 +183,8 @@ int pgpPrtParams2(const uint8_t * pkts, size_t pktlen, unsigned int pkttype,
 	rc = pgprSignatureParse(pkts, pktlen, &digp, lints);
     } else {
 	if (lints)
-	    *lints = rstrdup("Not a public key of signature");
+	    *lints = rstrdup("Not a public key or signature");
+	return -1;
     }
     if (ret && rc == PGPR_OK)
 	*ret = (pgpDigParams)digp;
