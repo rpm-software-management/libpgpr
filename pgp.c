@@ -293,7 +293,7 @@ static int pgprCurveByOid(const uint8_t *p, int l)
 static pgprRC pgprPrtKeyParams(pgprTag tag, const uint8_t *h, size_t hlen,
 		pgprDigParams keyp)
 {
-    pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;		/* assume failure */
+    pgprRC rc;
     const uint8_t *p;
     int curve = 0;
     /* We can't handle more than one key at a time */
@@ -310,16 +310,10 @@ static pgprRC pgprPrtKeyParams(pgprTag tag, const uint8_t *h, size_t hlen,
 	    return PGPR_ERROR_UNSUPPORTED_CURVE;
 	p += len + 1;
     }
-    pgprDigAlg alg = pgprDigAlgNew();
-    pgprDigAlgInitPubkey(alg, keyp->pubkey_algo, curve);
-    if (alg->mpis < 0)
-	rc = PGPR_ERROR_UNSUPPORTED_ALGORITHM;
-    else
-	rc = pgprDigAlgProcessMpis(alg, alg->mpis, p, h + hlen);
+    keyp->alg = pgprDigAlgNew();
+    rc = pgprDigAlgInitPubkey(keyp->alg, keyp->pubkey_algo, curve);
     if (rc == PGPR_OK)
-	keyp->alg = alg;
-    else
-	pgprDigAlgFree(alg);
+	rc = pgprDigAlgProcessMpis(keyp->alg, keyp->alg->mpis, p, h + hlen);
     return rc;
 }
 
@@ -353,20 +347,18 @@ static pgprRC pgprValidateKeyParamsSize(int pubkey_algo, const uint8_t *p, size_
 pgprRC pgprPrtSigParams(pgprTag tag, const uint8_t *h, size_t hlen,
 		pgprDigParams sigp)
 {
-    pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;		/* assume failure */
+    pgprRC rc;
     /* We can't handle more than one sig at a time */
     if (sigp->alg || !sigp->mpi_offset || sigp->mpi_offset > hlen || sigp->tag != PGPRTAG_SIGNATURE)
 	return PGPR_ERROR_INTERNAL;
-    pgprDigAlg alg = pgprDigAlgNew();
-    pgprDigAlgInitSignature(alg, sigp->pubkey_algo);
-    if (alg->mpis < 0)
-	rc = PGPR_ERROR_UNSUPPORTED_ALGORITHM;
-    else
-	rc = pgprDigAlgProcessMpis(alg, alg->mpis, h + sigp->mpi_offset, h + hlen);
+    sigp->alg = pgprDigAlgNew();
+    rc = pgprDigAlgInitSignature(sigp->alg, sigp->pubkey_algo);
     if (rc == PGPR_OK)
-	sigp->alg = alg;
-    else
-	pgprDigAlgFree(alg);
+	rc = pgprDigAlgProcessMpis(sigp->alg, sigp->alg->mpis, h + sigp->mpi_offset, h + hlen);
+    if (rc != PGPR_OK) {
+	pgprDigAlgFree(sigp->alg);
+	sigp->alg = NULL;
+    }
     return rc;
 }
 

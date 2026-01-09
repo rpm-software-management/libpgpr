@@ -131,10 +131,10 @@ PGPR_GNUC_INTERNAL
 pgprDigAlg pgprDigAlgFree(pgprDigAlg alg);
 
 PGPR_GNUC_INTERNAL
-void pgprDigAlgInitPubkey(pgprDigAlg alg, int algo, int curve);
+pgprRC pgprDigAlgInitPubkey(pgprDigAlg alg, int algo, int curve);
 
 PGPR_GNUC_INTERNAL
-void pgprDigAlgInitSignature(pgprDigAlg alg, int algo);
+pgprRC pgprDigAlgInitSignature(pgprDigAlg alg, int algo);
 
 /* pgpr packet data extraction */
 PGPR_GNUC_INTERNAL

@@ -723,8 +723,14 @@ static int constructEDDSASigningKey(struct pgprDigKeyEDDSA_s *key, int curve)
 {
     if (key->evp_pkey)
 	return 1;	/* We've already constructed it, so just reuse it */
+#ifdef EVP_PKEY_ED25519
     if (curve == PGPRCURVE_ED25519 || curve == PGPRCURVE_ED25519_ALT)
 	key->evp_pkey = EVP_PKEY_new_raw_public_key(EVP_PKEY_ED25519, NULL, key->q, key->qlen);
+#endif
+#ifdef EVP_PKEY_ED448
+    if (curve == PGPRCURVE_ED448)
+	key->evp_pkey = EVP_PKEY_new_raw_public_key(EVP_PKEY_ED448, NULL, key->q, key->qlen);
+#endif
     return key->evp_pkey ? 1 : 0;
 }
 
@@ -735,9 +741,15 @@ static pgprRC pgprSetKeyMpiEDDSA(pgprDigAlg pgprkey, int num, const uint8_t *p, 
 
     if (!key)
 	key = pgprkey->data = pgprCalloc(1, sizeof(*key));
-    if (num == 0 && !key->q && mlen > 3 && p[2] == 0x40) {
+    if ((pgprkey->curve == PGPRCURVE_ED25519 || pgprkey->curve == PGPRCURVE_ED25519_ALT) && num == 0 && !key->q && mlen > 3 && p[2] == 0x40) {
 	key->qlen = mlen - 3;
 	key->q = pgprMemdup(p + 3, mlen - 3);	/* we do not copy the leading 0x40 */
+	rc = PGPR_OK;
+    }
+    if (pgprkey->curve == PGPRCURVE_ED448 && num == 0 && !key->q && mlen > 3 && mlen <= 59) {
+	key->qlen = 57;
+	key->q = pgprCalloc(1, 57);
+	memcpy(key->q + 57 - (mlen - 2), p + 2, mlen - 2);
 	rc = PGPR_OK;
     }
     return rc;
@@ -756,20 +768,22 @@ static void pgprFreeKeyEDDSA(pgprDigAlg pgprkey)
 }
 
 struct pgprDigSigEDDSA_s {
-    unsigned char sig[32 + 32];
+    unsigned char sig[57 + 57];
+    int not_ed25519;
 };
 
 static pgprRC pgprSetSigMpiEDDSA(pgprDigAlg pgprsig, int num, const uint8_t *p, int mlen)
 {
-    pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;	/* assume failure */
     struct pgprDigSigEDDSA_s *sig = pgprsig->data;
 
     if (!sig)
 	sig = pgprsig->data = pgprCalloc(1, sizeof(*sig));
     mlen -= 2;	/* skip mpi len */
-    if (mlen <= 0 || mlen > 32 || (num != 0 && num != 1))
-	return rc;
-    memcpy(sig->sig + 32 * num + 32 - mlen, p + 2, mlen);
+    if ((num != 0 && num != 1) || mlen <= 0 || mlen > 57)
+      return PGPR_ERROR_BAD_SIGNATURE;
+    memcpy(sig->sig + 57 * num + 57 - mlen, p + 2, mlen);
+    if (mlen > 32)
+	sig->not_ed25519 = 1;
     return PGPR_OK;
 }
 
@@ -796,8 +810,17 @@ static pgprRC pgprVerifySigEDDSA(pgprDigAlg pgprkey, pgprDigAlg pgprsig,
     md_ctx = EVP_MD_CTX_new();
     if (EVP_DigestVerifyInit(md_ctx, NULL, EVP_md_null(), NULL, key->evp_pkey) != 1)
 	goto done;
-    if (EVP_DigestVerify(md_ctx, sig->sig, 64, hash, hashlen) == 1)
-	rc = PGPR_OK;		/* Success */
+    if ((pgprkey->curve == PGPRCURVE_ED25519 || pgprkey->curve == PGPRCURVE_ED25519_ALT) && !sig->not_ed25519) {
+	unsigned char esig[64];
+	memcpy(esig, sig->sig + 57 - 32, 32);
+	memcpy(esig + 32, sig->sig + 2 * 57 - 32, 32);
+	if (EVP_DigestVerify(md_ctx, esig, 64, hash, hashlen) == 1)
+	    rc = PGPR_OK;		/* Success */
+    }
+    if (pgprkey->curve == PGPRCURVE_ED448) {
+	if (EVP_DigestVerify(md_ctx, sig->sig, 114, hash, hashlen) == 1)
+	    rc = PGPR_OK;		/* Success */
+    }
 done:
     if (md_ctx)
 	EVP_MD_CTX_free(md_ctx);
@@ -816,6 +839,10 @@ static int pgprSupportedCurve(int algo, int curve)
     if (algo == PGPRPUBKEYALGO_EDDSA && (curve == PGPRCURVE_ED25519 || curve == PGPRCURVE_ED25519_ALT))
 	return 1;
 #endif
+#ifdef EVP_PKEY_ED448
+    if (algo == PGPRPUBKEYALGO_EDDSA && curve == PGPRCURVE_ED448)
+	return 1;
+#endif
     if (algo == PGPRPUBKEYALGO_ECDSA && curve == PGPRCURVE_NIST_P_256)
 	return 1;
     if (algo == PGPRPUBKEYALGO_ECDSA && curve == PGPRCURVE_NIST_P_384)
@@ -825,45 +852,46 @@ static int pgprSupportedCurve(int algo, int curve)
     return 0;
 }
 
-void pgprDigAlgInitPubkey(pgprDigAlg ka, int algo, int curve)
+pgprRC pgprDigAlgInitPubkey(pgprDigAlg ka, int algo, int curve)
 {
     switch (algo) {
     case PGPRPUBKEYALGO_RSA:
         ka->setmpi = pgprSetKeyMpiRSA;
         ka->free = pgprFreeKeyRSA;
         ka->mpis = 2;
-        break;
+        return PGPR_OK;
     case PGPRPUBKEYALGO_DSA:
         ka->setmpi = pgprSetKeyMpiDSA;
         ka->free = pgprFreeKeyDSA;
         ka->mpis = 4;
-        break;
+        return PGPR_OK;
     case PGPRPUBKEYALGO_ECDSA:
+        ka->curve = curve;
 	if (!pgprSupportedCurve(algo, curve))
-	    break;
+	    return PGPR_ERROR_UNSUPPORTED_CURVE;
         ka->setmpi = pgprSetKeyMpiECDSA;
         ka->free = pgprFreeKeyECDSA;
         ka->mpis = 1;
-        ka->curve = curve;
         ka->info = curve;
-	break;
+        return PGPR_OK;
 #ifdef EVP_PKEY_ED25519
     case PGPRPUBKEYALGO_EDDSA:
+        ka->curve = curve;
 	if (!pgprSupportedCurve(algo, curve))
-	    break;
+	    return PGPR_ERROR_UNSUPPORTED_CURVE;
         ka->setmpi = pgprSetKeyMpiEDDSA;
         ka->free = pgprFreeKeyEDDSA;
         ka->mpis = 1;
-        ka->curve = curve;
         ka->info = curve;
-        break;
+        return PGPR_OK;
 #endif
     default:
         break;
     }
+    return PGPR_ERROR_UNSUPPORTED_ALGORITHM;
 }
 
-void pgprDigAlgInitSignature(pgprDigAlg sa, int algo)
+pgprRC pgprDigAlgInitSignature(pgprDigAlg sa, int algo)
 {
     switch (algo) {
     case PGPRPUBKEYALGO_RSA:
@@ -871,41 +899,42 @@ void pgprDigAlgInitSignature(pgprDigAlg sa, int algo)
         sa->free = pgprFreeSigRSA;
         sa->verify = pgprVerifySigRSA;
         sa->mpis = 1;
-        break;
+        return PGPR_OK;
     case PGPRPUBKEYALGO_DSA:
         sa->setmpi = pgprSetSigMpiDSA;
         sa->free = pgprFreeSigDSA;
         sa->verify = pgprVerifySigDSA;
         sa->mpis = 2;
-        break;
+        return PGPR_OK;
     case PGPRPUBKEYALGO_ECDSA:
         sa->setmpi = pgprSetSigMpiECDSA;
         sa->free = pgprFreeSigECDSA;
         sa->verify = pgprVerifySigECDSA;
         sa->mpis = 2;
-        break;
+        return PGPR_OK;
 #ifdef EVP_PKEY_ED25519
     case PGPRPUBKEYALGO_EDDSA:
         sa->setmpi = pgprSetSigMpiEDDSA;
         sa->free = pgprFreeSigEDDSA;
         sa->verify = pgprVerifySigEDDSA;
         sa->mpis = 2;
-        break;
+        return PGPR_OK;
 #endif
     default:
         break;
     }
+    return PGPR_ERROR_UNSUPPORTED_ALGORITHM;
 }
 
 #ifndef PGPR_RPM_INTREE
-int pgprInitCrypto(void)
+pgprRC pgprInitCrypto(void)
 {
-    return 0;
+    return PGPR_OK;
 }
 
-int pgprFreeCrypto(void)
+pgprRC pgprFreeCrypto(void)
 {
-    return 0;
+    return PGPR_OK;
 }
 
 pgprDigCtx pgprDigestInit(int hashalgo)

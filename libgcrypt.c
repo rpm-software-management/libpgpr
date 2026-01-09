@@ -286,7 +286,7 @@ static pgprRC pgprSetKeyMpiECC(pgprDigAlg pgprkey, int num, const uint8_t *p, in
 }
 
 static int
-ed25519_zero_extend(gcry_mpi_t x, unsigned char *buf, int bufl)
+eddsa_zero_extend(gcry_mpi_t x, unsigned char *buf, int bufl)
 {
     int n = (gcry_mpi_get_nbits(x) + 7) / 8;
     if (n == 0 || n > bufl)
@@ -304,16 +304,31 @@ static pgprRC pgprVerifySigECC(pgprDigAlg pgprkey, pgprDigAlg pgprsig, const uin
     struct pgprDigSigECC_s *sig = pgprsig->data;
     gcry_sexp_t sexp_sig = NULL, sexp_data = NULL, sexp_pkey = NULL;
     pgprRC rc = PGPR_ERROR_SIGNATURE_VERIFICATION;
-    unsigned char buf_r[32], buf_s[32];
 
     if (!sig || !key)
 	return rc;
     if (pgprkey->curve == PGPRCURVE_ED25519 || pgprkey->curve == PGPRCURVE_ED25519_ALT) {
-	if (ed25519_zero_extend(sig->r, buf_r, 32) || ed25519_zero_extend(sig->s, buf_s, 32))
+	unsigned char buf_r[32], buf_s[32];
+	if (eddsa_zero_extend(sig->r, buf_r, 32) || eddsa_zero_extend(sig->s, buf_s, 32))
 	    return rc;
-	gcry_sexp_build(&sexp_sig, NULL, "(sig-val (eddsa (r %b) (s %b)))", 32, (const char *)buf_r, 32, (const char *)buf_s, 32);
+	gcry_sexp_build(&sexp_sig, NULL, "(sig-val (eddsa (r %b) (s %b)))", 32, (const char *)buf_r, 32, (const char *)buf_s);
 	gcry_sexp_build(&sexp_data, NULL, "(data (flags eddsa) (hash-algo sha512) (value %b))", (int)hashlen, (const char *)hash);
 	gcry_sexp_build(&sexp_pkey, NULL, "(public-key (ecc (curve \"Ed25519\") (flags eddsa) (q %M)))", key->q);
+	if (sexp_sig && sexp_data && sexp_pkey)
+	    if (gcry_pk_verify(sexp_sig, sexp_data, sexp_pkey) == 0)
+		rc = PGPR_OK;
+	gcry_sexp_release(sexp_sig);
+	gcry_sexp_release(sexp_data);
+	gcry_sexp_release(sexp_pkey);
+	return rc;
+    }
+    if (pgprkey->curve == PGPRCURVE_ED448) {
+	unsigned char buf_r[57], buf_s[57];
+	if (eddsa_zero_extend(sig->r, buf_r, 57) || eddsa_zero_extend(sig->s, buf_s, 57))
+	    return rc;
+	gcry_sexp_build(&sexp_sig, NULL, "(sig-val (eddsa (r %b) (s %b)))", 57, (const char *)buf_r, 57, (const char *)buf_s);
+	gcry_sexp_build(&sexp_data, NULL, "(data (flags eddsa) (value %b))", (int)hashlen, (const char *)hash);
+	gcry_sexp_build(&sexp_pkey, NULL, "(public-key (ecc (curve \"Ed448\") (flags eddsa) (q %M)))", key->q);
 	if (sexp_sig && sexp_data && sexp_pkey)
 	    if (gcry_pk_verify(sexp_sig, sexp_data, sexp_pkey) == 0)
 		rc = PGPR_OK;
@@ -364,19 +379,29 @@ static void pgprFreeKeyECC(pgprDigAlg pgprkey)
 }
 
 
+static int check_gcrypt_supported(const char *sexpstr)
+{
+    gcry_sexp_t sexp = NULL;
+    unsigned int nbits;
+    gcry_sexp_build(&sexp, NULL, sexpstr);
+    nbits = gcry_pk_get_nbits(sexp);
+    gcry_sexp_release(sexp);
+    return nbits > 0 ? 1 : -1;
+}
+
 static int pgprSupportedCurve(int algo, int curve)
 {
     if (algo == PGPRPUBKEYALGO_EDDSA && (curve == PGPRCURVE_ED25519 || curve == PGPRCURVE_ED25519_ALT)) {
 	static int supported_ed25519;
-	if (!supported_ed25519) {
-	    gcry_sexp_t sexp = NULL;
-	    unsigned int nbits;
-	    gcry_sexp_build(&sexp, NULL, "(public-key (ecc (curve \"Ed25519\")))");
-	    nbits = gcry_pk_get_nbits(sexp);
-	    gcry_sexp_release(sexp);
-	    supported_ed25519 = nbits > 0 ? 1 : -1;
-	}
+	if (!supported_ed25519)
+	    supported_ed25519 = check_gcrypt_supported("(public-key (ecc (curve \"Ed25519\")))");
 	return supported_ed25519 > 0;
+    }
+    if (algo == PGPRPUBKEYALGO_EDDSA && curve == PGPRCURVE_ED448) {
+	static int supported_ed448;
+	if (!supported_ed448)
+	    supported_ed448 = check_gcrypt_supported("(public-key (ecc (curve \"Ed448\")))");
+	return supported_ed448 > 0;
     }
     if (algo == PGPRPUBKEYALGO_ECDSA && curve == PGPRCURVE_NIST_P_256)
 	return 1;
@@ -387,72 +412,75 @@ static int pgprSupportedCurve(int algo, int curve)
     return 0;
 }
 
-void pgprDigAlgInitPubkey(pgprDigAlg ka, int algo, int curve)
+pgprRC pgprDigAlgInitPubkey(pgprDigAlg ka, int algo, int curve)
 {
     switch (algo) {
     case PGPRPUBKEYALGO_RSA:
-        ka->setmpi = pgprSetKeyMpiRSA;
-        ka->free = pgprFreeKeyRSA;
-        ka->mpis = 2;
-        break;
+	ka->setmpi = pgprSetKeyMpiRSA;
+	ka->free = pgprFreeKeyRSA;
+	ka->mpis = 2;
+	return PGPR_OK;
     case PGPRPUBKEYALGO_DSA:
-        ka->setmpi = pgprSetKeyMpiDSA;
-        ka->free = pgprFreeKeyDSA;
-        ka->mpis = 4;
-        break;
+	ka->setmpi = pgprSetKeyMpiDSA;
+	ka->free = pgprFreeKeyDSA;
+	ka->mpis = 4;
+	return PGPR_OK;
     case PGPRPUBKEYALGO_ECDSA:
     case PGPRPUBKEYALGO_EDDSA:
+	ka->curve = curve;
 	if (!pgprSupportedCurve(algo, curve))
-	    break;
-        ka->setmpi = pgprSetKeyMpiECC;
-        ka->free = pgprFreeKeyECC;
-        ka->mpis = 1;
-        ka->curve = curve;
-        ka->info = curve;
-        break;
+	    return PGPR_ERROR_UNSUPPORTED_CURVE;
+	ka->setmpi = pgprSetKeyMpiECC;
+	ka->free = pgprFreeKeyECC;
+	ka->mpis = 1;
+	ka->info = curve;
+	return PGPR_OK;
     default:
-        break;
+	break;
     }
+    return PGPR_ERROR_UNSUPPORTED_ALGORITHM;
 }
 
-void pgprDigAlgInitSignature(pgprDigAlg sa, int algo)
+pgprRC pgprDigAlgInitSignature(pgprDigAlg sa, int algo)
 {
     switch (algo) {
     case PGPRPUBKEYALGO_RSA:
-        sa->setmpi = pgprSetSigMpiRSA;
-        sa->free = pgprFreeSigRSA;
-        sa->verify = pgprVerifySigRSA;
-        sa->mpis = 1;
-        break;
+	sa->setmpi = pgprSetSigMpiRSA;
+	sa->free = pgprFreeSigRSA;
+	sa->verify = pgprVerifySigRSA;
+	sa->mpis = 1;
+	return PGPR_OK;
     case PGPRPUBKEYALGO_DSA:
-        sa->setmpi = pgprSetSigMpiDSA;
-        sa->free = pgprFreeSigDSA;
-        sa->verify = pgprVerifySigDSA;
-        sa->mpis = 2;
-        break;
+	sa->setmpi = pgprSetSigMpiDSA;
+	sa->free = pgprFreeSigDSA;
+	sa->verify = pgprVerifySigDSA;
+	sa->mpis = 2;
+	return PGPR_OK;
     case PGPRPUBKEYALGO_ECDSA:
     case PGPRPUBKEYALGO_EDDSA:
-        sa->setmpi = pgprSetSigMpiECC;
-        sa->free = pgprFreeSigECC;
-        sa->verify = pgprVerifySigECC;
-        sa->mpis = 2;
-        break;
+	sa->setmpi = pgprSetSigMpiECC;
+	sa->free = pgprFreeSigECC;
+	sa->verify = pgprVerifySigECC;
+	sa->mpis = 2;
+	return PGPR_OK;
+	break;
     default:
-        break;
+	break;
     }
+    return PGPR_ERROR_UNSUPPORTED_ALGORITHM;
 }
 
 #ifndef PGPR_RPM_INTREE
-int pgprInitCrypto(void)
+pgprRC pgprInitCrypto(void)
 {
     gcry_check_version(NULL);
     gcry_control(GCRYCTL_INITIALIZATION_FINISHED, 0);
-    return 0;
+    return PGPR_OK;
 }
 
-int pgprFreeCrypto(void)
+pgprRC pgprFreeCrypto(void)
 {
-    return 0;
+    return PGPR_OK;
 }
 
 pgprDigCtx pgprDigestInit(int hashalgo)

@@ -133,6 +133,12 @@ void pgprAddLint(pgprDigParams digp, char **lints, pgprRC error)
 	case PGPR_ERROR_UNSUPPORTED_ALGORITHM:
 	    pgprAsprintf(lints, "Unsupported pubkey algorithm (%d)", digp->pubkey_algo);
 	    return;
+	case PGPR_ERROR_UNSUPPORTED_CURVE:
+	    if (digp->alg)
+		pgprAsprintf(lints, "Unsupported pubkey curve (%d)", digp->alg->curve);
+	    else
+		pgprAsprintf(lints, "Unsupported pubkey curve");
+	    return;
 	default:
 	    break;
 	}
@@ -176,10 +182,10 @@ void pgprAddLint(pgprDigParams digp, char **lints, pgprRC error)
 	msg = "Unsupported pubkey curve";
 	break;
     case PGPR_ERROR_BAD_PUBKEY:
-	msg = "Pubkey was not accepted by crypto backend";
+	msg = "Pubkey not accepted by crypto backend";
 	break;
     case PGPR_ERROR_BAD_SIGNATURE:
-	msg = "Signature was not accepted by crypto backend";
+	msg = "Signature not accepted by crypto backend";
 	break;
     case PGPR_ERROR_SIGNATURE_VERIFICATION:
 	msg = "Signature verification failure";

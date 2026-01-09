@@ -148,6 +148,11 @@ typedef enum pgprCurveId_e {
 
 /* function declarations */
 
+/* initialization */
+pgprRC pgprInitCrypto(void);
+
+pgprRC pgprFreeCrypto(void);
+
 /* allocation */
 pgprDigParams pgprDigParamsNew(uint8_t tag);
 
