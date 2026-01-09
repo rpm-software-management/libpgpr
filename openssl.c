@@ -741,6 +741,18 @@ static pgprRC pgprSetKeyMpiEDDSA(pgprDigAlg pgprkey, int num, const uint8_t *p, 
 
     if (!key)
 	key = pgprkey->data = pgprCalloc(1, sizeof(*key));
+    if (num == -1) {
+	if (pgprkey->curve == PGPRCURVE_ED25519 && mlen == 32) {
+	    key->qlen = 32;
+	    key->q = pgprMemdup(p, 32);
+	    rc = PGPR_OK;
+	} else if (pgprkey->curve == PGPRCURVE_ED448 && mlen == 57) {
+	    key->qlen = 57;
+	    key->q = pgprMemdup(p, 57);
+	    rc = PGPR_OK;
+	}
+	return rc;
+    }
     if ((pgprkey->curve == PGPRCURVE_ED25519 || pgprkey->curve == PGPRCURVE_ED25519_ALT) && num == 0 && !key->q && mlen > 3 && p[2] == 0x40) {
 	key->qlen = mlen - 3;
 	key->q = pgprMemdup(p + 3, mlen - 3);	/* we do not copy the leading 0x40 */
@@ -775,12 +787,24 @@ struct pgprDigSigEDDSA_s {
 static pgprRC pgprSetSigMpiEDDSA(pgprDigAlg pgprsig, int num, const uint8_t *p, int mlen)
 {
     struct pgprDigSigEDDSA_s *sig = pgprsig->data;
+    pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;
 
     if (!sig)
 	sig = pgprsig->data = pgprCalloc(1, sizeof(*sig));
+    if (num == -1) {
+	if (pgprsig->curve == PGPRCURVE_ED25519 && mlen == 2 * 32) {
+	    memcpy(sig->sig + (57 - 32), p, 32);
+	    memcpy(sig->sig + (2 * 57 - 32), p + 32, 32);
+	    rc = PGPR_OK;
+	} else if (pgprsig->curve == PGPRCURVE_ED448 && mlen == 2 * 57) {
+	    memcpy(sig->sig, p, 2 * 57);
+	    rc = PGPR_OK;
+	}
+	return rc;
+    }
     mlen -= 2;	/* skip mpi len */
     if ((num != 0 && num != 1) || mlen <= 0 || mlen > 57)
-      return PGPR_ERROR_BAD_SIGNATURE;
+      return rc;
     memcpy(sig->sig + 57 * num + 57 - mlen, p + 2, mlen);
     if (mlen > 32)
 	sig->not_ed25519 = 1;
@@ -884,6 +908,15 @@ pgprRC pgprDigAlgInitPubkey(pgprDigAlg ka, int algo, int curve)
         ka->mpis = 1;
         ka->info = curve;
         return PGPR_OK;
+    case PGPRPUBKEYALGO_ED25519:
+    case PGPRPUBKEYALGO_ED448:
+	ka->curve = (algo == PGPRPUBKEYALGO_ED25519) ? PGPRCURVE_ED25519 : PGPRCURVE_ED448;
+	if (!pgprSupportedCurve(PGPRPUBKEYALGO_EDDSA, ka->curve))
+	    return PGPR_ERROR_UNSUPPORTED_CURVE;
+        ka->setmpi = pgprSetKeyMpiEDDSA;
+        ka->free = pgprFreeKeyEDDSA;
+        ka->mpis = 0;
+        return PGPR_OK;
 #endif
     default:
         break;
@@ -918,6 +951,14 @@ pgprRC pgprDigAlgInitSignature(pgprDigAlg sa, int algo)
         sa->free = pgprFreeSigEDDSA;
         sa->verify = pgprVerifySigEDDSA;
         sa->mpis = 2;
+        return PGPR_OK;
+    case PGPRPUBKEYALGO_ED25519:
+    case PGPRPUBKEYALGO_ED448:
+	sa->curve = (algo == PGPRPUBKEYALGO_ED25519) ? PGPRCURVE_ED25519 : PGPRCURVE_ED448;
+        sa->setmpi = pgprSetSigMpiEDDSA;
+        sa->free = pgprFreeSigEDDSA;
+        sa->verify = pgprVerifySigEDDSA;
+        sa->mpis = 0;
         return PGPR_OK;
 #endif
     default:

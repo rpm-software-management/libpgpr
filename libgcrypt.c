@@ -255,6 +255,13 @@ static pgprRC pgprSetSigMpiECC(pgprDigAlg pgprsig, int num, const uint8_t *p, in
     if (!sig)
 	sig = pgprsig->data = pgprCalloc(1, sizeof(*sig));
 
+    if (num == -1) {
+	if (pgprsig->curve == PGPRCURVE_ED25519 && mlen == 2 * 32 && !gcry_mpi_scan(&sig->r, GCRYMPI_FMT_USG, p, 32, NULL) && !gcry_mpi_scan(&sig->s, GCRYMPI_FMT_USG, p + 32, 32, NULL))
+	    rc = PGPR_OK;
+	else if (pgprsig->curve == PGPRCURVE_ED448 && mlen == 2 * 57 && !gcry_mpi_scan(&sig->r, GCRYMPI_FMT_USG, p, 57, NULL) && !gcry_mpi_scan(&sig->s, GCRYMPI_FMT_USG, p + 57, 57, NULL))
+	    rc = PGPR_OK;
+	return rc;
+    }
     switch (num) {
     case 0:
 	if (!gcry_mpi_scan(&sig->r, GCRYMPI_FMT_PGP, p, mlen, NULL))
@@ -275,6 +282,14 @@ static pgprRC pgprSetKeyMpiECC(pgprDigAlg pgprkey, int num, const uint8_t *p, in
 
     if (!key)
 	key = pgprkey->data = pgprCalloc(1, sizeof(*key));
+
+    if (num == -1) {
+	if (pgprkey->curve == PGPRCURVE_ED25519 && mlen == 32 && !gcry_mpi_scan(&key->q, GCRYMPI_FMT_USG, p, 32, NULL))
+	    rc = PGPR_OK;
+	else if (pgprkey->curve == PGPRCURVE_ED448 && mlen == 57 && !gcry_mpi_scan(&key->q, GCRYMPI_FMT_USG, p, 57, NULL))
+	    rc = PGPR_OK;
+	return rc;
+    }
 
     switch (num) {
     case 0:
@@ -435,6 +450,15 @@ pgprRC pgprDigAlgInitPubkey(pgprDigAlg ka, int algo, int curve)
 	ka->mpis = 1;
 	ka->info = curve;
 	return PGPR_OK;
+    case PGPRPUBKEYALGO_ED25519:
+    case PGPRPUBKEYALGO_ED448:
+	ka->curve = (algo == PGPRPUBKEYALGO_ED25519) ? PGPRCURVE_ED25519 : PGPRCURVE_ED448;
+	if (!pgprSupportedCurve(PGPRPUBKEYALGO_EDDSA, ka->curve))
+	    return PGPR_ERROR_UNSUPPORTED_CURVE;
+	ka->setmpi = pgprSetKeyMpiECC;
+	ka->free = pgprFreeKeyECC;
+	ka->mpis = 0;
+	return PGPR_OK;
     default:
 	break;
     }
@@ -463,7 +487,14 @@ pgprRC pgprDigAlgInitSignature(pgprDigAlg sa, int algo)
 	sa->verify = pgprVerifySigECC;
 	sa->mpis = 2;
 	return PGPR_OK;
-	break;
+    case PGPRPUBKEYALGO_ED25519:
+    case PGPRPUBKEYALGO_ED448:
+	sa->curve = (algo == PGPRPUBKEYALGO_ED25519) ? PGPRCURVE_ED25519 : PGPRCURVE_ED448;
+	sa->setmpi = pgprSetSigMpiECC;
+	sa->free = pgprFreeSigECC;
+	sa->verify = pgprVerifySigECC;
+	sa->mpis = 0;
+	return PGPR_OK;
     default:
 	break;
     }

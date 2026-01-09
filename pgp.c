@@ -214,6 +214,9 @@ static pgprRC pgprDigAlgProcessMpis(pgprDigAlg alg, const int mpis,
 		       const uint8_t *p, const uint8_t *const pend)
 {
     int i = 0;
+    if (mpis == 0) {
+	return alg->setmpi ? alg->setmpi(alg, -1, p, pend - p) : PGPR_ERROR_UNSUPPORTED_ALGORITHM;
+    }
     for (; i < mpis && pend - p >= 2; i++) {
 	int mpil = pgprMpiLen(p);
 	if (mpil < 2 || pend - p < mpil)
@@ -336,6 +339,10 @@ static pgprRC pgprValidateKeyParamsSize(int pubkey_algo, const uint8_t *p, size_
 	case PGPRPUBKEYALGO_DSA:
 	    nmpis = 4;
 	    break;
+	case PGPRPUBKEYALGO_ED25519:
+	    return plen == 32 ? PGPR_OK : PGPR_ERROR_CORRUPT_PGP_PACKET;
+	case PGPRPUBKEYALGO_ED448:
+	    return plen == 57 ? PGPR_OK : PGPR_ERROR_CORRUPT_PGP_PACKET;
 	default:
 	    break;
     }
@@ -382,16 +389,15 @@ pgprRC pgprGetKeyFingerprint(const uint8_t *h, size_t hlen,
 	if (hlen < sizeof(*v))
 	    return rc;
 	/* Does the size and number of MPI's match our expectations? */
-	if (pgprValidateKeyParamsSize(v->pubkey_algo, (uint8_t *)(v + 1), hlen - sizeof(*v)) == PGPR_OK) {
+	rc = pgprValidateKeyParamsSize(v->pubkey_algo, (uint8_t *)(v + 1), hlen - sizeof(*v));
+	if (rc == PGPR_OK) {
 	    pgprDigCtx ctx = pgprDigestInit(PGPRHASHALGO_SHA1);
 	    uint8_t *d = NULL;
 	    size_t dlen = 0;
 	    uint8_t in[3] = { 0x99, (hlen >> 8), hlen };
-
 	    (void) pgprDigestUpdate(ctx, in, 3);
 	    (void) pgprDigestUpdate(ctx, h, hlen);
 	    (void) pgprDigestFinal(ctx, (void **)&d, &dlen);
-
 	    if (dlen == 20) {
 		rc = PGPR_OK;
 		*fp = d;
@@ -408,16 +414,15 @@ pgprRC pgprGetKeyFingerprint(const uint8_t *h, size_t hlen,
 	if (hlen < sizeof(*v))
 	    return rc;
 	/* Does the size and number of MPI's match our expectations? */
-	if (pgprValidateKeyParamsSize(v->pubkey_algo, (uint8_t *)(v + 1), hlen - sizeof(*v)) == PGPR_OK) {
+	rc = pgprValidateKeyParamsSize(v->pubkey_algo, (uint8_t *)(v + 1), hlen - sizeof(*v));
+	if (rc == PGPR_OK) {
 	    pgprDigCtx ctx = pgprDigestInit(PGPRHASHALGO_SHA256);
 	    uint8_t *d = NULL;
 	    size_t dlen = 0;
 	    uint8_t in[5] = { h[0] == 6 ? 0x9b : 0x9a, (hlen >> 24), (hlen >> 16), (hlen >> 8), hlen };
-
 	    (void) pgprDigestUpdate(ctx, in, 5);
 	    (void) pgprDigestUpdate(ctx, h, hlen);
 	    (void) pgprDigestFinal(ctx, (void **)&d, &dlen);
-
 	    if (dlen == 32) {
 		rc = PGPR_OK;
 		*fp = d;
