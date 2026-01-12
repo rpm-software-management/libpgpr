@@ -4,28 +4,28 @@
 #include "pgpr.h"
 #include "pgpr_internal.h"
 
-pgprDigParams pgprDigParamsNew(uint8_t tag)
+pgprItem pgprItemNew(uint8_t tag)
 {
-    pgprDigParams digp = pgprCalloc(1, sizeof(*digp));
-    digp->tag = tag;
-    return digp;
+    pgprItem item = pgprCalloc(1, sizeof(*item));
+    item->tag = tag;
+    return item;
 }
 
-pgprDigParams pgprDigParamsFree(pgprDigParams digp)
+pgprItem pgprItemFree(pgprItem item)
 {
-    if (digp) {
-	pgprDigAlgFree(digp->alg);
-	free(digp->userid);
-	free(digp->hash);
-	free(digp->embedded_sig);
-	memset(digp, 0, sizeof(*digp));
-	free(digp);
+    if (item) {
+	pgprDigAlgFree(item->alg);
+	free(item->userid);
+	free(item->hash);
+	free(item->embedded_sig);
+	memset(item, 0, sizeof(*item));
+	free(item);
     }
     return NULL;
 }
 
 /* compare data of two signatures or keys */
-int pgprDigParamsCmp(pgprDigParams p1, pgprDigParams p2)
+int pgprItemCmp(pgprItem p1, pgprItem p2)
 {
     int rc = 1; /* assume different, eg if either is NULL */
     if (p1 && p2) {
@@ -52,89 +52,89 @@ exit:
     return rc;
 }
 
-int pgprDigParamsTag(pgprDigParams digp)
+int pgprItemTag(pgprItem item)
 {
-    return digp ? digp->tag : -1;
+    return item ? item->tag : -1;
 }
 
-int pgprDigParamsSignatureType(pgprDigParams digp)
+int pgprItemSignatureType(pgprItem item)
 {
-    return digp && digp->tag == PGPRTAG_SIGNATURE ? digp->sigtype : -1;
+    return item && item->tag == PGPRTAG_SIGNATURE ? item->sigtype : -1;
 }
 
-int pgprDigParamsPubkeyAlgo(pgprDigParams digp)
+int pgprItemPubkeyAlgo(pgprItem item)
 {
-    return digp ? digp->pubkey_algo : -1;
+    return item ? item->pubkey_algo : -1;
 }
 
-int pgprDigParamsHashAlgo(pgprDigParams digp)
+int pgprItemHashAlgo(pgprItem item)
 {
-    return digp ? digp->hash_algo : -1;
+    return item ? item->hash_algo : -1;
 }
 
-int pgprDigParamsPubkeyAlgoInfo(pgprDigParams digp)
+int pgprItemPubkeyAlgoInfo(pgprItem item)
 {
-    return digp && digp->alg ? digp->alg->info: -1;
+    return item && item->alg ? item->alg->info: -1;
 }
 
-const uint8_t *pgprDigParamsKeyID(pgprDigParams digp)
+const uint8_t *pgprItemKeyID(pgprItem item)
 {
-    return digp->signid;
+    return item->signid;
 }
 
-const uint8_t *pgprDigParamsKeyFingerprint(pgprDigParams digp, size_t *fp_len, int *fp_version)
+const uint8_t *pgprItemKeyFingerprint(pgprItem item, size_t *fp_len, int *fp_version)
 {
     if (fp_len)
-	*fp_len = digp->fp_len;
+	*fp_len = item->fp_len;
     if (fp_version)
-	*fp_version = digp->fp_len ? digp->fp_version : 0;
-    return digp->fp_len ? digp->fp : NULL;
+	*fp_version = item->fp_len ? item->fp_version : 0;
+    return item->fp_len ? item->fp : NULL;
 }
 
-const char *pgprDigParamsUserID(pgprDigParams digp)
+const char *pgprItemUserID(pgprItem item)
 {
-    return digp->userid;
+    return item->userid;
 }
 
-int pgprDigParamsVersion(pgprDigParams digp)
+int pgprItemVersion(pgprItem item)
 {
-    return digp->version;
+    return item->version;
 }
 
-uint32_t pgprDigParamsCreationTime(pgprDigParams digp)
+uint32_t pgprItemCreationTime(pgprItem item)
 {
-    return digp->time;
+    return item->time;
 }
 
-uint32_t pgprDigParamsModificationTime(pgprDigParams digp)
+uint32_t pgprItemModificationTime(pgprItem item)
 {
-    return digp->tag == PGPRTAG_PUBLIC_KEY ? digp->key_mtime : 0;
+    return item->tag == PGPRTAG_PUBLIC_KEY ? item->key_mtime : 0;
 }
 
-const uint8_t *pgprDigParamsHashHeader(pgprDigParams digp, size_t *headerlen)
+const uint8_t *pgprItemHashHeader(pgprItem item, size_t *headerlen)
 {
-    if (digp->tag != PGPRTAG_SIGNATURE) {
+    if (item->tag != PGPRTAG_SIGNATURE) {
 	*headerlen = 0;
 	return NULL;
     }
-    *headerlen = digp->saltlen;
-    return digp->saltlen ? digp->hash + digp->hashlen : NULL;
+    *headerlen = item->saltlen;
+    return item->saltlen ? item->hash + item->hashlen : NULL;
 }
 
-const uint8_t *pgprDigParamsHashTrailer(pgprDigParams digp, size_t *trailerlen)
+const uint8_t *pgprItemHashTrailer(pgprItem item, size_t *trailerlen)
 {
-    if (digp->tag != PGPRTAG_SIGNATURE) {
+    if (item->tag != PGPRTAG_SIGNATURE) {
 	*trailerlen = 0;
 	return NULL;
     }
-    *trailerlen = digp->hashlen;
-    return digp->hash;
+    *trailerlen = item->hashlen;
+    return item->hash;
 }
 
 
-pgprRC pgprSignatureParse(const uint8_t * pkts, size_t pktlen, pgprDigParams * ret, char **lints)
+pgprRC pgprSignatureParse(const uint8_t * pkts, size_t pktlen, pgprItem * ret, char **lints)
 {
-    pgprDigParams digp = NULL;
+    pgprItem item = NULL;
     pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;	/* assume failure */
     pgprPkt pkt;
 
@@ -148,24 +148,24 @@ pgprRC pgprSignatureParse(const uint8_t * pkts, size_t pktlen, pgprDigParams * r
 	goto exit;
     }
 
-    digp = pgprDigParamsNew(pkt.tag);
-    rc = pgprPrtSig(pkt.tag, pkt.body, pkt.blen, digp);
+    item = pgprItemNew(pkt.tag);
+    rc = pgprPrtSig(pkt.tag, pkt.body, pkt.blen, item);
     /* treat trailing data as error */
     if (rc == PGPR_OK && (pkt.body - pkt.head) + pkt.blen != pktlen)
 	rc = PGPR_ERROR_CORRUPT_PGP_PACKET;
 
 exit:
     if (ret && rc == PGPR_OK)
-	*ret = digp;
+	*ret = item;
     else {
 	if (lints)
-	    pgprAddLint(digp, lints, rc);
-	pgprDigParamsFree(digp);
+	    pgprAddLint(item, lints, rc);
+	pgprItemFree(item);
     }
     return rc;
 }
 
-pgprRC pgprVerifySignature(pgprDigParams key, pgprDigParams sig, const uint8_t *hash, size_t hashlen, char **lints)
+pgprRC pgprVerifySignature(pgprItem key, pgprItem sig, const uint8_t *hash, size_t hashlen, char **lints)
 {
     pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;	/* assume failure */
 
@@ -182,7 +182,7 @@ pgprRC pgprVerifySignature(pgprDigParams key, pgprDigParams sig, const uint8_t *
 	goto exit;
 
     /* now check the meta information of the signature */
-    if ((sig->saved & PGPRDIG_SAVED_SIG_EXPIRE) != 0 && sig->sig_expire) {
+    if ((sig->saved & PGPRITEM_SAVED_SIG_EXPIRE) != 0 && sig->sig_expire) {
 	uint32_t now = pgprCurrentTime();
 	if (now < sig->time) {
 	    if (lints)
@@ -201,15 +201,15 @@ pgprRC pgprVerifySignature(pgprDigParams key, pgprDigParams sig, const uint8_t *
 	rc = key->revoked == 2 ? PGPR_ERROR_PRIMARY_REVOKED : PGPR_ERROR_KEY_REVOKED;
 	if (lints)
 	    pgprAddLint(key, lints, rc);
-    } else if ((key->saved & PGPRDIG_SAVED_VALID) == 0) {
+    } else if ((key->saved & PGPRITEM_SAVED_VALID) == 0) {
 	rc = PGPR_ERROR_KEY_NOT_VALID;
 	if (lints)
 	    pgprAddLint(key, lints, rc);
-    } else if (key->tag == PGPRTAG_PUBLIC_KEY && (key->saved & PGPRDIG_SAVED_KEY_FLAGS) != 0 && (key->key_flags & 0x02) == 0) {
+    } else if (key->tag == PGPRTAG_PUBLIC_KEY && (key->saved & PGPRITEM_SAVED_KEY_FLAGS) != 0 && (key->key_flags & 0x02) == 0) {
 	rc = PGPR_ERROR_KEY_NO_SIGNING;
 	if (lints)
 	    pgprAddLint(key, lints, rc);
-    } else if (key->tag == PGPRTAG_PUBLIC_SUBKEY && ((key->saved & PGPRDIG_SAVED_KEY_FLAGS) == 0 || (key->key_flags & 0x02) == 0)) {
+    } else if (key->tag == PGPRTAG_PUBLIC_SUBKEY && ((key->saved & PGPRITEM_SAVED_KEY_FLAGS) == 0 || (key->key_flags & 0x02) == 0)) {
 	rc = PGPR_ERROR_KEY_NO_SIGNING;
 	if (lints)
 	    pgprAddLint(key, lints, rc);
@@ -217,7 +217,7 @@ pgprRC pgprVerifySignature(pgprDigParams key, pgprDigParams sig, const uint8_t *
 	rc = PGPR_ERROR_KEY_CREATED_AFTER_SIG;
 	if (lints)
 	    pgprAddLint(key, lints, rc);
-    } else if ((key->saved & PGPRDIG_SAVED_KEY_EXPIRE) != 0 && key->key_expire && key->key_expire < sig->time - key->time) {
+    } else if ((key->saved & PGPRITEM_SAVED_KEY_EXPIRE) != 0 && key->key_expire && key->key_expire < sig->time - key->time) {
 	rc = PGPR_ERROR_KEY_EXPIRED;
 	if (lints)
 	    pgprAddLint(key, lints, rc);
@@ -226,7 +226,7 @@ exit:
     return rc;
 }
 
-pgprRC pgprVerifySignatureNoKey(pgprDigParams sig, const uint8_t *hash, size_t hashlen, char **lints)
+pgprRC pgprVerifySignatureNoKey(pgprItem sig, const uint8_t *hash, size_t hashlen, char **lints)
 {
     if (lints)
         *lints = NULL;
@@ -240,7 +240,7 @@ pgprRC pgprVerifySignatureNoKey(pgprDigParams sig, const uint8_t *hash, size_t h
 	    return PGPR_ERROR_SIGNATURE_VERIFICATION;
     }
     /* now check the meta information of the signature */
-    if ((sig->saved & PGPRDIG_SAVED_SIG_EXPIRE) != 0 && sig->sig_expire) {
+    if ((sig->saved & PGPRITEM_SAVED_SIG_EXPIRE) != 0 && sig->sig_expire) {
 	uint32_t now = pgprCurrentTime();
 	if (now < sig->time) {
 	    if (lints)
@@ -255,9 +255,9 @@ pgprRC pgprVerifySignatureNoKey(pgprDigParams sig, const uint8_t *hash, size_t h
     return PGPR_OK;
 }
 
-pgprRC pgprPubkeyParse(const uint8_t * pkts, size_t pktlen, pgprDigParams * ret, char **lints)
+pgprRC pgprPubkeyParse(const uint8_t * pkts, size_t pktlen, pgprItem * ret, char **lints)
 {
-    pgprDigParams digp = NULL;
+    pgprItem item = NULL;
     pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;	/* assume failure */
     pgprPkt pkt;
 
@@ -271,21 +271,21 @@ pgprRC pgprPubkeyParse(const uint8_t * pkts, size_t pktlen, pgprDigParams * ret,
     }
 
     /* use specialized transferable pubkey implementation */
-    digp = pgprDigParamsNew(pkt.tag);
-    rc = pgprPrtTransferablePubkey(pkts, pktlen, digp);
+    item = pgprItemNew(pkt.tag);
+    rc = pgprPrtTransferablePubkey(pkts, pktlen, item);
 exit:
     if (ret && rc == PGPR_OK)
-	*ret = digp;
+	*ret = item;
     else {
 	if (lints)
-	    pgprAddLint(digp, lints, rc);
-	pgprDigParamsFree(digp);
+	    pgprAddLint(item, lints, rc);
+	pgprItemFree(item);
     }
     return rc;
 }
 
 pgprRC pgprPubkeyParseSubkeys(const uint8_t *pkts, size_t pktlen,
-			pgprDigParams mainkey, pgprDigParams **subkeys,
+			pgprItem mainkey, pgprItem **subkeys,
 			int *subkeysCount)
 {
     return pgprPrtTransferablePubkeySubkeys(pkts, pktlen, mainkey, subkeys, subkeysCount);

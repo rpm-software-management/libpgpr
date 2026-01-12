@@ -26,65 +26,65 @@ void *pgprCalloc(size_t nmemb, size_t size);
 
 pgpDigParams pgpDigParamsFree(pgpDigParams digp)
 {
-    return (pgpDigParams)pgprDigParamsFree((pgprDigParams)digp);
+    return (pgpDigParams)pgprItemFree((pgprItem)digp);
 }
 
 int pgpDigParamsCmp(pgpDigParams p1, pgpDigParams p2)
 {
-    return pgprDigParamsCmp((pgprDigParams)p1, (pgprDigParams)p2);
+    return pgprItemCmp((pgprItem)p1, (pgprItem)p2);
 }
 
 int pgpSignatureType(pgpDigParams digp)
 {
-    return pgprDigParamsSignatureType((pgprDigParams)digp);
+    return pgprItemSignatureType((pgprItem)digp);
 }
 
 unsigned int pgpDigParamsAlgo(pgpDigParams digp, unsigned int algotype)
 {
     int algo = 0;
     if (digp && algotype == PGPVAL_PUBKEYALGO)
-	algo = pgprDigParamsPubkeyAlgo((pgprDigParams)digp);
+	algo = pgprItemPubkeyAlgo((pgprItem)digp);
     if (digp && algotype == PGPVAL_HASHALGO)
-	algo = pgprDigParamsHashAlgo((pgprDigParams)digp);
+	algo = pgprItemHashAlgo((pgprItem)digp);
     return algo < 0 ? 0 : (unsigned int)algo;
 }
 
 const uint8_t *pgpDigParamsSignID(pgpDigParams digp)
 {
-    return pgprDigParamsKeyID((pgprDigParams)digp);
+    return pgprItemKeyID((pgprItem)digp);
 }
 
 const char *pgpDigParamsUserID(pgpDigParams digp)
 {
-    return pgprDigParamsUserID((pgprDigParams)digp);
+    return pgprItemUserID((pgprItem)digp);
 }
 
 int pgpDigParamsVersion(pgpDigParams digp)
 {
-    return pgprDigParamsVersion((pgprDigParams)digp);
+    return pgprItemVersion((pgprItem)digp);
 }
 
 uint32_t pgpDigParamsCreationTime(pgpDigParams digp)
 {
-    return pgprDigParamsCreationTime((pgprDigParams)digp);
+    return pgprItemCreationTime((pgprItem)digp);
 }
 
 uint32_t pgpDigParamsModificationTime(pgpDigParams digp)
 {
-    return pgprDigParamsModificationTime((pgprDigParams)digp);
+    return pgprItemModificationTime((pgprItem)digp);
 }
 
 int pgpDigParamsSalt(pgpDigParams _digp, const uint8_t **datap, size_t *lenp)
 {
-    pgprDigParams digp = (pgprDigParams)_digp;
+    pgprItem sig = (pgprItem)_digp;
     const uint8_t *header;
     size_t headerlen;
 
-    if(!digp || !datap || !lenp || pgprDigParamsTag(digp) != PGPRTAG_SIGNATURE)
+    if(!sig || !datap || !lenp || pgprItemTag(sig) != PGPRTAG_SIGNATURE)
         return -1;
     *datap = NULL;
     *lenp = 0;
-    header = pgprDigParamsHashTrailer(digp, &headerlen);
+    header = pgprItemHashTrailer(sig, &headerlen);
     if (header && headerlen) {
 	*datap = memcpy(rmalloc(headerlen), header, headerlen);
 	*lenp = headerlen;
@@ -92,9 +92,8 @@ int pgpDigParamsSalt(pgpDigParams _digp, const uint8_t **datap, size_t *lenp)
     return 0;
 }
 
-rpmRC pgpVerifySignature2(pgpDigParams key, pgpDigParams _sig, DIGEST_CTX hashctx, char **lints)
+rpmRC pgpVerifySignature2(pgpDigParams key, pgpDigParams sig, DIGEST_CTX hashctx, char **lints)
 {
-    pgprDigParams sig = (pgprDigParams)_sig;
     rpmRC res = RPMRC_FAIL;
     pgprRC rc;
     DIGEST_CTX ctx;
@@ -107,25 +106,25 @@ rpmRC pgpVerifySignature2(pgpDigParams key, pgpDigParams _sig, DIGEST_CTX hashct
     if (lints)
         *lints = NULL;
 
-    if (!sig || pgprDigParamsTag(sig) != PGPTAG_SIGNATURE)
+    if (!sig || pgprItemTag((pgprItem)sig) != PGPTAG_SIGNATURE)
 	goto exit;
-    sigtype = pgprDigParamsSignatureType(sig);
-    if (sigtype != PGPSIGTYPE_BINARY && sigtype != PGPSIGTYPE_TEXT && sigtype != PGPSIGTYPE_STANDALONE)
+    sigtype = pgprItemSignatureType((pgprItem)sig);
+    if (sigtype != PGPRSIGTYPE_BINARY && sigtype != PGPRSIGTYPE_TEXT && sigtype != PGPRSIGTYPE_STANDALONE)
 	goto exit;
 
-    /* hash signature data and trailer */
+    /* hash trailer */
     ctx = rpmDigestDup(hashctx);
     if (!ctx)
 	goto exit;
-    trailer = pgprDigParamsHashTrailer(sig, &trailerlen);
+    trailer = pgprItemHashTrailer((pgprItem)sig, &trailerlen);
     if (trailer != NULL)
 	rpmDigestUpdate(ctx, trailer, trailerlen);
     rpmDigestFinal(ctx, (void **)&hash, &hashlen, 0);
 
     if (key) {
-	rc = pgprVerifySignature((pgprDigParams)key, sig, hash, hashlen, lints);
+	rc = pgprVerifySignature((pgprItem)key, (pgprItem)sig, hash, hashlen, lints);
     } else {
-	rc = pgprVerifySignatureNoKey((pgprDigParams)key, sig, hash, hashlen, lints);
+	rc = pgprVerifySignatureNoKey((pgprItem)key, (pgprItem)sig, hash, hashlen, lints);
 	if (rc == PGPR_OK) {
 	    res = RPMRC_NOKEY;
 	    goto exit;
@@ -148,6 +147,7 @@ rpmRC pgpVerifySignature2(pgpDigParams key, pgpDigParams _sig, DIGEST_CTX hashct
     }
 
 exit:
+    free(hash);
     return res;
 }
 
@@ -160,7 +160,7 @@ int pgpPrtParams2(const uint8_t * pkts, size_t pktlen, unsigned int pkttype,
 		 pgpDigParams * ret, char **lints)
 {
     pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;	/* assume failure */
-    pgprDigParams digp = NULL;
+    pgprItem item = NULL;
     int tag;
 
     if (lints)
@@ -178,18 +178,18 @@ int pgpPrtParams2(const uint8_t * pkts, size_t pktlen, unsigned int pkttype,
 	return -1;
     }
     if (tag == PGPTAG_PUBLIC_KEY) {
-	rc = pgprPubkeyParse(pkts, pktlen, &digp, lints);
+	rc = pgprPubkeyParse(pkts, pktlen, &item, lints);
     } else if (tag == PGPTAG_SIGNATURE) {
-	rc = pgprSignatureParse(pkts, pktlen, &digp, lints);
+	rc = pgprSignatureParse(pkts, pktlen, &item, lints);
     } else {
 	if (lints)
 	    *lints = rstrdup("Not a public key or signature");
 	return -1;
     }
     if (ret && rc == PGPR_OK)
-	*ret = (pgpDigParams)digp;
+	*ret = (pgpDigParams)item;
     else {
-	pgprDigParamsFree(digp);
+	pgprItemFree(item);
     }
     return rc == PGPR_OK ? 0 : -1;
 }
@@ -204,15 +204,15 @@ int pgpPrtParamsSubkeys(const uint8_t *pkts, size_t pktlen,
 			pgpDigParams mainkey, pgpDigParams **subkeys,
 			int *subkeysCount)
 {
-    pgprRC rc = pgprPubkeyParseSubkeys(pkts, pktlen, (pgprDigParams)mainkey, (pgprDigParams **)subkeys, subkeysCount);
+    pgprRC rc = pgprPubkeyParseSubkeys(pkts, pktlen, (pgprItem)mainkey, (pgprItem **)subkeys, subkeysCount);
     return rc == PGPR_OK ? 0 : -1;
 }
 
 rpmRC pgpPubKeyLint(const uint8_t *pkts, size_t pktslen, char **explanation)
 {
-    pgprDigParams digp = NULL;
-    pgprRC rc = pgprPubkeyParse(pkts, pktslen, &digp, explanation);
-    pgprDigParamsFree(digp);
+    pgprItem item = NULL;
+    pgprRC rc = pgprPubkeyParse(pkts, pktslen, &item, explanation);
+    pgprItemFree(item);
     return rc == PGPR_OK ? RPMRC_OK : RPMRC_FAIL;
 }
 

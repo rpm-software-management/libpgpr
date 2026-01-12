@@ -4,7 +4,7 @@
 #define PGPR_KEYID_LEN 8
 
 /* type definitions */
-typedef struct pgprDigParams_s * pgprDigParams;
+typedef struct pgprItem_s * pgprItem;
 typedef void * pgprDigCtx;
 typedef uint8_t pgprKeyID_t[PGPR_KEYID_LEN];
 
@@ -154,52 +154,52 @@ pgprRC pgprInitCrypto(void);
 pgprRC pgprFreeCrypto(void);
 
 /* allocation */
-pgprDigParams pgprDigParamsNew(uint8_t tag);
+pgprItem pgprItemNew(uint8_t tag);
 
-pgprDigParams pgprDigParamsFree(pgprDigParams digp);
+pgprItem pgprItemFree(pgprItem digp);
 
 
 /* dig param methods */
-int pgprDigParamsTag(pgprDigParams _digp);
+int pgprItemTag(pgprItem _digp);
 
-int pgprDigParamsCmp(pgprDigParams p1, pgprDigParams p2);
+int pgprItemCmp(pgprItem p1, pgprItem p2);
 
-int pgprDigParamsSignatureType(pgprDigParams _digp);
+int pgprItemSignatureType(pgprItem _digp);
 
-int pgprDigParamsPubkeyAlgo(pgprDigParams digp);
+int pgprItemPubkeyAlgo(pgprItem digp);
 
-int pgprDigParamsPubkeyAlgoInfo(pgprDigParams digp);
+int pgprItemPubkeyAlgoInfo(pgprItem digp);
 
-int pgprDigParamsHashAlgo(pgprDigParams digp);
+int pgprItemHashAlgo(pgprItem digp);
 
-const uint8_t *pgprDigParamsKeyID(pgprDigParams digp);
+const uint8_t *pgprItemKeyID(pgprItem digp);
 
-const uint8_t *pgprDigParamsKeyFingerprint(pgprDigParams digp, size_t *fp_len, int *fp_version);
+const uint8_t *pgprItemKeyFingerprint(pgprItem digp, size_t *fp_len, int *fp_version);
 
-const char *pgprDigParamsUserID(pgprDigParams digp);
+const char *pgprItemUserID(pgprItem digp);
 
-int pgprDigParamsVersion(pgprDigParams digp);
+int pgprItemVersion(pgprItem digp);
 
-uint32_t pgprDigParamsCreationTime(pgprDigParams digp);
+uint32_t pgprItemCreationTime(pgprItem digp);
 
-uint32_t pgprDigParamsModificationTime(pgprDigParams digp);
+uint32_t pgprItemModificationTime(pgprItem digp);
 
-const uint8_t *pgprDigParamsHashHeader(pgprDigParams digp, size_t *headerlen);
+const uint8_t *pgprItemHashHeader(pgprItem digp, size_t *headerlen);
 
-const uint8_t *pgprDigParamsHashTrailer(pgprDigParams digp, size_t *trailerlen);
+const uint8_t *pgprItemHashTrailer(pgprItem digp, size_t *trailerlen);
 
 /* signature verification*/
 
-pgprRC pgprVerifySignature(pgprDigParams key, pgprDigParams sig, const uint8_t *hash, size_t hashlen, char **lints);
+pgprRC pgprVerifySignature(pgprItem key, pgprItem sig, const uint8_t *hash, size_t hashlen, char **lints);
 
-pgprRC pgprVerifySignatureNoKey(pgprDigParams sig, const uint8_t *hash, size_t hashlen, char **lints);
+pgprRC pgprVerifySignatureNoKey(pgprItem sig, const uint8_t *hash, size_t hashlen, char **lints);
 
 /* pgp packet parsing */
-pgprRC pgprSignatureParse(const uint8_t * pkts, size_t pktlen, pgprDigParams * ret, char **lints);
+pgprRC pgprSignatureParse(const uint8_t * pkts, size_t pktlen, pgprItem * ret, char **lints);
 
-pgprRC pgprPubkeyParse(const uint8_t * pkts, size_t pktlen, pgprDigParams * ret, char **lints);
+pgprRC pgprPubkeyParse(const uint8_t * pkts, size_t pktlen, pgprItem * ret, char **lints);
 
-pgprRC pgprPubkeyParseSubkeys(const uint8_t *pkts, size_t pktlen, pgprDigParams mainkey, pgprDigParams **subkeys, int *subkeysCount);
+pgprRC pgprPubkeyParseSubkeys(const uint8_t *pkts, size_t pktlen, pgprItem mainkey, pgprItem **subkeys, int *subkeysCount);
 
 pgprRC pgprPubkeyCertLen(const uint8_t *pkts, size_t pktslen, size_t *certlen);
 

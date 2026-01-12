@@ -36,10 +36,10 @@ static char *slurp(const char *fn, size_t *lenp)
     return buf;
 }
 
-pgprDigParams
-select_subkey(const uint8_t *pkts, size_t pktlen, pgprDigParams key, int subkey)
+pgprItem
+select_subkey(const uint8_t *pkts, size_t pktlen, pgprItem key, int subkey)
 {
-    pgprDigParams *subkeys;
+    pgprItem *subkeys;
     int nsubkeys = 0;
     if (pgprPubkeyParseSubkeys(pkts, pktlen, key, &subkeys, &nsubkeys) != PGPR_OK) {
 	fprintf(stderr, "subkeys parse error\n");
@@ -49,11 +49,11 @@ select_subkey(const uint8_t *pkts, size_t pktlen, pgprDigParams key, int subkey)
 	fprintf(stderr, "no subkey #%d\n", subkey);
 	exit(1);
     }
-    pgprDigParamsFree(key);
+    pgprItemFree(key);
     key = subkeys[subkey - 1];
     for (; nsubkeys > 0; nsubkeys--)
 	if (nsubkeys != subkey)
-	    pgprDigParamsFree(subkeys[nsubkeys - 1]);
+	    pgprItemFree(subkeys[nsubkeys - 1]);
     free(subkeys);
     return key;
 }
@@ -69,7 +69,7 @@ verifysignature(int argc, char **argv)
     size_t pubkeyl;
     unsigned char *signature;
     size_t signaturel;
-    pgprDigParams key = NULL, sig = NULL;
+    pgprItem key = NULL, sig = NULL;
     char *lints;
     pgprDigCtx ctx;
     const uint8_t *trailer;
@@ -129,16 +129,16 @@ verifysignature(int argc, char **argv)
     }
     free(lints);
 
-    ctx = pgprDigestInit(pgprDigParamsHashAlgo(sig));
+    ctx = pgprDigestInit(pgprItemHashAlgo(sig));
     if (!ctx) {
 	fprintf(stderr, "unsupported hash algorithm in signature\n");
 	exit(1);
     }
-    header = pgprDigParamsHashHeader(sig, &headerlen);
+    header = pgprItemHashHeader(sig, &headerlen);
     if (header)
 	pgprDigestUpdate(ctx, header, headerlen);
     pgprDigestUpdate(ctx, data, datalen);
-    trailer = pgprDigParamsHashTrailer(sig, &trailerlen);
+    trailer = pgprItemHashTrailer(sig, &trailerlen);
     if (trailer)
 	pgprDigestUpdate(ctx, trailer, trailerlen);
     pgprDigestFinal(ctx, &hash, &hashlen);
@@ -154,8 +154,8 @@ verifysignature(int argc, char **argv)
     printf("signature verified OK\n");
 
     free(hash);
-    pgprDigParamsFree(key);
-    pgprDigParamsFree(sig);
+    pgprItemFree(key);
+    pgprItemFree(sig);
     free(pubkey_a);
     free(pubkey);
     free(signature_a);
@@ -176,7 +176,7 @@ keyinfo(int argc, char **argv)
     unsigned char *pubkey;
     size_t pubkeyl;
     char *lints;
-    pgprDigParams key = NULL;
+    pgprItem key = NULL;
     const unsigned char *keyid;
     const unsigned char *keyfp;
     size_t keyfp_len = 0;
@@ -211,26 +211,26 @@ keyinfo(int argc, char **argv)
     }
     if (subkey)
 	key = select_subkey(pubkey, pubkeyl, key, subkey);
-    printf("Version: %d\n", pgprDigParamsVersion(key));
-    printf("CreationTime: %d\n", pgprDigParamsCreationTime(key));
-    printf("Algorithm: %d\n", pgprDigParamsPubkeyAlgo(key));
-    printf("AlgorithmInfo: %d\n", pgprDigParamsPubkeyAlgoInfo(key));
-    printf("UserID: %s\n", nullify(pgprDigParamsUserID(key)));
-    keyfp = pgprDigParamsKeyFingerprint(key, &keyfp_len, NULL);
+    printf("Version: %d\n", pgprItemVersion(key));
+    printf("CreationTime: %d\n", pgprItemCreationTime(key));
+    printf("Algorithm: %d\n", pgprItemPubkeyAlgo(key));
+    printf("AlgorithmInfo: %d\n", pgprItemPubkeyAlgoInfo(key));
+    printf("UserID: %s\n", nullify(pgprItemUserID(key)));
+    keyfp = pgprItemKeyFingerprint(key, &keyfp_len, NULL);
     if (keyfp) {
 	printf("KeyFP: ");
 	for (i = 0; i < keyfp_len; i++)
 	    printf("%02x", keyfp[i]);
 	printf("\n");
     }
-    keyid = pgprDigParamsKeyID(key);
+    keyid = pgprItemKeyID(key);
     if (keyid) {
 	printf("KeyID: ");
 	for (i = 0; i < 8; i++)
 	    printf("%02x", keyid[i]);
 	printf("\n");
     }
-    pgprDigParamsFree(key);
+    pgprItemFree(key);
     free(pubkey_a);
     free(pubkey);
     return 0;
@@ -243,7 +243,7 @@ siginfo(int argc, char **argv)
     unsigned char *signature;
     size_t signaturel;
     char *lints;
-    pgprDigParams sig = NULL;
+    pgprItem sig = NULL;
     const unsigned char *keyid;
     const unsigned char *keyfp;
     size_t keyfp_len = 0;
@@ -266,25 +266,25 @@ siginfo(int argc, char **argv)
 	    fprintf(stderr, "signature parse error\n");
 	exit(1);
     }
-    printf("Version: %d\n", pgprDigParamsVersion(sig));
-    printf("CreationTime: %d\n", pgprDigParamsCreationTime(sig));
-    printf("Algorithm: %d\n", pgprDigParamsPubkeyAlgo(sig));
-    printf("Hash: %d\n", pgprDigParamsHashAlgo(sig));
-    keyfp = pgprDigParamsKeyFingerprint(sig, &keyfp_len, NULL);
+    printf("Version: %d\n", pgprItemVersion(sig));
+    printf("CreationTime: %d\n", pgprItemCreationTime(sig));
+    printf("Algorithm: %d\n", pgprItemPubkeyAlgo(sig));
+    printf("Hash: %d\n", pgprItemHashAlgo(sig));
+    keyfp = pgprItemKeyFingerprint(sig, &keyfp_len, NULL);
     if (keyfp) {
 	printf("KeyFP: ");
 	for (i = 0; i < keyfp_len; i++)
 	    printf("%02x", keyfp[i]);
 	printf("\n");
     }
-    keyid = pgprDigParamsKeyID(sig);
+    keyid = pgprItemKeyID(sig);
     if (keyid) {
 	printf("KeyID: ");
 	for (i = 0; i < 8; i++)
 	    printf("%02x", keyid[i]);
 	printf("\n");
     }
-    pgprDigParamsFree(sig);
+    pgprItemFree(sig);
     free(signature_a);
     free(signature);
     return 0;

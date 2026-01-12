@@ -241,7 +241,7 @@ static pgprRC pgprDigAlgVerify(pgprDigAlg keyalg, pgprDigAlg sigalg,
     return PGPR_ERROR_SIGNATURE_VERIFICATION;
 }
 
-pgprRC pgprVerifySignatureRaw(pgprDigParams key, pgprDigParams sig, const uint8_t *hash, size_t hashlen)
+pgprRC pgprVerifySignatureRaw(pgprItem key, pgprItem sig, const uint8_t *hash, size_t hashlen)
 {
     pgprRC rc = PGPR_ERROR_SIGNATURE_VERIFICATION; /* assume failure */
 
@@ -294,7 +294,7 @@ static int pgprCurveByOid(const uint8_t *p, int l)
 }
 
 static pgprRC pgprPrtKeyParams(pgprTag tag, const uint8_t *h, size_t hlen,
-		pgprDigParams keyp)
+		pgprItem keyp)
 {
     pgprRC rc;
     const uint8_t *p;
@@ -352,7 +352,7 @@ static pgprRC pgprValidateKeyParamsSize(int pubkey_algo, const uint8_t *p, size_
 }
 
 pgprRC pgprPrtSigParams(pgprTag tag, const uint8_t *h, size_t hlen,
-		pgprDigParams sigp)
+		pgprItem sigp)
 {
     pgprRC rc;
     /* We can't handle more than one sig at a time */
@@ -470,7 +470,7 @@ pgprRC pgprGetKeyID(const uint8_t *h, size_t hlen, pgprKeyID_t keyid)
  *  PGP packet data extraction
  */
 
-static pgprRC pgprPrtSubType(const uint8_t *h, size_t hlen, pgprDigParams _digp, int hashed)
+static pgprRC pgprPrtSubType(const uint8_t *h, size_t hlen, pgprItem item, int hashed)
 {
     const uint8_t *p = h;
 
@@ -489,20 +489,20 @@ static pgprRC pgprPrtSubType(const uint8_t *h, size_t hlen, pgprDigParams _digp,
 		break; /* RFC 4880 §5.2.3.4 creation time MUST be hashed */
 	    if (plen - 1 != 4)
 		break; /* other lengths not understood */
-	    if (_digp->saved & PGPRDIG_SAVED_TIME)
+	    if (item->saved & PGPRITEM_SAVED_TIME)
 		return PGPR_ERROR_DUPLICATE_DATA;
 	    impl = 1;
-	    _digp->time = pgprGrab4(p + 1);
-	    _digp->saved |= PGPRDIG_SAVED_TIME;
+	    item->time = pgprGrab4(p + 1);
+	    item->saved |= PGPRITEM_SAVED_TIME;
 	    break;
 
 	case PGPRSUBTYPE_ISSUER_KEYID:
-	    if (plen - 1 != sizeof(_digp->signid))
+	    if (plen - 1 != sizeof(item->signid))
 		break; /* other lengths not understood */
 	    impl = 1;
-	    if (!(_digp->saved & PGPRDIG_SAVED_ID)) {
-		memcpy(_digp->signid, p + 1, sizeof(_digp->signid));
-		_digp->saved |= PGPRDIG_SAVED_ID;
+	    if (!(item->saved & PGPRITEM_SAVED_ID)) {
+		memcpy(item->signid, p + 1, sizeof(item->signid));
+		item->saved |= PGPRITEM_SAVED_ID;
 	    }
 	    break;
 
@@ -510,30 +510,30 @@ static pgprRC pgprPrtSubType(const uint8_t *h, size_t hlen, pgprDigParams _digp,
 	    if (plen - 1 < 17)
 		break;
 	    impl = 1;
-	    if (!(_digp->saved & PGPRDIG_SAVED_FP) && plen - 2 <= PGPR_MAX_FP_LENGTH) {
-		memcpy(_digp->fp, p + 2, plen - 2);
-		_digp->fp_len = plen - 2;
-		_digp->fp_version = p[1];
-		_digp->saved |= PGPRDIG_SAVED_FP;
+	    if (!(item->saved & PGPRITEM_SAVED_FP) && plen - 2 <= PGPR_MAX_FP_LENGTH) {
+		memcpy(item->fp, p + 2, plen - 2);
+		item->fp_len = plen - 2;
+		item->fp_version = p[1];
+		item->saved |= PGPRITEM_SAVED_FP;
 	    }
-	    if (p[1] == 4 && plen - 1 == 21 && !(_digp->saved & PGPRDIG_SAVED_ID)) {
-		memcpy(_digp->signid, p + plen - sizeof(_digp->signid), sizeof(_digp->signid));
-		_digp->saved |= PGPRDIG_SAVED_ID;
+	    if (p[1] == 4 && plen - 1 == 21 && !(item->saved & PGPRITEM_SAVED_ID)) {
+		memcpy(item->signid, p + plen - sizeof(item->signid), sizeof(item->signid));
+		item->saved |= PGPRITEM_SAVED_ID;
 	    }
-	    if ((p[1] == 5 || p[1] == 6) && plen - 1 == 33 && !(_digp->saved & PGPRDIG_SAVED_ID)) {
-		memcpy(_digp->signid, p + 2, sizeof(_digp->signid));
-		_digp->saved |= PGPRDIG_SAVED_ID;
+	    if ((p[1] == 5 || p[1] == 6) && plen - 1 == 33 && !(item->saved & PGPRITEM_SAVED_ID)) {
+		memcpy(item->signid, p + 2, sizeof(item->signid));
+		item->saved |= PGPRITEM_SAVED_ID;
 	    }
 	    break;
 
 	case PGPRSUBTYPE_KEY_FLAGS:
 	    if (!hashed)
 		break;	/* Subpackets in the unhashed section cannot be trusted */
-	    if (_digp->saved & PGPRDIG_SAVED_KEY_FLAGS)
+	    if (item->saved & PGPRITEM_SAVED_KEY_FLAGS)
 		return PGPR_ERROR_DUPLICATE_DATA;
 	    impl = 1;
-	    _digp->key_flags = plen >= 2 ? p[1] : 0;
-	    _digp->saved |= PGPRDIG_SAVED_KEY_FLAGS;
+	    item->key_flags = plen >= 2 ? p[1] : 0;
+	    item->saved |= PGPRITEM_SAVED_KEY_FLAGS;
 	    break;
 
 	case PGPRSUBTYPE_KEY_EXPIRE_TIME:
@@ -541,11 +541,11 @@ static pgprRC pgprPrtSubType(const uint8_t *h, size_t hlen, pgprDigParams _digp,
 		break;	/* Subpackets in the unhashed section cannot be trusted */
 	    if (plen - 1 != 4)
 		break; /* other lengths not understood */
-	    if (_digp->saved & PGPRDIG_SAVED_KEY_EXPIRE)
+	    if (item->saved & PGPRITEM_SAVED_KEY_EXPIRE)
 		return PGPR_ERROR_DUPLICATE_DATA;
 	    impl = 1;
-	    _digp->key_expire = pgprGrab4(p + 1);
-	    _digp->saved |= PGPRDIG_SAVED_KEY_EXPIRE;
+	    item->key_expire = pgprGrab4(p + 1);
+	    item->saved |= PGPRITEM_SAVED_KEY_EXPIRE;
 	    break;
 
 	case PGPRSUBTYPE_SIG_EXPIRE_TIME:
@@ -553,23 +553,23 @@ static pgprRC pgprPrtSubType(const uint8_t *h, size_t hlen, pgprDigParams _digp,
 		break; /* RFC 4880 §5.2.3.4 creation time MUST be hashed */
 	    if (plen - 1 != 4)
 		break; /* other lengths not understood */
-	    if (_digp->saved & PGPRDIG_SAVED_SIG_EXPIRE)
+	    if (item->saved & PGPRITEM_SAVED_SIG_EXPIRE)
 		return PGPR_ERROR_DUPLICATE_DATA;
 	    impl = 1;
-	    _digp->sig_expire = pgprGrab4(p + 1);
-	    _digp->saved |= PGPRDIG_SAVED_SIG_EXPIRE;
+	    item->sig_expire = pgprGrab4(p + 1);
+	    item->saved |= PGPRITEM_SAVED_SIG_EXPIRE;
 	    break;
 
 	case PGPRSUBTYPE_EMBEDDED_SIG:
-	    if (_digp->sigtype != PGPRSIGTYPE_SUBKEY_BINDING)
+	    if (item->sigtype != PGPRSIGTYPE_SUBKEY_BINDING)
 		break;	/* do not bother for other types */
 	    if (plen - 1 < 6)
 		break;	/* obviously not a signature */
-	    if (_digp->embedded_sig)
+	    if (item->embedded_sig)
 		break;	/* just store the first one. we may need to changed this to select the most recent. */
 	    impl = 1;
-	    _digp->embedded_sig_len = plen - 1;
-	    _digp->embedded_sig = pgprMemdup(p + 1, plen - 1);
+	    item->embedded_sig_len = plen - 1;
+	    item->embedded_sig = pgprMemdup(p + 1, plen - 1);
 	    break;
 
 	case PGPRSUBTYPE_PRIMARY_USERID:
@@ -579,7 +579,7 @@ static pgprRC pgprPrtSubType(const uint8_t *h, size_t hlen, pgprDigParams _digp,
 		break; /* other lengths not understood */
 	    impl = 1;
 	    if (p[1])
-		_digp->saved |= PGPRDIG_SAVED_PRIMARY;
+		item->saved |= PGPRITEM_SAVED_PRIMARY;
 	    break;
 
 	default:
@@ -599,35 +599,35 @@ static pgprRC pgprPrtSubType(const uint8_t *h, size_t hlen, pgprDigParams _digp,
 }
 
 pgprRC pgprPrtSigNoParams(pgprTag tag, const uint8_t *h, size_t hlen,
-		     pgprDigParams _digp)
+		     pgprItem item)
 {
     pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;		/* assume failure */
     const uint8_t * p;
     size_t plen;
 
-    if (_digp->version || _digp->saved || _digp->tag != PGPRTAG_SIGNATURE || tag != _digp->tag)
+    if (item->version || item->saved || item->tag != PGPRTAG_SIGNATURE || tag != item->tag)
 	return PGPR_ERROR_INTERNAL;
 
     if (hlen == 0)
 	return PGPR_ERROR_CORRUPT_PGP_PACKET;
-    _digp->version = h[0];
+    item->version = h[0];
 
-    switch (_digp->version) {
+    switch (item->version) {
     case 3:
     {   pgprPktSigV3 v = (pgprPktSigV3)h;
 
 	if (hlen <= sizeof(*v) || v->hashlen != 5)
 	    return PGPR_ERROR_CORRUPT_PGP_PACKET;
-	_digp->hashlen = v->hashlen;
-	_digp->sigtype = v->sigtype;
-	_digp->hash = pgprMemdup(&v->sigtype, v->hashlen);
-	_digp->time = pgprGrab4(v->time);
-	memcpy(_digp->signid, v->signid, sizeof(_digp->signid));
-	_digp->saved = PGPRDIG_SAVED_TIME | PGPRDIG_SAVED_ID;
-	_digp->pubkey_algo = v->pubkey_algo;
-	_digp->hash_algo = v->hash_algo;
-	memcpy(_digp->signhash16, v->signhash16, sizeof(_digp->signhash16));
-	_digp->mpi_offset = sizeof(*v);
+	item->hashlen = v->hashlen;
+	item->sigtype = v->sigtype;
+	item->hash = pgprMemdup(&v->sigtype, v->hashlen);
+	item->time = pgprGrab4(v->time);
+	memcpy(item->signid, v->signid, sizeof(item->signid));
+	item->saved = PGPRITEM_SAVED_TIME | PGPRITEM_SAVED_ID;
+	item->pubkey_algo = v->pubkey_algo;
+	item->hash_algo = v->hash_algo;
+	memcpy(item->signhash16, v->signhash16, sizeof(item->signhash16));
+	item->mpi_offset = sizeof(*v);
 	rc = PGPR_OK;
     }	break;
     case 4:
@@ -640,14 +640,14 @@ pgprRC pgprPrtSigNoParams(pgprTag tag, const uint8_t *h, size_t hlen,
 
 	if (hlen <= sizeof(*v))
 	    return PGPR_ERROR_CORRUPT_PGP_PACKET;
-	_digp->sigtype = v->sigtype;
-	_digp->pubkey_algo = v->pubkey_algo;
-	_digp->hash_algo = v->hash_algo;
+	item->sigtype = v->sigtype;
+	item->pubkey_algo = v->pubkey_algo;
+	item->hash_algo = v->hash_algo;
 
 	/* parse both the hashed and unhashed subpackets */
 	p = &v->hashlen[0];
 	for (hashed = 1; hashed >= 0; hashed--) {
-	    if (_digp->version == 6) {
+	    if (item->version == 6) {
 		if (p > hend || hend - p < 4)
 		    return PGPR_ERROR_CORRUPT_PGP_PACKET;
 		plen = pgprGrab4(p);
@@ -662,30 +662,30 @@ pgprRC pgprPrtSigNoParams(pgprTag tag, const uint8_t *h, size_t hlen,
 		return PGPR_ERROR_CORRUPT_PGP_PACKET;
 	    if (hashed) {
 		/* add bytes for the trailer */
-		if (_digp->version == 4)
-		    _digp->hashlen = sizeof(*v) + plen + 6;
-		else if (_digp->version == 5)
-		    _digp->hashlen = sizeof(*v) + plen + (_digp->sigtype == 0x00 || _digp->sigtype == 0x01 ? 6 : 0) + 10;
-		else if (_digp->version == 6)
-		    _digp->hashlen = sizeof(*v) + 2 + plen + 6;		/* len is 4 bytes */
-		_digp->hash = pgprCalloc(1, _digp->hashlen);
-		memcpy(_digp->hash, v, sizeof(*v) + plen + (_digp->version == 6 ? 2 : 0));
+		if (item->version == 4)
+		    item->hashlen = sizeof(*v) + plen + 6;
+		else if (item->version == 5)
+		    item->hashlen = sizeof(*v) + plen + (item->sigtype == 0x00 || item->sigtype == 0x01 ? 6 : 0) + 10;
+		else if (item->version == 6)
+		    item->hashlen = sizeof(*v) + 2 + plen + 6;		/* len is 4 bytes */
+		item->hash = pgprCalloc(1, item->hashlen);
+		memcpy(item->hash, v, sizeof(*v) + plen + (item->version == 6 ? 2 : 0));
 	    }
-	    rc = pgprPrtSubType(p, plen, _digp, hashed);
+	    rc = pgprPrtSubType(p, plen, item, hashed);
 	    if (rc != PGPR_OK)
 		return rc;
 	    p += plen;
 	}
 
-	if (!(_digp->saved & PGPRDIG_SAVED_TIME))
+	if (!(item->saved & PGPRITEM_SAVED_TIME))
 	    return PGPR_ERROR_NO_CREATION_TIME;	/* RFC 4880 §5.2.3.4 creation time MUST be present */
 
 	if (p > hend || hend - p < 2)
 	    return PGPR_ERROR_CORRUPT_PGP_PACKET;
-	memcpy(_digp->signhash16, p, sizeof(_digp->signhash16));
+	memcpy(item->signhash16, p, sizeof(item->signhash16));
 	p += 2;
 
-	if (_digp->version == 6) {
+	if (item->version == 6) {
 	    int saltlen;
 	    if (p > hend || hend - p < 1)
 		return PGPR_ERROR_CORRUPT_PGP_PACKET;
@@ -693,27 +693,27 @@ pgprRC pgprPrtSigNoParams(pgprTag tag, const uint8_t *h, size_t hlen,
 	    if (saltlen) {
 		if (hend - p < 1 + saltlen)
 		    return PGPR_ERROR_CORRUPT_PGP_PACKET;
-		_digp->hash = pgprRealloc(_digp->hash, _digp->hashlen + saltlen);
-		memcpy(_digp->hash + _digp->hashlen, p + 1, saltlen);
-		_digp->saltlen = saltlen;
+		item->hash = pgprRealloc(item->hash, item->hashlen + saltlen);
+		memcpy(item->hash + item->hashlen, p + 1, saltlen);
+		item->saltlen = saltlen;
 	    }
 	    p += 1 + saltlen;
 	}
 
 	if (p > hend)
 	    return PGPR_ERROR_CORRUPT_PGP_PACKET;
-	_digp->mpi_offset = p - h;
-	if (_digp->version == 4 || _digp->version == 6) {
-	    trailer = _digp->hash + _digp->hashlen - 6;
-	    trailer[0] = _digp->version;
+	item->mpi_offset = p - h;
+	if (item->version == 4 || item->version == 6) {
+	    trailer = item->hash + item->hashlen - 6;
+	    trailer[0] = item->version;
 	    trailer[1] = 0xff;
-	    trailer[2] = (_digp->hashlen - 6) >> 24;
-	    trailer[3] = (_digp->hashlen - 6) >> 16;
-	    trailer[4] = (_digp->hashlen - 6) >> 8;
-	    trailer[5] = (_digp->hashlen - 6);
-	} else if (_digp->version == 5) {
-	    uint32_t len = _digp->hashlen - 10 - (_digp->sigtype == 0x00 || _digp->sigtype == 0x01 ? 6 : 0);
-	    trailer = _digp->hash + _digp->hashlen - 10;
+	    trailer[2] = (item->hashlen - 6) >> 24;
+	    trailer[3] = (item->hashlen - 6) >> 16;
+	    trailer[4] = (item->hashlen - 6) >> 8;
+	    trailer[5] = (item->hashlen - 6);
+	} else if (item->version == 5) {
+	    uint32_t len = item->hashlen - 10 - (item->sigtype == 0x00 || item->sigtype == 0x01 ? 6 : 0);
+	    trailer = item->hash + item->hashlen - 10;
 	    trailer[0] = 0x05;
 	    trailer[1] = 0xff;
 	    trailer[6] = len >> 24;
@@ -731,15 +731,15 @@ pgprRC pgprPrtSigNoParams(pgprTag tag, const uint8_t *h, size_t hlen,
 }
 
 pgprRC pgprPrtSig(pgprTag tag, const uint8_t *h, size_t hlen,
-		     pgprDigParams _digp)
+		     pgprItem item)
 {
-    pgprRC rc = pgprPrtSigNoParams(tag, h, hlen, _digp);
+    pgprRC rc = pgprPrtSigNoParams(tag, h, hlen, item);
     if (rc == PGPR_OK)
-	rc = pgprPrtSigParams(tag, h, hlen, _digp);
+	rc = pgprPrtSigParams(tag, h, hlen, item);
     return rc;
 }
 
-static pgprRC pgprPrtKeyFp(const uint8_t *h, size_t hlen, pgprDigParams _digp)
+static pgprRC pgprPrtKeyFp(const uint8_t *h, size_t hlen, pgprItem item)
 {
     uint8_t *fp = NULL;
     size_t fplen = 0;
@@ -749,42 +749,42 @@ static pgprRC pgprPrtKeyFp(const uint8_t *h, size_t hlen, pgprDigParams _digp)
     if (rc == PGPR_OK && (fplen == 0 || fplen > PGPR_MAX_FP_LENGTH)) {
 	rc = PGPR_ERROR_INTERNAL;
     } else if (rc == PGPR_OK) {
-	memcpy(_digp->fp, fp, fplen);
-	_digp->fp_len = fplen;
-	_digp->fp_version = _digp->version;
-	_digp->saved |= PGPRDIG_SAVED_FP;
-	if ((rc = pgprGetKeyIDFromFp(_digp->fp, _digp->fp_len, _digp->fp_version, _digp->signid)) == PGPR_OK)
-	    _digp->saved |= PGPRDIG_SAVED_ID;
+	memcpy(item->fp, fp, fplen);
+	item->fp_len = fplen;
+	item->fp_version = item->version;
+	item->saved |= PGPRITEM_SAVED_FP;
+	if ((rc = pgprGetKeyIDFromFp(item->fp, item->fp_len, item->fp_version, item->signid)) == PGPR_OK)
+	    item->saved |= PGPRITEM_SAVED_ID;
     }
     free(fp);
     return rc;
 }
 
 pgprRC pgprPrtKey(pgprTag tag, const uint8_t *h, size_t hlen,
-		     pgprDigParams _digp)
+		     pgprItem item)
 {
     pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;		/* assume failure */
 
-    if (_digp->version || _digp->saved)
+    if (item->version || item->saved)
 	return PGPR_ERROR_INTERNAL;
-    if  ((_digp->tag != PGPRTAG_PUBLIC_KEY && _digp->tag != PGPRTAG_PUBLIC_SUBKEY) || tag != _digp->tag)
+    if  ((item->tag != PGPRTAG_PUBLIC_KEY && item->tag != PGPRTAG_PUBLIC_SUBKEY) || tag != item->tag)
 	return PGPR_ERROR_INTERNAL;
 
     if (hlen == 0)
 	return PGPR_ERROR_CORRUPT_PGP_PACKET;
-    _digp->version = h[0];
+    item->version = h[0];
 
     /* We only permit V4 keys, V3 keys are long long since deprecated */
-    switch (_digp->version) {
+    switch (item->version) {
     case 4:
     {   pgprPktKeyV4 v = (pgprPktKeyV4)h;
 
 	if (hlen <= sizeof(*v))
 	    return PGPR_ERROR_CORRUPT_PGP_PACKET;
-	_digp->time = pgprGrab4(v->time);
-	_digp->saved |= PGPRDIG_SAVED_TIME;
-	_digp->pubkey_algo = v->pubkey_algo;
-	_digp->mpi_offset = sizeof(*v);
+	item->time = pgprGrab4(v->time);
+	item->saved |= PGPRITEM_SAVED_TIME;
+	item->pubkey_algo = v->pubkey_algo;
+	item->mpi_offset = sizeof(*v);
 	rc = PGPR_OK;
     }	break;
     case 5:
@@ -794,10 +794,10 @@ pgprRC pgprPrtKey(pgprTag tag, const uint8_t *h, size_t hlen,
 	    return PGPR_ERROR_CORRUPT_PGP_PACKET;
 	if (hlen != sizeof(*v) + pgprGrab4(v->pubkey_len))
 	    return PGPR_ERROR_CORRUPT_PGP_PACKET;
-	_digp->time = pgprGrab4(v->time);
-	_digp->saved |= PGPRDIG_SAVED_TIME;
-	_digp->pubkey_algo = v->pubkey_algo;
-	_digp->mpi_offset = sizeof(*v);
+	item->time = pgprGrab4(v->time);
+	item->saved |= PGPRITEM_SAVED_TIME;
+	item->pubkey_algo = v->pubkey_algo;
+	item->mpi_offset = sizeof(*v);
 	rc = PGPR_OK;
     }	break;
     default:
@@ -807,22 +807,22 @@ pgprRC pgprPrtKey(pgprTag tag, const uint8_t *h, size_t hlen,
 
     /* read mpi data if there was no error */
     if (rc == PGPR_OK)
-	rc = pgprPrtKeyParams(tag, h, hlen, _digp);
+	rc = pgprPrtKeyParams(tag, h, hlen, item);
 
     /* calculate the key fingerprint and key id if we could parse the key */
     if (rc == PGPR_OK)
-	rc = pgprPrtKeyFp(h, hlen, _digp);
+	rc = pgprPrtKeyFp(h, hlen, item);
     return rc;
 }
 
 pgprRC pgprPrtUserID(pgprTag tag, const uint8_t *h, size_t hlen,
-			pgprDigParams _digp)
+			pgprItem item)
 {
-    if (_digp->tag != PGPRTAG_PUBLIC_KEY || tag != PGPRTAG_USER_ID)
+    if (item->tag != PGPRTAG_PUBLIC_KEY || tag != PGPRTAG_USER_ID)
 	return PGPR_ERROR_INTERNAL;
-    free(_digp->userid);
-    _digp->userid = memcpy(pgprMalloc(hlen + 1), h, hlen);
-    _digp->userid[hlen] = '\0';
+    free(item->userid);
+    item->userid = memcpy(pgprMalloc(hlen + 1), h, hlen);
+    item->userid[hlen] = '\0';
     return PGPR_OK;
 }
 

@@ -43,7 +43,7 @@ static char *format_time(time_t *t)
     return ret;
 }
 
-static void pgprAddKeyLint(pgprDigParams key, char **lints, const char *msg)
+static void pgprAddKeyLint(pgprItem key, char **lints, const char *msg)
 {
     char *keyid = format_keyid(key->signid, key->tag == PGPRTAG_PUBLIC_SUBKEY ? NULL : key->userid);
     char *main_keyid = key->tag == PGPRTAG_PUBLIC_SUBKEY ? format_keyid(key->mainid, key->userid) : NULL;
@@ -60,7 +60,7 @@ static void pgprAddKeyLint(pgprDigParams key, char **lints, const char *msg)
     free(main_keyid);
 }
 
-static void pgprAddSigLint(pgprDigParams sig, char **lints, const char *msg)
+static void pgprAddSigLint(pgprItem sig, char **lints, const char *msg)
 {
     pgprAsprintf(lints, "Signature %s", msg);
 }
@@ -75,7 +75,7 @@ static char *format_expired(uint32_t created, uint32_t expire)
     return msg;
 }
 
-void pgprAddLint(pgprDigParams digp, char **lints, pgprRC error)
+void pgprAddLint(pgprItem item, char **lints, pgprRC error)
 {
     const char *msg = NULL;
     char *exp_msg;
@@ -84,58 +84,58 @@ void pgprAddLint(pgprDigParams digp, char **lints, pgprRC error)
     *lints = NULL;
 
     /* if we have suitable DigParams we can make a better error message */
-    if (digp && (digp->tag == PGPRTAG_PUBLIC_KEY || digp->tag == PGPRTAG_PUBLIC_SUBKEY)) {
+    if (item && (item->tag == PGPRTAG_PUBLIC_KEY || item->tag == PGPRTAG_PUBLIC_SUBKEY)) {
 	switch (error) {
 	case PGPR_ERROR_UNSUPPORTED_VERSION:
-	    pgprAsprintf(lints, "Unsupported pubkey version (V%d)", digp->version);
+	    pgprAsprintf(lints, "Unsupported pubkey version (V%d)", item->version);
 	    return;
 	case PGPR_ERROR_KEY_EXPIRED:
-	    exp_msg = format_expired(digp->time, digp->key_expire);
-	    pgprAddKeyLint(digp, lints, exp_msg);
+	    exp_msg = format_expired(item->time, item->key_expire);
+	    pgprAddKeyLint(item, lints, exp_msg);
 	    free(exp_msg);
 	    return;
 	case PGPR_ERROR_KEY_REVOKED:
 	case PGPR_ERROR_PRIMARY_REVOKED:
-	    pgprAddKeyLint(digp, lints, "has been revoked");
+	    pgprAddKeyLint(item, lints, "has been revoked");
 	    return;
 	case PGPR_ERROR_KEY_NOT_VALID:
-	    pgprAddKeyLint(digp, lints, "has no valid binding signature");
+	    pgprAddKeyLint(item, lints, "has no valid binding signature");
 	    return;
 	case PGPR_ERROR_KEY_NO_SIGNING:
-	    pgprAddKeyLint(digp, lints, "is not suitable for signing");
+	    pgprAddKeyLint(item, lints, "is not suitable for signing");
 	    return;
 	case PGPR_ERROR_KEY_CREATED_AFTER_SIG:
-	    pgprAddKeyLint(digp, lints, "has been created after the signature");
+	    pgprAddKeyLint(item, lints, "has been created after the signature");
 	    return;
 	default:
 	    break;
 	}
     }
-    if (digp && digp->tag == PGPRTAG_SIGNATURE) {
+    if (item && item->tag == PGPRTAG_SIGNATURE) {
 	switch (error) {
 	case PGPR_ERROR_UNSUPPORTED_VERSION:
-	    pgprAsprintf(lints, "Unsupported signature version (V%d)", digp->version);
+	    pgprAsprintf(lints, "Unsupported signature version (V%d)", item->version);
 	    return;
 	case PGPR_ERROR_SIGNATURE_EXPIRED:
-	    exp_msg = format_expired(digp->time, digp->sig_expire);
-	    pgprAddSigLint(digp, lints, exp_msg);
+	    exp_msg = format_expired(item->time, item->sig_expire);
+	    pgprAddSigLint(item, lints, exp_msg);
 	    free(exp_msg);
 	    return;
 	default:
 	    break;
 	}
     }
-    if (digp) {
+    if (item) {
 	switch (error) {
 	case PGPR_ERROR_UNSUPPORTED_VERSION:
-	    pgprAsprintf(lints, "Unsupported packet version (V%d)", digp->version);
+	    pgprAsprintf(lints, "Unsupported packet version (V%d)", item->version);
 	    return;
 	case PGPR_ERROR_UNSUPPORTED_ALGORITHM:
-	    pgprAsprintf(lints, "Unsupported pubkey algorithm (%d)", digp->pubkey_algo);
+	    pgprAsprintf(lints, "Unsupported pubkey algorithm (%d)", item->pubkey_algo);
 	    return;
 	case PGPR_ERROR_UNSUPPORTED_CURVE:
-	    if (digp->alg)
-		pgprAsprintf(lints, "Unsupported pubkey curve (%d)", digp->alg->curve);
+	    if (item->alg)
+		pgprAsprintf(lints, "Unsupported pubkey curve (%d)", item->alg->curve);
 	    else
 		pgprAsprintf(lints, "Unsupported pubkey curve");
 	    return;

@@ -56,7 +56,7 @@ static pgprRC hashUserID(pgprDigCtx ctx, const pgprPkt *pkt, int exptag, int ver
     return rc;
 }
 
-static pgprRC pgprVerifySelf(pgprDigParams key, pgprDigParams selfsig,
+static pgprRC pgprVerifySelf(pgprItem key, pgprItem selfsig,
 			const pgprPkt *mainpkt, const pgprPkt *sectionpkt)
 {
     int rc = PGPR_ERROR_SELFSIG_VERIFICATION;
@@ -113,34 +113,34 @@ static pgprRC pgprVerifySelf(pgprDigParams key, pgprDigParams selfsig,
     return rc;
 }
 
-static pgprRC verifyPrimaryBindingSig(pgprPkt *mainpkt, pgprPkt *subkeypkt, pgprDigParams subkeydig, pgprDigParams bindsigdig)
+static pgprRC verifyPrimaryBindingSig(pgprPkt *mainpkt, pgprPkt *subkeypkt, pgprItem subkey, pgprItem bindsig)
 {
-    pgprDigParams emb_digp = NULL;
+    pgprItem emb = NULL;
     int rc = PGPR_ERROR_SELFSIG_VERIFICATION;		/* assume failure */
-    if (!bindsigdig || !bindsigdig->embedded_sig)
+    if (!bindsig || !bindsig->embedded_sig)
 	return rc;
-    emb_digp = pgprDigParamsNew(PGPRTAG_SIGNATURE);
-    if (pgprPrtSig(PGPRTAG_SIGNATURE, bindsigdig->embedded_sig, bindsigdig->embedded_sig_len, emb_digp) == PGPR_OK)
-	if (emb_digp->sigtype == PGPRSIGTYPE_PRIMARY_BINDING)
-	    rc = pgprVerifySelf(subkeydig, emb_digp, mainpkt, subkeypkt);
-    emb_digp = pgprDigParamsFree(emb_digp);
+    emb = pgprItemNew(PGPRTAG_SIGNATURE);
+    if (pgprPrtSig(PGPRTAG_SIGNATURE, bindsig->embedded_sig, bindsig->embedded_sig_len, emb) == PGPR_OK)
+	if (emb->sigtype == PGPRSIGTYPE_PRIMARY_BINDING)
+	    rc = pgprVerifySelf(subkey, emb, mainpkt, subkeypkt);
+    emb = pgprItemFree(emb);
     return rc;
 }
 
-static int is_same_keyid(pgprDigParams digp, pgprDigParams sigdigp)
+static int is_same_keyid(pgprItem item1, pgprItem item2)
 {
-    return (digp->saved & sigdigp->saved & PGPRDIG_SAVED_ID) != 0 &&
-	memcmp(digp->signid, sigdigp->signid, sizeof(digp->signid)) == 0;
+    return (item1->saved & item2->saved & PGPRITEM_SAVED_ID) != 0 &&
+	memcmp(item1->signid, item2->signid, sizeof(item1->signid)) == 0;
 }
 
 /* Parse a complete pubkey with all associated packets */
 /* This is similar to gnupg's merge_selfsigs_main() function */
-pgprRC pgprPrtTransferablePubkey(const uint8_t * pkts, size_t pktlen, pgprDigParams digp)
+pgprRC pgprPrtTransferablePubkey(const uint8_t * pkts, size_t pktlen, pgprItem item)
 {
     const uint8_t *p = pkts;
     const uint8_t *pend = pkts + pktlen;
-    pgprDigParams sigdigp = NULL;
-    pgprDigParams newest_digp = NULL;
+    pgprItem sigitem = NULL;
+    pgprItem newest_item = NULL;
     pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;		/* assume failure */
     uint32_t key_expire_sig_time = 0;
     uint32_t key_flags_sig_time = 0;
@@ -158,11 +158,11 @@ pgprRC pgprPrtTransferablePubkey(const uint8_t * pkts, size_t pktlen, pgprDigPar
     p += (mainpkt.body - mainpkt.head) + mainpkt.blen;
 
     /* Parse the pubkey packet */
-    if ((rc = pgprPrtKey(mainpkt.tag, mainpkt.body, mainpkt.blen, digp)) != PGPR_OK)
+    if ((rc = pgprPrtKey(mainpkt.tag, mainpkt.body, mainpkt.blen, item)) != PGPR_OK)
 	return rc;
     sectionpkt = mainpkt;
     haveselfsig = 1;
-    digp->key_mtime = digp->time;
+    item->key_mtime = item->time;
 
     rc = PGPR_OK;
     while (rc == PGPR_OK) {
@@ -189,36 +189,36 @@ pgprRC pgprPrtTransferablePubkey(const uint8_t * pkts, size_t pktlen, pgprDigPar
 		break;
 	    }
 	    /* take the data from the newest signature */
-	    if (newest_digp && (sectionpkt.tag == PGPRTAG_USER_ID || sectionpkt.tag == PGPRTAG_PUBLIC_KEY) && newest_digp->sigtype != PGPRSIGTYPE_CERT_REVOKE) {
-		digp->saved |= PGPRDIG_SAVED_VALID;	/* we have a valid binding sig */
-		if ((newest_digp->saved & PGPRDIG_SAVED_KEY_EXPIRE) != 0) {
-		    if ((!key_expire_sig_time || newest_digp->time > key_expire_sig_time)) {
-			digp->key_expire = newest_digp->key_expire;
-			digp->saved |= PGPRDIG_SAVED_KEY_EXPIRE;
-			key_expire_sig_time = newest_digp->time;
-			if (newest_digp->sigtype == PGPRSIGTYPE_SIGNED_KEY)
+	    if (newest_item && (sectionpkt.tag == PGPRTAG_USER_ID || sectionpkt.tag == PGPRTAG_PUBLIC_KEY) && newest_item->sigtype != PGPRSIGTYPE_CERT_REVOKE) {
+		item->saved |= PGPRITEM_SAVED_VALID;	/* we have a valid binding sig */
+		if ((newest_item->saved & PGPRITEM_SAVED_KEY_EXPIRE) != 0) {
+		    if ((!key_expire_sig_time || newest_item->time > key_expire_sig_time)) {
+			item->key_expire = newest_item->key_expire;
+			item->saved |= PGPRITEM_SAVED_KEY_EXPIRE;
+			key_expire_sig_time = newest_item->time;
+			if (newest_item->sigtype == PGPRSIGTYPE_SIGNED_KEY)
 			    key_expire_sig_time = 0xffffffffU;	/* expires from the direct signatures are final */
 		    }
 		}
-		if ((newest_digp->saved & PGPRDIG_SAVED_KEY_FLAGS) != 0) {
-		    if ((!key_flags_sig_time || newest_digp->time > key_flags_sig_time)) {
-			digp->key_flags = newest_digp->key_flags;
-			digp->saved |= PGPRDIG_SAVED_KEY_FLAGS;
-			key_flags_sig_time = newest_digp->time;
-			if (newest_digp->sigtype == PGPRSIGTYPE_SIGNED_KEY)
+		if ((newest_item->saved & PGPRITEM_SAVED_KEY_FLAGS) != 0) {
+		    if ((!key_flags_sig_time || newest_item->time > key_flags_sig_time)) {
+			item->key_flags = newest_item->key_flags;
+			item->saved |= PGPRITEM_SAVED_KEY_FLAGS;
+			key_flags_sig_time = newest_item->time;
+			if (newest_item->sigtype == PGPRSIGTYPE_SIGNED_KEY)
 			    key_flags_sig_time = 0xffffffffU;	/* key flags from the direct signatures are final */
 		    }
 		}
 		if (sectionpkt.tag == PGPRTAG_USER_ID) {
-		    if (!digp->userid || ((newest_digp->saved & PGPRDIG_SAVED_PRIMARY) != 0 && (digp->saved & PGPRDIG_SAVED_PRIMARY) == 0)) {
-			if ((rc = pgprPrtUserID(sectionpkt.tag, sectionpkt.body, sectionpkt.blen, digp)) != PGPR_OK)
+		    if (!item->userid || ((newest_item->saved & PGPRITEM_SAVED_PRIMARY) != 0 && (item->saved & PGPRITEM_SAVED_PRIMARY) == 0)) {
+			if ((rc = pgprPrtUserID(sectionpkt.tag, sectionpkt.body, sectionpkt.blen, item)) != PGPR_OK)
 			    break;
-			if ((newest_digp->saved & PGPRDIG_SAVED_PRIMARY) != 0)
-			    digp->saved |= PGPRDIG_SAVED_PRIMARY;
+			if ((newest_item->saved & PGPRITEM_SAVED_PRIMARY) != 0)
+			    item->saved |= PGPRITEM_SAVED_PRIMARY;
 		    }
 		}
 	    }
-	    newest_digp = pgprDigParamsFree(newest_digp);
+	    newest_item = pgprItemFree(newest_item);
 	}
 
 	if (p == pend)
@@ -226,29 +226,29 @@ pgprRC pgprPrtTransferablePubkey(const uint8_t * pkts, size_t pktlen, pgprDigPar
 
 	if (pkt.tag == PGPRTAG_SIGNATURE) {
 	    int isselfsig, needsig = 0;
-	    sigdigp = pgprDigParamsNew(pkt.tag);
+	    sigitem = pgprItemNew(pkt.tag);
 	    /* use the NoParams variant because we want to ignore non self-sigs */
-	    if ((rc = pgprPrtSigNoParams(pkt.tag, pkt.body, pkt.blen, sigdigp)) != PGPR_OK)
+	    if ((rc = pgprPrtSigNoParams(pkt.tag, pkt.body, pkt.blen, sigitem)) != PGPR_OK)
 		break;
-	    isselfsig = is_same_keyid(digp, sigdigp);
+	    isselfsig = is_same_keyid(item, sigitem);
 
 	    /* check if we understand this signature type and make sure it is in the right section */
-	    if (sigdigp->sigtype == PGPRSIGTYPE_KEY_REVOKE) {
+	    if (sigitem->sigtype == PGPRSIGTYPE_KEY_REVOKE) {
 		/* sections don't matter here */
 		needsig = 1;
-	    } else if (sigdigp->sigtype == PGPRSIGTYPE_SUBKEY_BINDING || sigdigp->sigtype == PGPRSIGTYPE_SUBKEY_REVOKE) {
+	    } else if (sigitem->sigtype == PGPRSIGTYPE_SUBKEY_BINDING || sigitem->sigtype == PGPRSIGTYPE_SUBKEY_REVOKE) {
 		if (sectionpkt.tag != PGPRTAG_PUBLIC_SUBKEY) {
 		    rc = PGPR_ERROR_BAD_PUBKEY_STRUCTURE;
 		    break;		/* signature in wrong section */
 		}
 		needsig = 1;
-	    } else if (sigdigp->sigtype == PGPRSIGTYPE_SIGNED_KEY) {
+	    } else if (sigitem->sigtype == PGPRSIGTYPE_SIGNED_KEY) {
 		if (sectionpkt.tag != PGPRTAG_PUBLIC_KEY) {
 		    rc = PGPR_ERROR_BAD_PUBKEY_STRUCTURE;
 		    break;		/* signature in wrong section */
 		}
 		needsig = isselfsig;
-	    } else if (sigdigp->sigtype == PGPRSIGTYPE_GENERIC_CERT || sigdigp->sigtype == PGPRSIGTYPE_PERSONA_CERT || sigdigp->sigtype == PGPRSIGTYPE_CASUAL_CERT || sigdigp->sigtype == PGPRSIGTYPE_POSITIVE_CERT || sigdigp->sigtype == PGPRSIGTYPE_CERT_REVOKE) {
+	    } else if (sigitem->sigtype == PGPRSIGTYPE_GENERIC_CERT || sigitem->sigtype == PGPRSIGTYPE_PERSONA_CERT || sigitem->sigtype == PGPRSIGTYPE_CASUAL_CERT || sigitem->sigtype == PGPRSIGTYPE_POSITIVE_CERT || sigitem->sigtype == PGPRSIGTYPE_CERT_REVOKE) {
 		if (sectionpkt.tag != PGPRTAG_USER_ID && sectionpkt.tag != PGPRTAG_USER_ATTRIBUTE) {
 		    rc = PGPR_ERROR_BAD_PUBKEY_STRUCTURE;
 		    break;		/* signature in wrong section */
@@ -264,38 +264,38 @@ pgprRC pgprPrtTransferablePubkey(const uint8_t * pkts, size_t pktlen, pgprDigPar
 		    break;
 		}
 		/* add MPIs so we can verify */
-	        if ((rc = pgprPrtSigParams(pkt.tag, pkt.body, pkt.blen, sigdigp)) != PGPR_OK)
+	        if ((rc = pgprPrtSigParams(pkt.tag, pkt.body, pkt.blen, sigitem)) != PGPR_OK)
 		    break;
-		if ((rc = pgprVerifySelf(digp, sigdigp, &mainpkt, &sectionpkt)) != PGPR_OK)
+		if ((rc = pgprVerifySelf(item, sigitem, &mainpkt, &sectionpkt)) != PGPR_OK)
 		    break;		/* verification failed */
-		if (sigdigp->sigtype != PGPRSIGTYPE_KEY_REVOKE)
+		if (sigitem->sigtype != PGPRSIGTYPE_KEY_REVOKE)
 		    haveselfsig = 1;
-		if (sigdigp->time > digp->key_mtime)
-		    digp->key_mtime = sigdigp->time;
+		if (sigitem->time > item->key_mtime)
+		    item->key_mtime = sigitem->time;
 	    }
 
 	    /* check if this signature is expired */
-	    if (needsig && (sigdigp->saved & PGPRDIG_SAVED_SIG_EXPIRE) != 0 && sigdigp->sig_expire) {
+	    if (needsig && (sigitem->saved & PGPRITEM_SAVED_SIG_EXPIRE) != 0 && sigitem->sig_expire) {
 		if (!now)
 		    now = pgprCurrentTime();
-		if (now < sigdigp->time || sigdigp->sig_expire < now - sigdigp->time)
+		if (now < sigitem->time || sigitem->sig_expire < now - sigitem->time)
 		    needsig = 0;	/* signature is expired, ignore */
 	    }
 
 	    /* handle key revokations right away */
-	    if (needsig && sigdigp->sigtype == PGPRSIGTYPE_KEY_REVOKE) {
-		digp->revoked = 1;				/* this is final */
-		digp->saved |= PGPRDIG_SAVED_VALID;		/* we have at least one correct self-sig */
+	    if (needsig && sigitem->sigtype == PGPRSIGTYPE_KEY_REVOKE) {
+		item->revoked = 1;				/* this is final */
+		item->saved |= PGPRITEM_SAVED_VALID;		/* we have at least one correct self-sig */
 		needsig = 0;
 	    }
 
 	    /* find the newest self-sig for all the other types */
-	    if (needsig && (!newest_digp || sigdigp->time >= newest_digp->time)) {
-		newest_digp = pgprDigParamsFree(newest_digp);
-		newest_digp = sigdigp;
-		sigdigp = NULL;
+	    if (needsig && (!newest_item || sigitem->time >= newest_item->time)) {
+		newest_item = pgprItemFree(newest_item);
+		newest_item = sigitem;
+		sigitem = NULL;
 	    }
-	    sigdigp = pgprDigParamsFree(sigdigp);
+	    sigitem = pgprItemFree(sigitem);
 	} else if (pkt.tag == PGPRTAG_USER_ID || pkt.tag == PGPRTAG_USER_ATTRIBUTE) {
 	    if (sectionpkt.tag == PGPRTAG_PUBLIC_SUBKEY) {
 		rc = PGPR_ERROR_BAD_PUBKEY_STRUCTURE;
@@ -314,8 +314,8 @@ pgprRC pgprPrtTransferablePubkey(const uint8_t * pkts, size_t pktlen, pgprDigPar
     }
     if (rc == PGPR_OK && p != pend)
 	rc = PGPR_ERROR_INTERNAL;
-    sigdigp = pgprDigParamsFree(sigdigp);
-    newest_digp = pgprDigParamsFree(newest_digp);
+    sigitem = pgprItemFree(sigitem);
+    newest_item = pgprItemFree(newest_item);
     return rc;
 }
 	
@@ -323,14 +323,14 @@ pgprRC pgprPrtTransferablePubkey(const uint8_t * pkts, size_t pktlen, pgprDigPar
  * made sure that the signatures are self-signatures and verified ok. */
 /* This is similar to gnupg's merge_selfsigs_subkey() function */
 pgprRC pgprPrtTransferablePubkeySubkeys(const uint8_t *pkts, size_t pktlen,
-			pgprDigParams mainkey, pgprDigParams **subkeys,
+			pgprItem mainkey, pgprItem **subkeys,
 			int *subkeysCount)
 {
     const uint8_t *p = pkts;
     const uint8_t *pend = pkts + pktlen;
-    pgprDigParams *digps = NULL, subdigp = NULL;
-    pgprDigParams sigdigp = NULL;
-    pgprDigParams newest_digp = NULL;
+    pgprItem *items = NULL, subitem = NULL;
+    pgprItem sigitem = NULL;
+    pgprItem newest_item = NULL;
     pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;		/* assume failure */
     int count = 0;
     int alloced = 10;
@@ -351,7 +351,7 @@ pgprRC pgprPrtTransferablePubkeySubkeys(const uint8_t *pkts, size_t pktlen,
 
     memset(&subkeypkt, 0, sizeof(subkeypkt));
 
-    digps = pgprMalloc(alloced * sizeof(*digps));
+    items = pgprMalloc(alloced * sizeof(*items));
     rc = PGPR_OK;
     while (rc == PGPR_OK) {
 	if (p < pend) {
@@ -370,18 +370,18 @@ pgprRC pgprPrtTransferablePubkeySubkeys(const uint8_t *pkts, size_t pktlen,
 	/* finish up this subkey if we are at the end or a new one comes next */
 	if (p == pend || pkt.tag == PGPRTAG_PUBLIC_SUBKEY) {
 	    /* take the data from the newest signature */
-	    if (newest_digp && subdigp && newest_digp->sigtype == PGPRSIGTYPE_SUBKEY_BINDING) {
-		subdigp->saved |= PGPRDIG_SAVED_VALID;	/* at least one binding sig */
-		if ((newest_digp->saved & PGPRDIG_SAVED_KEY_FLAGS) != 0) {
-		    subdigp->key_flags = newest_digp->key_flags;
-		    subdigp->saved |= PGPRDIG_SAVED_KEY_FLAGS;
+	    if (newest_item && subitem && newest_item->sigtype == PGPRSIGTYPE_SUBKEY_BINDING) {
+		subitem->saved |= PGPRITEM_SAVED_VALID;	/* at least one binding sig */
+		if ((newest_item->saved & PGPRITEM_SAVED_KEY_FLAGS) != 0) {
+		    subitem->key_flags = newest_item->key_flags;
+		    subitem->saved |= PGPRITEM_SAVED_KEY_FLAGS;
 		}
-		if ((newest_digp->saved & PGPRDIG_SAVED_KEY_EXPIRE) != 0) {
-		    subdigp->key_expire = newest_digp->key_expire;
-		    subdigp->saved |= PGPRDIG_SAVED_KEY_EXPIRE;
+		if ((newest_item->saved & PGPRITEM_SAVED_KEY_EXPIRE) != 0) {
+		    subitem->key_expire = newest_item->key_expire;
+		    subitem->saved |= PGPRITEM_SAVED_KEY_EXPIRE;
 		}
 	    }
-	    newest_digp = pgprDigParamsFree(newest_digp);
+	    newest_item = pgprItemFree(newest_item);
 	}
 
 	if (p == pend)
@@ -389,78 +389,78 @@ pgprRC pgprPrtTransferablePubkeySubkeys(const uint8_t *pkts, size_t pktlen,
 	p += (pkt.body - pkt.head) + pkt.blen;
 
 	if (pkt.tag == PGPRTAG_PUBLIC_SUBKEY) {
-	    subdigp = pgprDigParamsNew(PGPRTAG_PUBLIC_SUBKEY);
+	    subitem = pgprItemNew(PGPRTAG_PUBLIC_SUBKEY);
 	    /* Copy keyid of main key for error messages */
-	    memcpy(subdigp->mainid, mainkey->signid, sizeof(mainkey->signid));
+	    memcpy(subitem->mainid, mainkey->signid, sizeof(mainkey->signid));
 	    /* Copy UID from main key to subkey */
-	    subdigp->userid = mainkey->userid ? pgprStrdup(mainkey->userid) : NULL;
+	    subitem->userid = mainkey->userid ? pgprStrdup(mainkey->userid) : NULL;
 	    /* if the main key is revoked, all the subkeys are also revoked */
-	    subdigp->revoked = mainkey->revoked ? 2 : 0;
-	    if (pgprPrtKey(pkt.tag, pkt.body, pkt.blen, subdigp)) {
-		subdigp = pgprDigParamsFree(subdigp);
+	    subitem->revoked = mainkey->revoked ? 2 : 0;
+	    if (pgprPrtKey(pkt.tag, pkt.body, pkt.blen, subitem)) {
+		subitem = pgprItemFree(subitem);
 	    } else {
 		if (count == alloced) {
 		    alloced <<= 1;
-		    digps = pgprRealloc(digps, alloced * sizeof(*digps));
+		    items = pgprRealloc(items, alloced * sizeof(*items));
 		}
-		digps[count++] = subdigp;
+		items[count++] = subitem;
 		subkeypkt = pkt;
 	    }
-	} else if (pkt.tag == PGPRTAG_SIGNATURE && subdigp != NULL) {
+	} else if (pkt.tag == PGPRTAG_SIGNATURE && subitem != NULL) {
 	    int needsig = 0;
-	    sigdigp = pgprDigParamsNew(pkt.tag);
+	    sigitem = pgprItemNew(pkt.tag);
 	    /* we use the NoParams variant because we do not verify */
-	    if (pgprPrtSigNoParams(pkt.tag, pkt.body, pkt.blen, sigdigp) != PGPR_OK) {
-		sigdigp = pgprDigParamsFree(sigdigp);
+	    if (pgprPrtSigNoParams(pkt.tag, pkt.body, pkt.blen, sigitem) != PGPR_OK) {
+		sigitem = pgprItemFree(sigitem);
 	    }
 
 	    /* check if we understand this signature */
-	    if (sigdigp && sigdigp->sigtype == PGPRSIGTYPE_SUBKEY_REVOKE) {
+	    if (sigitem && sigitem->sigtype == PGPRSIGTYPE_SUBKEY_REVOKE) {
 		needsig = 1;
-	    } else if (sigdigp && sigdigp->sigtype == PGPRSIGTYPE_SUBKEY_BINDING) {
+	    } else if (sigitem && sigitem->sigtype == PGPRSIGTYPE_SUBKEY_BINDING) {
 		/* insist on a embedded primary key binding signature if this is used for signing */
-		int key_flags = (sigdigp->saved & PGPRDIG_SAVED_KEY_FLAGS) ? sigdigp->key_flags : 0;
-		if (!(key_flags & 0x02) || verifyPrimaryBindingSig(&mainpkt, &subkeypkt, subdigp, sigdigp) == PGPR_OK)
+		int key_flags = (sigitem->saved & PGPRITEM_SAVED_KEY_FLAGS) ? sigitem->key_flags : 0;
+		if (!(key_flags & 0x02) || verifyPrimaryBindingSig(&mainpkt, &subkeypkt, subitem, sigitem) == PGPR_OK)
 		    needsig = 1;
 	    }
 
 	    /* check if this signature is expired */
-	    if (needsig && (sigdigp->saved & PGPRDIG_SAVED_SIG_EXPIRE) != 0 && sigdigp->sig_expire) {
+	    if (needsig && (sigitem->saved & PGPRITEM_SAVED_SIG_EXPIRE) != 0 && sigitem->sig_expire) {
 		if (!now)
 		    now = pgprCurrentTime();
-		if (now < sigdigp->time || sigdigp->sig_expire < now - sigdigp->time)
+		if (now < sigitem->time || sigitem->sig_expire < now - sigitem->time)
 		    needsig = 0;	/* signature is expired, ignore */
 	    }
 
 	    /* handle subkey revokations right away */
-	    if (needsig && sigdigp->sigtype == PGPRSIGTYPE_SUBKEY_REVOKE) {
-		if (subdigp->revoked != 2)
-		    subdigp->revoked = 1;
-		subdigp->saved |= PGPRDIG_SAVED_VALID;	/* at least one binding sig */
+	    if (needsig && sigitem->sigtype == PGPRSIGTYPE_SUBKEY_REVOKE) {
+		if (subitem->revoked != 2)
+		    subitem->revoked = 1;
+		subitem->saved |= PGPRITEM_SAVED_VALID;	/* at least one binding sig */
 		needsig = 0;
 	    }
 
 	    /* find the newest self-sig for all the other types */
-	    if (needsig && (!newest_digp || sigdigp->time >= newest_digp->time)) {
-		newest_digp = pgprDigParamsFree(newest_digp);
-		newest_digp = sigdigp;
-		sigdigp = NULL;
+	    if (needsig && (!newest_item || sigitem->time >= newest_item->time)) {
+		newest_item = pgprItemFree(newest_item);
+		newest_item = sigitem;
+		sigitem = NULL;
 	    }
-	    sigdigp = pgprDigParamsFree(sigdigp);
+	    sigitem = pgprItemFree(sigitem);
 	}
     }
     if (rc == PGPR_OK && p != pend)
 	rc = PGPR_ERROR_INTERNAL;
-    sigdigp = pgprDigParamsFree(sigdigp);
-    newest_digp = pgprDigParamsFree(newest_digp);
+    sigitem = pgprItemFree(sigitem);
+    newest_item = pgprItemFree(newest_item);
 
     if (rc == PGPR_OK) {
-	*subkeys = pgprRealloc(digps, count * sizeof(*digps));
+	*subkeys = pgprRealloc(items, count * sizeof(*items));
 	*subkeysCount = count;
     } else {
 	for (i = 0; i < count; i++)
-	    pgprDigParamsFree(digps[i]);
-	free(digps);
+	    pgprItemFree(items[i]);
+	free(items);
     }
     return rc;
 }

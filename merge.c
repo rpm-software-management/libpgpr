@@ -76,17 +76,17 @@ static pgprRC pgprMergePktNew(pgprPkt *pkt, int source, pgprKeyID_t primaryid, p
     mp->source = source;
     mp->hashlen = pkt->blen;
     if (pkt->tag == PGPRTAG_SIGNATURE) {
-        pgprDigParams sigdigp = pgprDigParamsNew(pkt->tag);
-	rc = pgprPrtSigNoParams(pkt->tag, pkt->body, pkt->blen, sigdigp);
+        pgprItem sigitem = pgprItemNew(pkt->tag);
+	rc = pgprPrtSigNoParams(pkt->tag, pkt->body, pkt->blen, sigitem);
 	if (rc == PGPR_OK) {
-	    mp->time = sigdigp->time;
-	    memcpy(mp->signid, sigdigp->signid, sizeof(pgprKeyID_t));
+	    mp->time = sigitem->time;
+	    memcpy(mp->signid, sigitem->signid, sizeof(pgprKeyID_t));
 	    if (primaryid && memcmp(primaryid, mp->signid, sizeof(pgprKeyID_t)) == 0)
 		mp->selfsig = 1;
-	    if (sigdigp->version > 3 && sigdigp->hashlen > 6)
-		mp->hashlen = sigdigp->hashlen - 6;	/* 6: size of trailer */
+	    if (sigitem->version > 3 && sigitem->hashlen > 6)
+		mp->hashlen = sigitem->hashlen - 6;	/* 6: size of trailer */
 	}
-	pgprDigParamsFree(sigdigp);
+	pgprItemFree(sigitem);
     }
     mp->hash = pgprMergePktCalcHash(mp);
     if (rc != PGPR_OK)

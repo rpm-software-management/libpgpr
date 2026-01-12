@@ -38,7 +38,7 @@ struct pgprDigAlg_s {
 /*
  * Values parsed from OpenPGP signature/pubkey packet(s).
  */
-struct pgprDigParams_s {
+struct pgprItem_s {
     uint8_t tag;
     char * userid;		/*!< key user id */
     uint8_t key_flags;		/*!< key usage flags */
@@ -57,14 +57,14 @@ struct pgprDigParams_s {
     uint32_t sig_expire;	/*!< signature expire time. */
     int revoked;		/*!< is the key revoked? */
     int saved;			/*!< Various flags. */
-#define	PGPRDIG_SAVED_TIME		(1 << 0)
-#define	PGPRDIG_SAVED_ID		(1 << 1)
-#define	PGPRDIG_SAVED_KEY_FLAGS		(1 << 2)
-#define	PGPRDIG_SAVED_KEY_EXPIRE	(1 << 3)
-#define	PGPRDIG_SAVED_PRIMARY		(1 << 4)
-#define	PGPRDIG_SAVED_VALID		(1 << 5)
-#define	PGPRDIG_SAVED_SIG_EXPIRE	(1 << 6)
-#define	PGPRDIG_SAVED_FP		(1 << 7)
+#define	PGPRITEM_SAVED_TIME		(1 << 0)
+#define	PGPRITEM_SAVED_ID		(1 << 1)
+#define	PGPRITEM_SAVED_KEY_FLAGS		(1 << 2)
+#define	PGPRITEM_SAVED_KEY_EXPIRE	(1 << 3)
+#define	PGPRITEM_SAVED_PRIMARY		(1 << 4)
+#define	PGPRITEM_SAVED_VALID		(1 << 5)
+#define	PGPRITEM_SAVED_SIG_EXPIRE	(1 << 6)
+#define	PGPRITEM_SAVED_FP		(1 << 7)
     uint8_t * embedded_sig;	/* embedded signature */
     size_t embedded_sig_len;	/* length of the embedded signature */
     pgprKeyID_t mainid;		/* key id of main key if this is a subkey */
@@ -138,19 +138,19 @@ pgprRC pgprDigAlgInitSignature(pgprDigAlg alg, int algo);
 
 /* pgpr packet data extraction */
 PGPR_GNUC_INTERNAL
-pgprRC pgprPrtKey(pgprTag tag, const uint8_t *h, size_t hlen, pgprDigParams _digp);
+pgprRC pgprPrtKey(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem _digp);
 
 PGPR_GNUC_INTERNAL
-pgprRC pgprPrtSig(pgprTag tag, const uint8_t *h, size_t hlen, pgprDigParams _digp);
+pgprRC pgprPrtSig(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem _digp);
 
 PGPR_GNUC_INTERNAL
-pgprRC pgprPrtSigNoParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprDigParams _digp);
+pgprRC pgprPrtSigNoParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem _digp);
 
 PGPR_GNUC_INTERNAL
-pgprRC pgprPrtSigParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprDigParams sigp);
+pgprRC pgprPrtSigParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem sigp);
 
 PGPR_GNUC_INTERNAL
-pgprRC pgprPrtUserID(pgprTag tag, const uint8_t *h, size_t hlen, pgprDigParams _digp);
+pgprRC pgprPrtUserID(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem _digp);
 
 PGPR_GNUC_INTERNAL
 pgprRC pgprGetKeyFingerprint(const uint8_t *h, size_t hlen, uint8_t **fp, size_t *fplen);
@@ -161,19 +161,19 @@ pgprRC pgprGetKeyID(const uint8_t *h, size_t hlen, pgprKeyID_t keyid);
 
 /* diagnostics */
 PGPR_GNUC_INTERNAL
-void pgprAddLint(pgprDigParams digp, char **lints, pgprRC error);
+void pgprAddLint(pgprItem digp, char **lints, pgprRC error);
 
 /* transferable pubkey parsing */
 PGPR_GNUC_INTERNAL
-pgprRC pgprPrtTransferablePubkey(const uint8_t * pkts, size_t pktlen, pgprDigParams digp);
+pgprRC pgprPrtTransferablePubkey(const uint8_t * pkts, size_t pktlen, pgprItem digp);
 
 PGPR_GNUC_INTERNAL
-pgprRC pgprPrtTransferablePubkeySubkeys(const uint8_t * pkts, size_t pktlen, pgprDigParams mainkey,
-				   pgprDigParams **subkeys, int *subkeysCount);
+pgprRC pgprPrtTransferablePubkeySubkeys(const uint8_t * pkts, size_t pktlen, pgprItem mainkey,
+				   pgprItem **subkeys, int *subkeysCount);
 
 /* signature verification */
 PGPR_GNUC_INTERNAL
-pgprRC pgprVerifySignatureRaw(pgprDigParams key, pgprDigParams sig, const uint8_t *hash, size_t hashlen);
+pgprRC pgprVerifySignatureRaw(pgprItem key, pgprItem sig, const uint8_t *hash, size_t hashlen);
 
 /* pubkey merging */
 PGPR_GNUC_INTERNAL
