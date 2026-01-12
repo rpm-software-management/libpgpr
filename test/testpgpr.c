@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include "../pgpr.h"
 
@@ -35,6 +36,28 @@ static char *slurp(const char *fn, size_t *lenp)
     return buf;
 }
 
+pgprDigParams
+select_subkey(const uint8_t *pkts, size_t pktlen, pgprDigParams key, int subkey)
+{
+    pgprDigParams *subkeys;
+    int nsubkeys = 0;
+    if (pgprPubkeyParseSubkeys(pkts, pktlen, key, &subkeys, &nsubkeys) != PGPR_OK) {
+	fprintf(stderr, "subkeys parse error\n");
+	exit(1);
+    }
+    if (subkey <= 0 || subkey > nsubkeys) {
+	fprintf(stderr, "no subkey #%d\n", subkey);
+	exit(1);
+    }
+    pgprDigParamsFree(key);
+    key = subkeys[subkey - 1];
+    for (; nsubkeys > 0; nsubkeys--)
+	if (nsubkeys != subkey)
+	    pgprDigParamsFree(subkeys[nsubkeys - 1]);
+    free(subkeys);
+    return key;
+}
+
 static int
 verifysignature(int argc, char **argv)
 {
@@ -55,14 +78,25 @@ verifysignature(int argc, char **argv)
     size_t headerlen;
     void *hash;
     size_t hashlen;
+    int c;
+    int subkey = 0;
 
-    if (argc != 4) {
-	fprintf(stderr, "usage: testpgpr verifysignature <pubkey> <sig> <data>\n");
+    while ((c = getopt(argc, argv, "s:")) >= 0) {
+	switch(c) {
+	case 's':
+	    subkey = atoi(optarg);
+	    break;
+	default:
+	    break;
+	}
+    }
+    if (argc - optind != 3) {
+	fprintf(stderr, "usage: testpgpr verifysignature [-s subkey] <pubkey> <sig> <data>\n");
 	exit(1);
     }
-    pubkey_a = slurp(argv[1], NULL);
-    signature_a = slurp(argv[2], NULL);
-    data = slurp(argv[3], &datalen);
+    pubkey_a = slurp(argv[optind], NULL);
+    signature_a = slurp(argv[optind + 1], NULL);
+    data = slurp(argv[optind + 2], &datalen);
 
     if (pgprArmorUnwrap("PUBLIC KEY BLOCK", pubkey_a, &pubkey, &pubkeyl) != PGPR_OK) {
 	fprintf(stderr, "pubkey unwrap error\n");
@@ -81,6 +115,9 @@ verifysignature(int argc, char **argv)
 	exit(1);
     }
     free(lints);
+
+    if (subkey)
+	key = select_subkey(pubkey, pubkeyl, key, subkey);
 
     lints = 0;
     if (pgprSignatureParse(signature, signaturel, &sig, &lints) != PGPR_OK) {
@@ -143,13 +180,23 @@ keyinfo(int argc, char **argv)
     const unsigned char *keyid;
     const unsigned char *keyfp;
     size_t keyfp_len = 0;
-    int i;
+    int c, i;
+    int subkey = 0;
 
-    if (argc != 2) {
-	fprintf(stderr, "usage: testpgpr keyinfo <pubkey>\n");
+    while ((c = getopt(argc, argv, "s:")) >= 0) {
+	switch(c) {
+	case 's':
+	    subkey = atoi(optarg);
+	    break;
+	default:
+	    break;
+	}
+    }
+    if (argc - optind != 1) {
+	fprintf(stderr, "usage: testpgpr keyinfo [-s subkey] <pubkey>\n");
 	exit(1);
     }
-    pubkey_a = slurp(argv[1], NULL);
+    pubkey_a = slurp(argv[optind], NULL);
     if (pgprArmorUnwrap("PUBLIC KEY BLOCK", pubkey_a, &pubkey, &pubkeyl) != PGPR_OK) {
 	fprintf(stderr, "pubkey unwrap error\n");
 	exit(1);
@@ -162,6 +209,8 @@ keyinfo(int argc, char **argv)
 	    fprintf(stderr, "pubkey parse error\n");
 	exit(1);
     }
+    if (subkey)
+	key = select_subkey(pubkey, pubkeyl, key, subkey);
     printf("Version: %d\n", pgprDigParamsVersion(key));
     printf("CreationTime: %d\n", pgprDigParamsCreationTime(key));
     printf("Algorithm: %d\n", pgprDigParamsPubkeyAlgo(key));
