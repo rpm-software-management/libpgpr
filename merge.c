@@ -304,7 +304,7 @@ static pgprRC pgprMergeKeyConcat(pgprMergeKey *mk, uint8_t **pktsm, size_t *pktl
     return PGPR_OK;
 }
 
-pgprRC pgprMergeKeys(const uint8_t *pkts1, size_t pktlen1, const uint8_t *pkts2, size_t pktlen2, uint8_t **pktsm, size_t *pktlenm) {
+pgprRC pgprPubkeyMerge(const uint8_t *pkts1, size_t pktlen1, const uint8_t *pkts2, size_t pktlen2, uint8_t **pktsm, size_t *pktlenm) {
     pgprRC rc;
     pgprMergeKey *mk = pgprMergeKeyNew();
 

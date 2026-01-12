@@ -243,8 +243,3 @@ pgprRC pgprPubkeyFingerprint(const uint8_t * pkts, size_t pktslen,
     return pgprGetKeyFingerprint(pkt.body, pkt.blen, fp, fplen);
 }
 
-pgprRC pgprPubkeyMerge(const uint8_t *pkts1, size_t pkts1len, const uint8_t *pkts2, size_t pkts2len, uint8_t **pktsm, size_t *pktsmlen)
-{
-    return pgprMergeKeys(pkts1, pkts1len, pkts2, pkts2len, pktsm, pktsmlen);
-}
-

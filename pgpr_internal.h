@@ -175,10 +175,6 @@ pgprRC pgprPrtTransferablePubkeySubkeys(const uint8_t * pkts, size_t pktlen, pgp
 PGPR_GNUC_INTERNAL
 pgprRC pgprVerifySignatureRaw(pgprItem key, pgprItem sig, const uint8_t *hash, size_t hashlen);
 
-/* pubkey merging */
-PGPR_GNUC_INTERNAL
-pgprRC pgprMergeKeys(const uint8_t *pkts1, size_t pktlen1, const uint8_t *pkts2, size_t pktlen2, uint8_t **pktsm, size_t *pktlenm);
-
 /* misc */
 PGPR_GNUC_INTERNAL
 uint32_t pgprCurrentTime(void);
