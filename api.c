@@ -205,6 +205,10 @@ pgprRC pgprVerifySignature(pgprDigParams key, pgprDigParams sig, const uint8_t *
 	rc = PGPR_ERROR_KEY_NOT_VALID;
 	if (lints)
 	    pgprAddLint(key, lints, rc);
+    } else if (key->tag == PGPRTAG_PUBLIC_KEY && (key->saved & PGPRDIG_SAVED_KEY_FLAGS) != 0 && (key->key_flags & 0x02) == 0) {
+	rc = PGPR_ERROR_KEY_NO_SIGNING;
+	if (lints)
+	    pgprAddLint(key, lints, rc);
     } else if (key->tag == PGPRTAG_PUBLIC_SUBKEY && ((key->saved & PGPRDIG_SAVED_KEY_FLAGS) == 0 || (key->key_flags & 0x02) == 0)) {
 	rc = PGPR_ERROR_KEY_NO_SIGNING;
 	if (lints)
