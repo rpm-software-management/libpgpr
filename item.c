@@ -14,7 +14,7 @@ pgprItem pgprItemNew(uint8_t tag)
 pgprItem pgprItemFree(pgprItem item)
 {
     if (item) {
-	pgprDigAlgFree(item->alg);
+	pgprAlgFree(item->alg);
 	free(item->userid);
 	free(item->hash);
 	free(item->embedded_sig);
@@ -163,96 +163,6 @@ exit:
 	pgprItemFree(item);
     }
     return rc;
-}
-
-pgprRC pgprVerifySignature(pgprItem key, pgprItem sig, const uint8_t *hash, size_t hashlen, char **lints)
-{
-    pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;	/* assume failure */
-
-    if (lints)
-        *lints = NULL;
-
-    if (!sig || sig->tag != PGPRTAG_SIGNATURE || (sig->sigtype != PGPRSIGTYPE_BINARY && sig->sigtype != PGPRSIGTYPE_TEXT && sig->sigtype != PGPRSIGTYPE_STANDALONE))
-	goto exit;
-    if (!key || (key->tag != PGPRTAG_PUBLIC_KEY && key->tag != PGPRTAG_PUBLIC_SUBKEY))
-	goto exit;
-
-    rc = pgprVerifySignatureRaw(key, sig, hash, hashlen);
-    if (rc != PGPR_OK)
-	goto exit;
-
-    /* now check the meta information of the signature */
-    if ((sig->saved & PGPRITEM_SAVED_SIG_EXPIRE) != 0 && sig->sig_expire) {
-	uint32_t now = pgprCurrentTime();
-	if (now < sig->time) {
-	    if (lints)
-		pgprAddLint(sig, lints, PGPR_ERROR_SIGNATURE_FROM_FUTURE);
-	    rc = PGPR_ERROR_SIGNATURE_FROM_FUTURE;
-	} else if (sig->sig_expire < now - sig->time) {
-	    if (lints)
-		pgprAddLint(sig, lints, PGPR_ERROR_SIGNATURE_EXPIRED);
-	    rc = PGPR_ERROR_SIGNATURE_EXPIRED;
-	}
-	if (rc != PGPR_OK)
-	    goto exit;
-    }
-    /* now check the meta information of the key */
-    if (key->revoked) {
-	rc = key->revoked == 2 ? PGPR_ERROR_PRIMARY_REVOKED : PGPR_ERROR_KEY_REVOKED;
-	if (lints)
-	    pgprAddLint(key, lints, rc);
-    } else if ((key->saved & PGPRITEM_SAVED_VALID) == 0) {
-	rc = PGPR_ERROR_KEY_NOT_VALID;
-	if (lints)
-	    pgprAddLint(key, lints, rc);
-    } else if (key->tag == PGPRTAG_PUBLIC_KEY && (key->saved & PGPRITEM_SAVED_KEY_FLAGS) != 0 && (key->key_flags & 0x02) == 0) {
-	rc = PGPR_ERROR_KEY_NO_SIGNING;
-	if (lints)
-	    pgprAddLint(key, lints, rc);
-    } else if (key->tag == PGPRTAG_PUBLIC_SUBKEY && ((key->saved & PGPRITEM_SAVED_KEY_FLAGS) == 0 || (key->key_flags & 0x02) == 0)) {
-	rc = PGPR_ERROR_KEY_NO_SIGNING;
-	if (lints)
-	    pgprAddLint(key, lints, rc);
-    } else if (key->time > sig->time) {
-	rc = PGPR_ERROR_KEY_CREATED_AFTER_SIG;
-	if (lints)
-	    pgprAddLint(key, lints, rc);
-    } else if ((key->saved & PGPRITEM_SAVED_KEY_EXPIRE) != 0 && key->key_expire && key->key_expire < sig->time - key->time) {
-	rc = PGPR_ERROR_KEY_EXPIRED;
-	if (lints)
-	    pgprAddLint(key, lints, rc);
-    }
-exit:
-    return rc;
-}
-
-pgprRC pgprVerifySignatureNoKey(pgprItem sig, const uint8_t *hash, size_t hashlen, char **lints)
-{
-    if (lints)
-        *lints = NULL;
-    if (!sig || sig->tag != PGPRTAG_SIGNATURE || (sig->sigtype != PGPRSIGTYPE_BINARY && sig->sigtype != PGPRSIGTYPE_TEXT && sig->sigtype != PGPRSIGTYPE_STANDALONE))
-	return PGPR_ERROR_BAD_SIGNATURE;
-    if (hash) {
-	if (hashlen == 0 || hashlen != pgprDigestLength(sig->hash_algo))
-	    return PGPR_ERROR_INTERNAL;
-	/* Compare leading 16 bits of digest for a quick check. */
-	if (memcmp(hash, sig->signhash16, 2) != 0)
-	    return PGPR_ERROR_SIGNATURE_VERIFICATION;
-    }
-    /* now check the meta information of the signature */
-    if ((sig->saved & PGPRITEM_SAVED_SIG_EXPIRE) != 0 && sig->sig_expire) {
-	uint32_t now = pgprCurrentTime();
-	if (now < sig->time) {
-	    if (lints)
-		pgprAddLint(sig, lints, PGPR_ERROR_SIGNATURE_FROM_FUTURE);
-	    return PGPR_ERROR_SIGNATURE_FROM_FUTURE;
-	} else if (sig->sig_expire < now - sig->time) {
-	    if (lints)
-		pgprAddLint(sig, lints, PGPR_ERROR_SIGNATURE_EXPIRED);
-	    return PGPR_ERROR_SIGNATURE_EXPIRED;
-	}
-    }
-    return PGPR_OK;
 }
 
 pgprRC pgprPubkeyParse(const uint8_t * pkts, size_t pktlen, pgprItem * ret, char **lints)

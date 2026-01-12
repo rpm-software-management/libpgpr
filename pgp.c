@@ -1,5 +1,5 @@
 /*
- * Routines to handle RFC-2440 detached signatures.
+ * Routines to parse pgp key/signature packets
  */
 
 #include <string.h>
@@ -186,15 +186,15 @@ pgprRC pgprDecodePkt(const uint8_t *p, size_t plen, pgprPkt *pkt)
  * Key/Signature algorithm parameter handling and signature verification
  */
 
-static pgprDigAlg pgprDigAlgNew(void)
+static pgprAlg pgprAlgNew(void)
 {
-    pgprDigAlg alg;
+    pgprAlg alg;
     alg = pgprCalloc(1, sizeof(*alg));
     alg->mpis = -1;
     return alg;
 }
 
-pgprDigAlg pgprDigAlgFree(pgprDigAlg alg)
+pgprAlg pgprAlgFree(pgprAlg alg)
 {
     if (alg) {
         if (alg->free)
@@ -210,7 +210,7 @@ static inline int pgprMpiLen(const uint8_t *p)
     return 2 + ((mpi_bits + 7) >> 3);
 }
 
-static pgprRC pgprDigAlgProcessMpis(pgprDigAlg alg, const int mpis,
+static pgprRC pgprAlgProcessMpis(pgprAlg alg, const int mpis,
 		       const uint8_t *p, const uint8_t *const pend)
 {
     int i = 0;
@@ -231,36 +231,6 @@ static pgprRC pgprDigAlgProcessMpis(pgprDigAlg alg, const int mpis,
 
     /* Does the size and number of MPI's match our expectations? */
     return p == pend && i == mpis ? PGPR_OK : PGPR_ERROR_CORRUPT_PGP_PACKET;
-}
-
-static pgprRC pgprDigAlgVerify(pgprDigAlg keyalg, pgprDigAlg sigalg,
-			const uint8_t *hash, size_t hashlen, int hashalgo)
-{
-    if (keyalg && sigalg && sigalg->verify)
-	return sigalg->verify(keyalg, sigalg, hash, hashlen, hashalgo);
-    return PGPR_ERROR_SIGNATURE_VERIFICATION;
-}
-
-pgprRC pgprVerifySignatureRaw(pgprItem key, pgprItem sig, const uint8_t *hash, size_t hashlen)
-{
-    pgprRC rc = PGPR_ERROR_SIGNATURE_VERIFICATION; /* assume failure */
-
-    /* make sure the parameters are correct and the pubkey algo matches */
-    if (sig == NULL || sig->tag != PGPRTAG_SIGNATURE)
-	return PGPR_ERROR_INTERNAL;
-    if (key == NULL || (key->tag != PGPRTAG_PUBLIC_KEY && key->tag != PGPRTAG_PUBLIC_SUBKEY))
-	return PGPR_ERROR_INTERNAL;
-    if (hash == NULL || hashlen == 0 || hashlen != pgprDigestLength(sig->hash_algo))
-	return PGPR_ERROR_INTERNAL;
-    if (sig->pubkey_algo != key->pubkey_algo)
-	return PGPR_ERROR_SIGNATURE_VERIFICATION;
-
-    /* Compare leading 16 bits of digest for a quick check. */
-    if (memcmp(hash, sig->signhash16, 2) != 0)
-	rc = PGPR_ERROR_SIGNATURE_VERIFICATION;
-    else
-	rc = pgprDigAlgVerify(key->alg, sig->alg, hash, hashlen, sig->hash_algo);
-    return rc;
 }
 
 
@@ -313,10 +283,10 @@ static pgprRC pgprPrtKeyParams(pgprTag tag, const uint8_t *h, size_t hlen,
 	    return PGPR_ERROR_UNSUPPORTED_CURVE;
 	p += len + 1;
     }
-    keyp->alg = pgprDigAlgNew();
-    rc = pgprDigAlgInitPubkey(keyp->alg, keyp->pubkey_algo, curve);
+    keyp->alg = pgprAlgNew();
+    rc = pgprAlgInitPubkey(keyp->alg, keyp->pubkey_algo, curve);
     if (rc == PGPR_OK)
-	rc = pgprDigAlgProcessMpis(keyp->alg, keyp->alg->mpis, p, h + hlen);
+	rc = pgprAlgProcessMpis(keyp->alg, keyp->alg->mpis, p, h + hlen);
     return rc;
 }
 
@@ -348,7 +318,7 @@ static pgprRC pgprValidateKeyParamsSize(int pubkey_algo, const uint8_t *p, size_
     }
     if (nmpis < 0)
 	return PGPR_ERROR_UNSUPPORTED_ALGORITHM;
-    return pgprDigAlgProcessMpis(NULL, nmpis, p, p + plen);
+    return pgprAlgProcessMpis(NULL, nmpis, p, p + plen);
 }
 
 pgprRC pgprPrtSigParams(pgprTag tag, const uint8_t *h, size_t hlen,
@@ -358,12 +328,12 @@ pgprRC pgprPrtSigParams(pgprTag tag, const uint8_t *h, size_t hlen,
     /* We can't handle more than one sig at a time */
     if (sigp->alg || !sigp->mpi_offset || sigp->mpi_offset > hlen || sigp->tag != PGPRTAG_SIGNATURE)
 	return PGPR_ERROR_INTERNAL;
-    sigp->alg = pgprDigAlgNew();
-    rc = pgprDigAlgInitSignature(sigp->alg, sigp->pubkey_algo);
+    sigp->alg = pgprAlgNew();
+    rc = pgprAlgInitSignature(sigp->alg, sigp->pubkey_algo);
     if (rc == PGPR_OK)
-	rc = pgprDigAlgProcessMpis(sigp->alg, sigp->alg->mpis, h + sigp->mpi_offset, h + hlen);
+	rc = pgprAlgProcessMpis(sigp->alg, sigp->alg->mpis, h + sigp->mpi_offset, h + hlen);
     if (rc != PGPR_OK) {
-	pgprDigAlgFree(sigp->alg);
+	pgprAlgFree(sigp->alg);
 	sigp->alg = NULL;
     }
     return rc;
@@ -550,9 +520,9 @@ static pgprRC pgprPrtSubType(const uint8_t *h, size_t hlen, pgprItem item, int h
 
 	case PGPRSUBTYPE_SIG_EXPIRE_TIME:
 	    if (!hashed)
-		break; /* RFC 4880 §5.2.3.4 creation time MUST be hashed */
+		break;	/* RFC 4880 §5.2.3.4 creation time MUST be hashed */
 	    if (plen - 1 != 4)
-		break; /* other lengths not understood */
+		break;	/* other lengths not understood */
 	    if (item->saved & PGPRITEM_SAVED_SIG_EXPIRE)
 		return PGPR_ERROR_DUPLICATE_DATA;
 	    impl = 1;
@@ -576,7 +546,7 @@ static pgprRC pgprPrtSubType(const uint8_t *h, size_t hlen, pgprItem item, int h
 	    if (!hashed)
 		break;	/* Subpackets in the unhashed section cannot be trusted */
 	    if (plen - 1 != 1)
-		break; /* other lengths not understood */
+		break;	/* other lengths not understood */
 	    impl = 1;
 	    if (p[1])
 		item->saved |= PGPRITEM_SAVED_PRIMARY;
@@ -767,6 +737,7 @@ pgprRC pgprPrtKey(pgprTag tag, const uint8_t *h, size_t hlen,
 
     if (item->version || item->saved)
 	return PGPR_ERROR_INTERNAL;
+    /* make sure that the item was initialized with the correct tag */
     if  ((item->tag != PGPRTAG_PUBLIC_KEY && item->tag != PGPRTAG_PUBLIC_SUBKEY) || tag != item->tag)
 	return PGPR_ERROR_INTERNAL;
 

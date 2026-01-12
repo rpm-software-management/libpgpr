@@ -83,7 +83,7 @@ void pgprAddLint(pgprItem item, char **lints, pgprRC error)
 	return;
     *lints = NULL;
 
-    /* if we have suitable DigParams we can make a better error message */
+    /* if we have a suitable item we can make a better error message */
     if (item && (item->tag == PGPRTAG_PUBLIC_KEY || item->tag == PGPRTAG_PUBLIC_SUBKEY)) {
 	switch (error) {
 	case PGPR_ERROR_UNSUPPORTED_VERSION:

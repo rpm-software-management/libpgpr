@@ -14,7 +14,7 @@ INCLUDE (FindPkgConfig)
 OPTION (WITH_OPENSSL "Use openssl instead of libgcrypt for internal crypto" OFF)
 
 SET (libpgpr_SRCS
-    item.c pgp.c armor.c lint.c pubkey.c merge.c util.c
+    item.c verify.c pgp.c armor.c lint.c pubkey.c merge.c util.c
 )
 
 if (WITH_OPENSSL)

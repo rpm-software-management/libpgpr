@@ -153,40 +153,40 @@ pgprRC pgprInitCrypto(void);
 
 pgprRC pgprFreeCrypto(void);
 
-/* allocation */
+/* item management */
 pgprItem pgprItemNew(uint8_t tag);
 
-pgprItem pgprItemFree(pgprItem digp);
+pgprItem pgprItemFree(pgprItem item);
 
 
-/* dig param methods */
-int pgprItemTag(pgprItem _digp);
+/* item methods */
+int pgprItemTag(pgprItem _item);
 
 int pgprItemCmp(pgprItem p1, pgprItem p2);
 
-int pgprItemSignatureType(pgprItem _digp);
+int pgprItemSignatureType(pgprItem _item);
 
-int pgprItemPubkeyAlgo(pgprItem digp);
+int pgprItemPubkeyAlgo(pgprItem item);
 
-int pgprItemPubkeyAlgoInfo(pgprItem digp);
+int pgprItemPubkeyAlgoInfo(pgprItem item);
 
-int pgprItemHashAlgo(pgprItem digp);
+int pgprItemHashAlgo(pgprItem item);
 
-const uint8_t *pgprItemKeyID(pgprItem digp);
+const uint8_t *pgprItemKeyID(pgprItem item);
 
-const uint8_t *pgprItemKeyFingerprint(pgprItem digp, size_t *fp_len, int *fp_version);
+const uint8_t *pgprItemKeyFingerprint(pgprItem item, size_t *fp_len, int *fp_version);
 
-const char *pgprItemUserID(pgprItem digp);
+const char *pgprItemUserID(pgprItem item);
 
-int pgprItemVersion(pgprItem digp);
+int pgprItemVersion(pgprItem item);
 
-uint32_t pgprItemCreationTime(pgprItem digp);
+uint32_t pgprItemCreationTime(pgprItem item);
 
-uint32_t pgprItemModificationTime(pgprItem digp);
+uint32_t pgprItemModificationTime(pgprItem item);
 
-const uint8_t *pgprItemHashHeader(pgprItem digp, size_t *headerlen);
+const uint8_t *pgprItemHashHeader(pgprItem item, size_t *headerlen);
 
-const uint8_t *pgprItemHashTrailer(pgprItem digp, size_t *trailerlen);
+const uint8_t *pgprItemHashTrailer(pgprItem item, size_t *trailerlen);
 
 /* signature verification*/
 

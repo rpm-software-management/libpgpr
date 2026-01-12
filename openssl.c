@@ -82,7 +82,7 @@ free_bn_param(OSSL_PARAM *param)
 
 /* Key */
 
-struct pgprDigKeyRSA_s {
+struct pgprAlgKeyRSA_s {
     size_t nbytes; /* Size of modulus */
 
     BIGNUM *n; /* Common Modulus */
@@ -90,7 +90,7 @@ struct pgprDigKeyRSA_s {
     EVP_PKEY *evp_pkey; /* Fully constructed key */
 };
 
-static int constructRSASigningKey(struct pgprDigKeyRSA_s *key)
+static int constructRSASigningKey(struct pgprAlgKeyRSA_s *key)
 {
     if (key->evp_pkey)
         return 1;	/* We've already constructed it, so just reuse it */
@@ -139,13 +139,13 @@ exit:
 #endif
 }
 
-static pgprRC pgprSetKeyMpiRSA(pgprDigAlg pgprkey, int num, const uint8_t *p, int mlen)
+static pgprRC pgprSetKeyMpiRSA(pgprAlg ka, int num, const uint8_t *p, int mlen)
 {
     pgprRC rc = PGPR_ERROR_BAD_PUBKEY;	/* assume failure */
-    struct pgprDigKeyRSA_s *key = pgprkey->data;
+    struct pgprAlgKeyRSA_s *key = ka->data;
 
     if (!key)
-        key = pgprkey->data = pgprCalloc(1, sizeof(*key));
+        key = ka->data = pgprCalloc(1, sizeof(*key));
 
     if (key->evp_pkey)
 	return rc;
@@ -156,7 +156,7 @@ static pgprRC pgprSetKeyMpiRSA(pgprDigAlg pgprkey, int num, const uint8_t *p, in
         if (key->n)
             return 1;	/* This should only ever happen once per key */
 	key->nbytes = mlen - 2;
-	pgprkey->info = 8 * (((mlen - 2) + 7) & ~7);
+	ka->info = 8 * (((mlen - 2) + 7) & ~7);
         /* Create a BIGNUM from the pointer.
            Note: this assumes big-endian data as required by PGPR */
         key->n = BN_bin2bn(p + 2, mlen - 2, NULL);
@@ -179,9 +179,9 @@ static pgprRC pgprSetKeyMpiRSA(pgprDigAlg pgprkey, int num, const uint8_t *p, in
     return rc;
 }
 
-static void pgprFreeKeyRSA(pgprDigAlg pgprkey)
+static void pgprFreeKeyRSA(pgprAlg ka)
 {
-    struct pgprDigKeyRSA_s *key = pgprkey->data;
+    struct pgprAlgKeyRSA_s *key = ka->data;
     if (key) {
         if (key->evp_pkey)
             EVP_PKEY_free(key->evp_pkey);
@@ -195,17 +195,17 @@ static void pgprFreeKeyRSA(pgprDigAlg pgprkey)
 
 /* Signature */
 
-struct pgprDigSigRSA_s {
+struct pgprAlgSigRSA_s {
     BIGNUM *bn;
 };
 
-static pgprRC pgprSetSigMpiRSA(pgprDigAlg pgprsig, int num, const uint8_t *p, int mlen)
+static pgprRC pgprSetSigMpiRSA(pgprAlg sa, int num, const uint8_t *p, int mlen)
 {
     pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;	/* assume failure */
-    struct pgprDigSigRSA_s *sig = pgprsig->data;
+    struct pgprAlgSigRSA_s *sig = sa->data;
 
     if (!sig)
-        sig = pgprsig->data = pgprCalloc(1, sizeof(*sig));
+        sig = sa->data = pgprCalloc(1, sizeof(*sig));
 
     switch (num) {
     case 0:
@@ -226,22 +226,22 @@ static pgprRC pgprSetSigMpiRSA(pgprDigAlg pgprsig, int num, const uint8_t *p, in
     return rc;
 }
 
-static void pgprFreeSigRSA(pgprDigAlg pgprsig)
+static void pgprFreeSigRSA(pgprAlg sa)
 {
-    struct pgprDigSigRSA_s *sig = pgprsig->data;
+    struct pgprAlgSigRSA_s *sig = sa->data;
     if (sig) {
 	if (sig->bn)
 	    BN_clear_free(sig->bn);
-        free(pgprsig->data);
+        free(sa->data);
     }
 }
 
-static pgprRC pgprVerifySigRSA(pgprDigAlg pgprkey, pgprDigAlg pgprsig,
+static pgprRC pgprVerifySigRSA(pgprAlg ka, pgprAlg sa,
                            const uint8_t *hash, size_t hashlen, int hash_algo)
 {
     pgprRC rc = PGPR_ERROR_SIGNATURE_VERIFICATION;	/* assume failure */
-    struct pgprDigSigRSA_s *sig = pgprsig->data;
-    struct pgprDigKeyRSA_s *key = pgprkey->data;
+    struct pgprAlgSigRSA_s *sig = sa->data;
+    struct pgprAlgKeyRSA_s *key = ka->data;
     EVP_PKEY_CTX *pkey_ctx = NULL;
     void *padded_sig = NULL;
 
@@ -281,7 +281,7 @@ done:
 /****************************** DSA ***************************************/
 /* Key */
 
-struct pgprDigKeyDSA_s {
+struct pgprAlgKeyDSA_s {
     BIGNUM *p; /* Prime */
     BIGNUM *q; /* Subprime */
     BIGNUM *g; /* Base */
@@ -290,7 +290,7 @@ struct pgprDigKeyDSA_s {
     EVP_PKEY *evp_pkey; /* Fully constructed key */
 };
 
-static int constructDSASigningKey(struct pgprDigKeyDSA_s *key)
+static int constructDSASigningKey(struct pgprAlgKeyDSA_s *key)
 {
     if (key->evp_pkey)
         return 1;	/* We've already constructed it, so just reuse it */
@@ -349,20 +349,20 @@ exit:
 }
 
 
-static pgprRC pgprSetKeyMpiDSA(pgprDigAlg pgprkey, int num, const uint8_t *p, int mlen)
+static pgprRC pgprSetKeyMpiDSA(pgprAlg ka, int num, const uint8_t *p, int mlen)
 {
     pgprRC rc = PGPR_ERROR_BAD_PUBKEY;	/* assume failure */
-    struct pgprDigKeyDSA_s *key = pgprkey->data;
+    struct pgprAlgKeyDSA_s *key = ka->data;
 
     if (!key)
-        key = pgprkey->data = pgprCalloc(1, sizeof(*key));
+        key = ka->data = pgprCalloc(1, sizeof(*key));
 
     switch (num) {
     case 0:
         /* Prime */
         if (key->p)
             return rc;	/* This should only ever happen once per key */
-	pgprkey->info = 8 * (((mlen - 2) + 7) & ~7);
+	ka->info = 8 * (((mlen - 2) + 7) & ~7);
         key->p = BN_bin2bn(p + 2, mlen - 2, NULL);
 	if (key->p)
 	    rc = PGPR_OK;
@@ -395,9 +395,9 @@ static pgprRC pgprSetKeyMpiDSA(pgprDigAlg pgprkey, int num, const uint8_t *p, in
     return rc;
 }
 
-static void pgprFreeKeyDSA(pgprDigAlg pgprkey)
+static void pgprFreeKeyDSA(pgprAlg ka)
 {
-    struct pgprDigKeyDSA_s *key = pgprkey->data;
+    struct pgprAlgKeyDSA_s *key = ka->data;
     if (key) {
         if (key->evp_pkey)
             EVP_PKEY_free(key->evp_pkey);
@@ -415,7 +415,7 @@ static void pgprFreeKeyDSA(pgprDigAlg pgprkey)
 
 /* Signature */
 
-struct pgprDigSigDSA_s {
+struct pgprAlgSigDSA_s {
     unsigned char *r;
     int rlen;
     unsigned char *s;
@@ -456,13 +456,13 @@ static unsigned char *constructDSASignature(unsigned char *r, int rlen, unsigned
     return buf;
 }
 
-static pgprRC pgprSetSigMpiDSA(pgprDigAlg pgprsig, int num, const uint8_t *p, int mlen)
+static pgprRC pgprSetSigMpiDSA(pgprAlg sa, int num, const uint8_t *p, int mlen)
 {
     pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;	/* assume failure */
-    struct pgprDigSigDSA_s *sig = pgprsig->data;
+    struct pgprAlgSigDSA_s *sig = sa->data;
 
     if (!sig)
-        sig = pgprsig->data = pgprCalloc(1, sizeof(*sig));
+        sig = sa->data = pgprCalloc(1, sizeof(*sig));
 
     switch (num) {
     case 0:
@@ -484,22 +484,22 @@ static pgprRC pgprSetSigMpiDSA(pgprDigAlg pgprsig, int num, const uint8_t *p, in
     return rc;
 }
 
-static void pgprFreeSigDSA(pgprDigAlg pgprsig)
+static void pgprFreeSigDSA(pgprAlg sa)
 {
-    struct pgprDigSigDSA_s *sig = pgprsig->data;
+    struct pgprAlgSigDSA_s *sig = sa->data;
     if (sig) {
 	free(sig->r);
 	free(sig->s);
     }
-    free(pgprsig->data);
+    free(sa->data);
 }
 
-static pgprRC pgprVerifySigDSA(pgprDigAlg pgprkey, pgprDigAlg pgprsig,
+static pgprRC pgprVerifySigDSA(pgprAlg ka, pgprAlg sa,
                            const uint8_t *hash, size_t hashlen, int hash_algo)
 {
     pgprRC rc = PGPR_ERROR_SIGNATURE_VERIFICATION;	/* assume failure */
-    struct pgprDigSigDSA_s *sig = pgprsig->data;
-    struct pgprDigKeyDSA_s *key = pgprkey->data;
+    struct pgprAlgSigDSA_s *sig = sa->data;
+    struct pgprAlgKeyDSA_s *key = ka->data;
     unsigned char *xsig = NULL;		/* signature encoded for X509 */
     size_t xsig_len = 0;
     EVP_PKEY_CTX *pkey_ctx = NULL;
@@ -532,13 +532,13 @@ done:
 
 /****************************** ECDSA ***************************************/
 
-struct pgprDigKeyECDSA_s {
+struct pgprAlgKeyECDSA_s {
     EVP_PKEY *evp_pkey; /* Fully constructed key */
     unsigned char *q;	/* compressed point */
     int qlen;
 };
 
-static int constructECDSASigningKey(struct pgprDigKeyECDSA_s *key, int curve)
+static int constructECDSASigningKey(struct pgprAlgKeyECDSA_s *key, int curve)
 {
     if (key->evp_pkey)
 	return 1;	/* We've already constructed it, so just reuse it */
@@ -601,13 +601,13 @@ exit:
 #endif
 }
 
-static pgprRC pgprSetKeyMpiECDSA(pgprDigAlg pgprkey, int num, const uint8_t *p, int mlen)
+static pgprRC pgprSetKeyMpiECDSA(pgprAlg ka, int num, const uint8_t *p, int mlen)
 {
-    struct pgprDigKeyECDSA_s *key = pgprkey->data;
+    struct pgprAlgKeyECDSA_s *key = ka->data;
     pgprRC rc = PGPR_ERROR_BAD_PUBKEY;	/* assume failure */
 
     if (!key)
-	key = pgprkey->data = pgprCalloc(1, sizeof(*key));
+	key = ka->data = pgprCalloc(1, sizeof(*key));
     if (num == 0 && !key->q && mlen > 3 && p[2] == 0x04) {
 	key->qlen = mlen - 2;
 	key->q = pgprMemdup(p + 2, mlen - 2);
@@ -616,9 +616,9 @@ static pgprRC pgprSetKeyMpiECDSA(pgprDigAlg pgprkey, int num, const uint8_t *p, 
     return rc;
 }
 
-static void pgprFreeKeyECDSA(pgprDigAlg pgprkey)
+static void pgprFreeKeyECDSA(pgprAlg ka)
 {
-    struct pgprDigKeyECDSA_s *key = pgprkey->data;
+    struct pgprAlgKeyECDSA_s *key = ka->data;
     if (key) {
 	if (key->q)
 	    free(key->q);
@@ -628,20 +628,20 @@ static void pgprFreeKeyECDSA(pgprDigAlg pgprkey)
     }
 }
 
-struct pgprDigSigECDSA_s {
+struct pgprAlgSigECDSA_s {
     unsigned char *r;
     int rlen;
     unsigned char *s;
     int slen;
 };
 
-static pgprRC pgprSetSigMpiECDSA(pgprDigAlg pgprsig, int num, const uint8_t *p, int mlen)
+static pgprRC pgprSetSigMpiECDSA(pgprAlg sa, int num, const uint8_t *p, int mlen)
 {
     pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;	/* assume failure */
-    struct pgprDigSigECDSA_s *sig = pgprsig->data;
+    struct pgprAlgSigECDSA_s *sig = sa->data;
 
     if (!sig)
-        sig = pgprsig->data = pgprCalloc(1, sizeof(*sig));
+        sig = sa->data = pgprCalloc(1, sizeof(*sig));
 
     switch (num) {
     case 0:
@@ -663,27 +663,27 @@ static pgprRC pgprSetSigMpiECDSA(pgprDigAlg pgprsig, int num, const uint8_t *p, 
     return rc;
 }
 
-static void pgprFreeSigECDSA(pgprDigAlg pgprsig)
+static void pgprFreeSigECDSA(pgprAlg sa)
 {
-    struct pgprDigSigECDSA_s *sig = pgprsig->data;
+    struct pgprAlgSigECDSA_s *sig = sa->data;
     if (sig) {
 	free(sig->r);
 	free(sig->s);
     }
-    free(pgprsig->data);
+    free(sa->data);
 }
 
-static pgprRC pgprVerifySigECDSA(pgprDigAlg pgprkey, pgprDigAlg pgprsig,
+static pgprRC pgprVerifySigECDSA(pgprAlg ka, pgprAlg sa,
                            const uint8_t *hash, size_t hashlen, int hash_algo)
 {
     pgprRC rc = PGPR_ERROR_SIGNATURE_VERIFICATION;	/* assume failure */
-    struct pgprDigSigECDSA_s *sig = pgprsig->data;
-    struct pgprDigKeyECDSA_s *key = pgprkey->data;
+    struct pgprAlgSigECDSA_s *sig = sa->data;
+    struct pgprAlgKeyECDSA_s *key = ka->data;
     unsigned char *xsig = NULL;		/* signature encoded for X509 */
     size_t xsig_len = 0;
     EVP_PKEY_CTX *pkey_ctx = NULL;
 
-    if (!constructECDSASigningKey(key, pgprkey->curve)) {
+    if (!constructECDSASigningKey(key, ka->curve)) {
 	rc = PGPR_ERROR_BAD_PUBKEY;
         goto done;
     }
@@ -713,13 +713,13 @@ done:
 
 #ifdef EVP_PKEY_ED25519
 
-struct pgprDigKeyEDDSA_s {
+struct pgprAlgKeyEDDSA_s {
     EVP_PKEY *evp_pkey; /* Fully constructed key */
     unsigned char *q;	/* compressed point */
     int qlen;
 };
 
-static int constructEDDSASigningKey(struct pgprDigKeyEDDSA_s *key, int curve)
+static int constructEDDSASigningKey(struct pgprAlgKeyEDDSA_s *key, int curve)
 {
     if (key->evp_pkey)
 	return 1;	/* We've already constructed it, so just reuse it */
@@ -734,31 +734,31 @@ static int constructEDDSASigningKey(struct pgprDigKeyEDDSA_s *key, int curve)
     return key->evp_pkey ? 1 : 0;
 }
 
-static pgprRC pgprSetKeyMpiEDDSA(pgprDigAlg pgprkey, int num, const uint8_t *p, int mlen)
+static pgprRC pgprSetKeyMpiEDDSA(pgprAlg ka, int num, const uint8_t *p, int mlen)
 {
-    struct pgprDigKeyEDDSA_s *key = pgprkey->data;
+    struct pgprAlgKeyEDDSA_s *key = ka->data;
     pgprRC rc = PGPR_ERROR_BAD_PUBKEY;
 
     if (!key)
-	key = pgprkey->data = pgprCalloc(1, sizeof(*key));
+	key = ka->data = pgprCalloc(1, sizeof(*key));
     if (num == -1) {
-	if (pgprkey->curve == PGPRCURVE_ED25519 && mlen == 32) {
+	if (ka->curve == PGPRCURVE_ED25519 && mlen == 32) {
 	    key->qlen = 32;
 	    key->q = pgprMemdup(p, 32);
 	    rc = PGPR_OK;
-	} else if (pgprkey->curve == PGPRCURVE_ED448 && mlen == 57) {
+	} else if (ka->curve == PGPRCURVE_ED448 && mlen == 57) {
 	    key->qlen = 57;
 	    key->q = pgprMemdup(p, 57);
 	    rc = PGPR_OK;
 	}
 	return rc;
     }
-    if ((pgprkey->curve == PGPRCURVE_ED25519 || pgprkey->curve == PGPRCURVE_ED25519_ALT) && num == 0 && !key->q && mlen > 3 && p[2] == 0x40) {
+    if ((ka->curve == PGPRCURVE_ED25519 || ka->curve == PGPRCURVE_ED25519_ALT) && num == 0 && !key->q && mlen > 3 && p[2] == 0x40) {
 	key->qlen = mlen - 3;
 	key->q = pgprMemdup(p + 3, mlen - 3);	/* we do not copy the leading 0x40 */
 	rc = PGPR_OK;
     }
-    if (pgprkey->curve == PGPRCURVE_ED448 && num == 0 && !key->q && mlen > 3 && mlen <= 59) {
+    if (ka->curve == PGPRCURVE_ED448 && num == 0 && !key->q && mlen > 3 && mlen <= 59) {
 	key->qlen = 57;
 	key->q = pgprCalloc(1, 57);
 	memcpy(key->q + 57 - (mlen - 2), p + 2, mlen - 2);
@@ -767,9 +767,9 @@ static pgprRC pgprSetKeyMpiEDDSA(pgprDigAlg pgprkey, int num, const uint8_t *p, 
     return rc;
 }
 
-static void pgprFreeKeyEDDSA(pgprDigAlg pgprkey)
+static void pgprFreeKeyEDDSA(pgprAlg ka)
 {
-    struct pgprDigKeyEDDSA_s *key = pgprkey->data;
+    struct pgprAlgKeyEDDSA_s *key = ka->data;
     if (key) {
 	if (key->q)
 	    free(key->q);
@@ -779,24 +779,24 @@ static void pgprFreeKeyEDDSA(pgprDigAlg pgprkey)
     }
 }
 
-struct pgprDigSigEDDSA_s {
+struct pgprAlgSigEDDSA_s {
     unsigned char sig[57 + 57];
     int not_ed25519;
 };
 
-static pgprRC pgprSetSigMpiEDDSA(pgprDigAlg pgprsig, int num, const uint8_t *p, int mlen)
+static pgprRC pgprSetSigMpiEDDSA(pgprAlg sa, int num, const uint8_t *p, int mlen)
 {
-    struct pgprDigSigEDDSA_s *sig = pgprsig->data;
+    struct pgprAlgSigEDDSA_s *sig = sa->data;
     pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;
 
     if (!sig)
-	sig = pgprsig->data = pgprCalloc(1, sizeof(*sig));
+	sig = sa->data = pgprCalloc(1, sizeof(*sig));
     if (num == -1) {
-	if (pgprsig->curve == PGPRCURVE_ED25519 && mlen == 2 * 32) {
+	if (sa->curve == PGPRCURVE_ED25519 && mlen == 2 * 32) {
 	    memcpy(sig->sig + (57 - 32), p, 32);
 	    memcpy(sig->sig + (2 * 57 - 32), p + 32, 32);
 	    rc = PGPR_OK;
-	} else if (pgprsig->curve == PGPRCURVE_ED448 && mlen == 2 * 57) {
+	} else if (sa->curve == PGPRCURVE_ED448 && mlen == 2 * 57) {
 	    memcpy(sig->sig, p, 2 * 57);
 	    rc = PGPR_OK;
 	}
@@ -811,37 +811,37 @@ static pgprRC pgprSetSigMpiEDDSA(pgprDigAlg pgprsig, int num, const uint8_t *p, 
     return PGPR_OK;
 }
 
-static void pgprFreeSigEDDSA(pgprDigAlg pgprsig)
+static void pgprFreeSigEDDSA(pgprAlg sa)
 {
-    struct pgprDigSigEDDSA_s *sig = pgprsig->data;
+    struct pgprAlgSigEDDSA_s *sig = sa->data;
     if (sig) {
-	free(pgprsig->data);
+	free(sa->data);
     }
 }
 
-static pgprRC pgprVerifySigEDDSA(pgprDigAlg pgprkey, pgprDigAlg pgprsig,
+static pgprRC pgprVerifySigEDDSA(pgprAlg ka, pgprAlg sa,
                            const uint8_t *hash, size_t hashlen, int hash_algo)
 {
     pgprRC rc = PGPR_ERROR_SIGNATURE_VERIFICATION;	/* assume failure */
-    struct pgprDigSigEDDSA_s *sig = pgprsig->data;
-    struct pgprDigKeyEDDSA_s *key = pgprkey->data;
+    struct pgprAlgSigEDDSA_s *sig = sa->data;
+    struct pgprAlgKeyEDDSA_s *key = ka->data;
     EVP_MD_CTX *md_ctx = NULL;
 
-    if (!constructEDDSASigningKey(key, pgprkey->curve)) {
+    if (!constructEDDSASigningKey(key, ka->curve)) {
 	rc = PGPR_ERROR_BAD_PUBKEY;
 	goto done;
     }
     md_ctx = EVP_MD_CTX_new();
     if (EVP_DigestVerifyInit(md_ctx, NULL, EVP_md_null(), NULL, key->evp_pkey) != 1)
 	goto done;
-    if ((pgprkey->curve == PGPRCURVE_ED25519 || pgprkey->curve == PGPRCURVE_ED25519_ALT) && !sig->not_ed25519) {
+    if ((ka->curve == PGPRCURVE_ED25519 || ka->curve == PGPRCURVE_ED25519_ALT) && !sig->not_ed25519) {
 	unsigned char esig[64];
 	memcpy(esig, sig->sig + 57 - 32, 32);
 	memcpy(esig + 32, sig->sig + 2 * 57 - 32, 32);
 	if (EVP_DigestVerify(md_ctx, esig, 64, hash, hashlen) == 1)
 	    rc = PGPR_OK;		/* Success */
     }
-    if (pgprkey->curve == PGPRCURVE_ED448) {
+    if (ka->curve == PGPRCURVE_ED448) {
 	if (EVP_DigestVerify(md_ctx, sig->sig, 114, hash, hashlen) == 1)
 	    rc = PGPR_OK;		/* Success */
     }
@@ -876,7 +876,7 @@ static int pgprSupportedCurve(int algo, int curve)
     return 0;
 }
 
-pgprRC pgprDigAlgInitPubkey(pgprDigAlg ka, int algo, int curve)
+pgprRC pgprAlgInitPubkey(pgprAlg ka, int algo, int curve)
 {
     switch (algo) {
     case PGPRPUBKEYALGO_RSA:
@@ -924,7 +924,7 @@ pgprRC pgprDigAlgInitPubkey(pgprDigAlg ka, int algo, int curve)
     return PGPR_ERROR_UNSUPPORTED_ALGORITHM;
 }
 
-pgprRC pgprDigAlgInitSignature(pgprDigAlg sa, int algo)
+pgprRC pgprAlgInitSignature(pgprAlg sa, int algo)
 {
     switch (algo) {
     case PGPRPUBKEYALGO_RSA:

@@ -19,13 +19,13 @@
 /* maximum fingerprint length */
 #define PGPR_MAX_FP_LENGTH 32
 
-typedef struct pgprDigAlg_s * pgprDigAlg;
-typedef pgprRC (*setmpifunc)(pgprDigAlg digp, int num, const uint8_t *p, int mlen);
-typedef pgprRC (*verifyfunc)(pgprDigAlg pgprkey, pgprDigAlg pgprsig,
+typedef struct pgprAlg_s * pgprAlg;
+typedef pgprRC (*setmpifunc)(pgprAlg item, int num, const uint8_t *p, int mlen);
+typedef pgprRC (*verifyfunc)(pgprAlg pgprkey, pgprAlg pgprsig,
                           const uint8_t *hash, size_t hashlen, int hash_algo);
-typedef void (*freefunc)(pgprDigAlg digp);
+typedef void (*freefunc)(pgprAlg item);
 
-struct pgprDigAlg_s {
+struct pgprAlg_s {
     setmpifunc setmpi;
     verifyfunc verify;
     freefunc free;
@@ -75,7 +75,7 @@ struct pgprItem_s {
     uint8_t signhash16[2];
 
     size_t mpi_offset;		/* start of mpi data */
-    pgprDigAlg alg;		/*!< algorithm specific data like MPIs */
+    pgprAlg alg;		/*!< algorithm specific data like MPIs */
 };
 
 /*
@@ -128,29 +128,29 @@ pgprRC pgprDecodePkt(const uint8_t *p, size_t plen, pgprPkt *pkt);
 
 /* allocation */
 PGPR_GNUC_INTERNAL
-pgprDigAlg pgprDigAlgFree(pgprDigAlg alg);
+pgprAlg pgprAlgFree(pgprAlg alg);
 
 PGPR_GNUC_INTERNAL
-pgprRC pgprDigAlgInitPubkey(pgprDigAlg alg, int algo, int curve);
+pgprRC pgprAlgInitPubkey(pgprAlg alg, int algo, int curve);
 
 PGPR_GNUC_INTERNAL
-pgprRC pgprDigAlgInitSignature(pgprDigAlg alg, int algo);
+pgprRC pgprAlgInitSignature(pgprAlg alg, int algo);
 
 /* pgpr packet data extraction */
 PGPR_GNUC_INTERNAL
-pgprRC pgprPrtKey(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem _digp);
+pgprRC pgprPrtKey(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item);
 
 PGPR_GNUC_INTERNAL
-pgprRC pgprPrtSig(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem _digp);
+pgprRC pgprPrtSig(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item);
 
 PGPR_GNUC_INTERNAL
-pgprRC pgprPrtSigNoParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem _digp);
+pgprRC pgprPrtSigNoParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item);
 
 PGPR_GNUC_INTERNAL
 pgprRC pgprPrtSigParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem sigp);
 
 PGPR_GNUC_INTERNAL
-pgprRC pgprPrtUserID(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem _digp);
+pgprRC pgprPrtUserID(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item);
 
 PGPR_GNUC_INTERNAL
 pgprRC pgprGetKeyFingerprint(const uint8_t *h, size_t hlen, uint8_t **fp, size_t *fplen);
@@ -161,11 +161,11 @@ pgprRC pgprGetKeyID(const uint8_t *h, size_t hlen, pgprKeyID_t keyid);
 
 /* diagnostics */
 PGPR_GNUC_INTERNAL
-void pgprAddLint(pgprItem digp, char **lints, pgprRC error);
+void pgprAddLint(pgprItem item, char **lints, pgprRC error);
 
 /* transferable pubkey parsing */
 PGPR_GNUC_INTERNAL
-pgprRC pgprPrtTransferablePubkey(const uint8_t * pkts, size_t pktlen, pgprItem digp);
+pgprRC pgprPrtTransferablePubkey(const uint8_t * pkts, size_t pktlen, pgprItem item);
 
 PGPR_GNUC_INTERNAL
 pgprRC pgprPrtTransferablePubkeySubkeys(const uint8_t * pkts, size_t pktlen, pgprItem mainkey,
