@@ -167,7 +167,7 @@ exit:
 
 pgprRC pgprPubkeyParse(const uint8_t * pkts, size_t pktlen, pgprItem * ret, char **lints)
 {
-    pgprItem item = NULL;
+    pgprItem key = NULL;
     pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;	/* assume failure */
     pgprPkt pkt;
 
@@ -181,24 +181,24 @@ pgprRC pgprPubkeyParse(const uint8_t * pkts, size_t pktlen, pgprItem * ret, char
     }
 
     /* use specialized transferable pubkey implementation */
-    item = pgprItemNew(pkt.tag);
-    rc = pgprPrtTransferablePubkey(pkts, pktlen, item);
+    key = pgprItemNew(pkt.tag);
+    rc = pgprPrtTransferablePubkey(pkts, pktlen, key);
 exit:
     if (ret && rc == PGPR_OK)
-	*ret = item;
+	*ret = key;
     else {
 	if (lints)
-	    pgprAddLint(item, lints, rc);
-	pgprItemFree(item);
+	    pgprAddLint(key, lints, rc);
+	pgprItemFree(key);
     }
     return rc;
 }
 
 pgprRC pgprPubkeyParseSubkeys(const uint8_t *pkts, size_t pktlen,
-			pgprItem mainkey, pgprItem **subkeys,
+			pgprItem key, pgprItem **subkeys,
 			int *subkeysCount)
 {
-    return pgprPrtTransferablePubkeySubkeys(pkts, pktlen, mainkey, subkeys, subkeysCount);
+    return pgprPrtTransferablePubkeySubkeys(pkts, pktlen, key, subkeys, subkeysCount);
 }
 
 pgprRC pgprPubkeyCertLen(const uint8_t *pkts, size_t pktslen, size_t *certlen)

@@ -199,7 +199,7 @@ pgprRC pgprSignatureParse(const uint8_t * pkts, size_t pktlen, pgprItem * ret, c
 
 pgprRC pgprPubkeyParse(const uint8_t * pkts, size_t pktlen, pgprItem * ret, char **lints);
 
-pgprRC pgprPubkeyParseSubkeys(const uint8_t *pkts, size_t pktlen, pgprItem mainkey, pgprItem **subkeys, int *subkeysCount);
+pgprRC pgprPubkeyParseSubkeys(const uint8_t *pkts, size_t pktlen, pgprItem key, pgprItem **subkeys, int *subkeysCount);
 
 pgprRC pgprPubkeyCertLen(const uint8_t *pkts, size_t pktslen, size_t *certlen);
 
