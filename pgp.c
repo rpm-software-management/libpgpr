@@ -183,7 +183,7 @@ pgprRC pgprDecodePkt(const uint8_t *p, size_t plen, pgprPkt *pkt)
 
 
 /*
- * Key/Signature algorithm parameter handling and signature verification
+ * Key/Signature algorithm parameter handling
  */
 
 static pgprAlg pgprAlgNew(void)
@@ -219,13 +219,12 @@ static pgprRC pgprAlgProcessMpis(pgprAlg alg, const int mpis,
     }
     for (; i < mpis && pend - p >= 2; i++) {
 	int mpil = pgprMpiLen(p);
+        pgprRC rc;
 	if (mpil < 2 || pend - p < mpil)
 	    return PGPR_ERROR_CORRUPT_PGP_PACKET;
-	if (alg) {
-	    pgprRC rc = alg->setmpi ? alg->setmpi(alg, i, p, mpil) : PGPR_ERROR_UNSUPPORTED_ALGORITHM;
-	    if (rc != PGPR_OK)
-		return rc;
-	}
+	rc = alg->setmpi ? alg->setmpi(alg, i, p, mpil) : PGPR_ERROR_UNSUPPORTED_ALGORITHM;
+	if (rc != PGPR_OK)
+	    return rc;
 	p += mpil;
     }
 
@@ -292,37 +291,6 @@ static pgprRC pgprPrtKeyParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprI
     return rc;
 }
 
-/* validate that the mpi data matches our expectations */
-static pgprRC pgprValidateKeyParamsSize(int pubkey_algo, const uint8_t *p, size_t plen) {
-    int nmpis = -1;
-
-    switch (pubkey_algo) {
-	case PGPRPUBKEYALGO_ECDSA:
-	case PGPRPUBKEYALGO_EDDSA:
-	    if (!plen || p[0] == 0x00 || p[0] == 0xff || plen < 1 + p[0])
-		return PGPR_ERROR_CORRUPT_PGP_PACKET;
-	    plen -= 1 + p[0];
-	    p += 1 + p[0];
-	    nmpis = 1;
-	    break;
-	case PGPRPUBKEYALGO_RSA:
-	    nmpis = 2;
-	    break;
-	case PGPRPUBKEYALGO_DSA:
-	    nmpis = 4;
-	    break;
-	case PGPRPUBKEYALGO_ED25519:
-	    return plen == 32 ? PGPR_OK : PGPR_ERROR_CORRUPT_PGP_PACKET;
-	case PGPRPUBKEYALGO_ED448:
-	    return plen == 57 ? PGPR_OK : PGPR_ERROR_CORRUPT_PGP_PACKET;
-	default:
-	    break;
-    }
-    if (nmpis < 0)
-	return PGPR_ERROR_UNSUPPORTED_ALGORITHM;
-    return pgprAlgProcessMpis(NULL, nmpis, p, p + plen);
-}
-
 pgprRC pgprPrtSigParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item)
 {
     pgprRC rc;
@@ -338,42 +306,6 @@ pgprRC pgprPrtSigParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem ite
     if (rc != PGPR_OK) {
 	pgprAlgFree(item->alg);
 	item->alg = NULL;
-    }
-    return rc;
-}
-
-
-/*
- *  Key fingerprint calculation
- */
-
-static pgprRC gen_key_fingerprint(const uint8_t *d, size_t dlen, const uint8_t *h, size_t hlen, int hashalgo, uint8_t *fp, size_t fplen)
-{
-    uint8_t *out = NULL;
-    size_t outlen = 0;
-    pgprRC rc = PGPR_ERROR_INTERNAL;
-    pgprDigCtx ctx = pgprDigestInit(hashalgo);
-
-    (void)pgprDigestUpdate(ctx, d, dlen);
-    (void)pgprDigestUpdate(ctx, h, hlen);
-    (void)pgprDigestFinal(ctx, (void **)&out, &outlen);
-    if (outlen == fplen) {
-	memcpy(fp, out, outlen);
-	rc = PGPR_OK;
-    }
-    free(out);
-    return rc;
-}
-
-static pgprRC pgprGetKeyIDFromFp(const uint8_t *fp, int fplen, int fpversion, pgprKeyID_t keyid)
-{
-    pgprRC rc = PGPR_ERROR_INTERNAL;
-    if (fp && fplen > 8) {
-	if (fpversion == 5 || fpversion == 6)
-	    memcpy(keyid, fp, 8);
-	else
-	    memcpy(keyid, (fp + (fplen - 8)), 8);
-	rc = PGPR_OK;
     }
     return rc;
 }
@@ -655,6 +587,25 @@ pgprRC pgprPrtSig(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item)
     return rc;
 }
 
+/* fingerprint calculation helper */
+static pgprRC gen_key_fingerprint(const uint8_t *d, size_t dlen, const uint8_t *h, size_t hlen, int hashalgo, uint8_t *fp, size_t fplen)
+{
+    uint8_t *out = NULL;
+    size_t outlen = 0;
+    pgprRC rc = PGPR_ERROR_INTERNAL;
+    pgprDigCtx ctx = pgprDigestInit(hashalgo);
+
+    (void)pgprDigestUpdate(ctx, d, dlen);
+    (void)pgprDigestUpdate(ctx, h, hlen);
+    (void)pgprDigestFinal(ctx, (void **)&out, &outlen);
+    if (outlen == fplen) {
+	memcpy(fp, out, outlen);
+	rc = PGPR_OK;
+    }
+    free(out);
+    return rc;
+}
+
 pgprRC pgprPrtKeyFp(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item)
 {
     uint8_t *fp = NULL;
@@ -667,47 +618,37 @@ pgprRC pgprPrtKeyFp(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item)
     if (hlen == 0)
 	return rc;
 
-
     /* We only permit V4/5/6 keys, V3 keys are long long since deprecated */
     switch (h[0]) {
     case 4:
-      {	pgprPktKeyV4 v = (pgprPktKeyV4)h;
-	if (hlen < sizeof(*v))
-	    return rc;
-	/* Does the size and number of MPI's match our expectations? */
-	rc = pgprValidateKeyParamsSize(v->pubkey_algo, (uint8_t *)(v + 1), hlen - sizeof(*v));
-	if (rc == PGPR_OK) {
-	    uint8_t in[3] = { 0x99, (hlen >> 8), hlen };
-	    rc = gen_key_fingerprint(in, 3, h, hlen, PGPRHASHALGO_SHA1, item->fp, 20);
-	    if (rc == PGPR_OK)
-		item->fp_len = 20;
-	}
+      {
+	uint8_t in[3] = { 0x99, (hlen >> 8), hlen };
+	rc = gen_key_fingerprint(in, 3, h, hlen, PGPRHASHALGO_SHA1, item->fp, 20);
+	if (rc == PGPR_OK)
+	    item->fp_len = 20;
       }	break;
     case 5:
     case 6:
-      {	pgprPktKeyV56 v = (pgprPktKeyV56)h;
-	if (hlen < sizeof(*v))
-	    return rc;
-	/* Does the size and number of MPI's match our expectations? */
-	rc = pgprValidateKeyParamsSize(v->pubkey_algo, (uint8_t *)(v + 1), hlen - sizeof(*v));
-	if (rc == PGPR_OK) {
-	    uint8_t in[5] = { h[0] == 6 ? 0x9b : 0x9a, (hlen >> 24), (hlen >> 16), (hlen >> 8), hlen };
-	    rc = gen_key_fingerprint(in, 5, h, hlen, PGPRHASHALGO_SHA256, item->fp, 32);
-	    if (rc == PGPR_OK)
-		item->fp_len = 32;
-	}
+      {
+	uint8_t in[5] = { h[0] == 6 ? 0x9b : 0x9a, (hlen >> 24), (hlen >> 16), (hlen >> 8), hlen };
+	rc = gen_key_fingerprint(in, 5, h, hlen, PGPRHASHALGO_SHA256, item->fp, 32);
+	if (rc == PGPR_OK)
+	    item->fp_len = 32;
       }	break;
     default:
 	rc = PGPR_ERROR_UNSUPPORTED_VERSION;
 	break;
     }
-    if (rc == PGPR_OK && item->fp_len == 0)
+    if (rc == PGPR_OK && item->fp_len <= 8)
 	rc = PGPR_ERROR_INTERNAL;
     if (rc == PGPR_OK) {
 	item->fp_version = h[0];
-	item->saved |= PGPRITEM_SAVED_FP;
-	if ((rc = pgprGetKeyIDFromFp(item->fp, item->fp_len, item->fp_version, item->signid)) == PGPR_OK)
-	    item->saved |= PGPRITEM_SAVED_ID;
+	/* calculate the keyid from the fp */
+	if (h[0] == 4)
+	    memcpy(item->signid, (item->fp + (item->fp_len - 8)), 8);
+	else
+	    memcpy(item->signid, item->fp, 8);
+	item->saved |= PGPRITEM_SAVED_FP | PGPRITEM_SAVED_ID;
     }
     free(fp);
     return rc;
@@ -776,7 +717,7 @@ pgprRC pgprPrtUserID(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item)
 	return PGPR_ERROR_INTERNAL;
     free(item->userid);
     item->userid = memcpy(pgprMalloc(hlen + 1), h, hlen);
-    item->userid[hlen] = '\0';
+    item->userid[hlen] = 0;
     return PGPR_OK;
 }
 
