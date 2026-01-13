@@ -7,17 +7,15 @@
 #include "pgpr.h"
 #include "pgpr_internal.h"
 
-typedef uint8_t pgprTime_t[4];
-
 typedef struct pgprPktKeyV4_s {
     uint8_t version;	/*!< version number (4). */
-    pgprTime_t time;	/*!< time that the key was created. */
+    uint8_t time[4];	/*!< time that the key was created. */
     uint8_t pubkey_algo;	/*!< public key algorithm. */
 } * pgprPktKeyV4;
 
 typedef struct pgprPktKeyV56_s {
     uint8_t version;	/*!< version number (4). */
-    pgprTime_t time;	/*!< time that the key was created. */
+    uint8_t time[4];	/*!< time that the key was created. */
     uint8_t pubkey_algo;	/*!< public key algorithm. */
     uint8_t pubkey_len[4];	/*!< public key material length. */
 } * pgprPktKeyV56;
@@ -26,7 +24,7 @@ typedef struct pgprPktSigV3_s {
     uint8_t version;	/*!< version number (3). */
     uint8_t hashlen;	/*!< length of following hashed material. MUST be 5. */
     uint8_t sigtype;	/*!< signature type. */
-    pgprTime_t time;	/*!< 4 byte creation time. */
+    uint8_t time[4];	/*!< time that the key was created. */
     pgprKeyID_t keyid;	/*!< key ID of signer. */
     uint8_t pubkey_algo;	/*!< public key algorithm. */
     uint8_t hash_algo;	/*!< hash algorithm. */
