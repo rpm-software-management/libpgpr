@@ -13,7 +13,7 @@ typedef struct pgprMergePkt_s {
     int source;
 
     /* signature data */
-    pgprKeyID_t signid;
+    pgprKeyID_t keyid;
     uint32_t time;
     int selfsig;
 
@@ -51,7 +51,7 @@ static uint32_t pgprMergePktCalcHash(pgprMergePkt *mp)
 {
     uint32_t hash = simplehash(mp->pkt.tag, mp->pkt.body, mp->hashlen);
     if (mp->pkt.tag == PGPRTAG_SIGNATURE)
-	hash = simplehash(hash, mp->signid, sizeof(pgprKeyID_t));
+	hash = simplehash(hash, mp->keyid, sizeof(pgprKeyID_t));
     return hash;
 }
 
@@ -63,7 +63,7 @@ static int pgprMergePktIdentical(pgprMergePkt *mp1, pgprMergePkt *mp2)
 	return 0;
     if (memcmp(mp1->pkt.body, mp2->pkt.body, mp1->hashlen) != 0)
 	return 0;
-    if (mp1->pkt.tag == PGPRTAG_SIGNATURE && memcmp(mp1->signid, mp2->signid, sizeof(pgprKeyID_t)) != 0)
+    if (mp1->pkt.tag == PGPRTAG_SIGNATURE && memcmp(mp1->keyid, mp2->keyid, sizeof(pgprKeyID_t)) != 0)
 	return 0;
     return 1;
 }
@@ -80,8 +80,8 @@ static pgprRC pgprMergePktNew(pgprPkt *pkt, int source, pgprKeyID_t primaryid, p
 	rc = pgprParseSigNoParams(pkt, sigitem);
 	if (rc == PGPR_OK) {
 	    mp->time = sigitem->time;
-	    memcpy(mp->signid, sigitem->signid, sizeof(pgprKeyID_t));
-	    if (primaryid && memcmp(primaryid, mp->signid, sizeof(pgprKeyID_t)) == 0)
+	    memcpy(mp->keyid, sigitem->keyid, sizeof(pgprKeyID_t));
+	    if (primaryid && memcmp(primaryid, mp->keyid, sizeof(pgprKeyID_t)) == 0)
 		mp->selfsig = 1;
 	    if (sigitem->version > 3 && sigitem->hashlen > 6)
 		mp->hashlen = sigitem->hashlen - 6;	/* 6: size of trailer */

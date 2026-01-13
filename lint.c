@@ -45,7 +45,7 @@ static char *format_time(time_t *t)
 
 static void pgprAddKeyLint(pgprItem key, char **lints, const char *msg)
 {
-    char *keyid = format_keyid(key->signid, key->tag == PGPRTAG_PUBLIC_SUBKEY ? NULL : key->userid);
+    char *keyid = format_keyid(key->keyid, key->tag == PGPRTAG_PUBLIC_SUBKEY ? NULL : key->userid);
     char *main_keyid = key->tag == PGPRTAG_PUBLIC_SUBKEY ? format_keyid(key->mainid, key->userid) : NULL;
     if (key->tag == PGPRTAG_PUBLIC_SUBKEY) {
 	/* special case the message about subkeys with a revoked primary key */

@@ -134,7 +134,7 @@ static pgprRC verifyPrimaryBindingSig(pgprPkt *mainpkt, pgprPkt *subkeypkt, pgpr
 static int is_same_keyid(pgprItem item1, pgprItem item2)
 {
     return (item1->saved & item2->saved & PGPRITEM_SAVED_ID) != 0 &&
-	memcmp(item1->signid, item2->signid, sizeof(item1->signid)) == 0;
+	memcmp(item1->keyid, item2->keyid, sizeof(item1->keyid)) == 0;
 }
 
 /* Parse a complete pubkey with all associated packets */
@@ -395,7 +395,7 @@ pgprRC pgprParseTransferablePubkeySubkeys(const uint8_t *pkts, size_t pktlen,
 	if (pkt.tag == PGPRTAG_PUBLIC_SUBKEY) {
 	    subitem = pgprItemNew(PGPRTAG_PUBLIC_SUBKEY);
 	    /* Copy keyid of main key for error messages */
-	    memcpy(subitem->mainid, mainkey->signid, sizeof(mainkey->signid));
+	    memcpy(subitem->mainid, mainkey->keyid, sizeof(mainkey->keyid));
 	    /* Copy UID from main key to subkey */
 	    subitem->userid = mainkey->userid ? pgprStrdup(mainkey->userid) : NULL;
 	    /* if the main key is revoked, all the subkeys are also revoked */

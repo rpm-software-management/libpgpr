@@ -58,7 +58,7 @@ int pgprItemCmp(pgprItem p1, pgprItem p2)
 	    goto exit;
 	if (p1->sigtype != p2->sigtype)
 	    goto exit;
-	if (memcmp(p1->signid, p2->signid, sizeof(p1->signid)) != 0)
+	if (memcmp(p1->keyid, p2->keyid, sizeof(p1->keyid)) != 0)
 	    goto exit;
 	if (p1->userid && p2->userid && strcmp(p1->userid, p2->userid) != 0)
 	    goto exit;
@@ -97,7 +97,7 @@ int pgprItemPubkeyAlgoInfo(pgprItem item)
 
 const uint8_t *pgprItemKeyID(pgprItem item)
 {
-    return item->signid;
+    return item->keyid;
 }
 
 const uint8_t *pgprItemKeyFingerprint(pgprItem item, size_t *fp_len, int *fp_version)

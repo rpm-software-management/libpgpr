@@ -27,7 +27,7 @@ typedef struct pgprPktSigV3_s {
     uint8_t hashlen;	/*!< length of following hashed material. MUST be 5. */
     uint8_t sigtype;	/*!< signature type. */
     pgprTime_t time;	/*!< 4 byte creation time. */
-    pgprKeyID_t signid;	/*!< key ID of signer. */
+    pgprKeyID_t keyid;	/*!< key ID of signer. */
     uint8_t pubkey_algo;	/*!< public key algorithm. */
     uint8_t hash_algo;	/*!< hash algorithm. */
     uint8_t signhash16[2];	/*!< left 16 bits of signed hash value. */
@@ -213,11 +213,11 @@ static pgprRC pgprParseSigSubPkts(const uint8_t *h, size_t hlen, pgprItem item, 
 	    break;
 
 	case PGPRSUBTYPE_ISSUER_KEYID:
-	    if (plen - 1 != sizeof(item->signid))
+	    if (plen - 1 != sizeof(item->keyid))
 		break; /* other lengths not understood */
 	    impl = 1;
 	    if (!(item->saved & PGPRITEM_SAVED_ID)) {
-		memcpy(item->signid, p + 1, sizeof(item->signid));
+		memcpy(item->keyid, p + 1, sizeof(item->keyid));
 		item->saved |= PGPRITEM_SAVED_ID;
 	    }
 	    break;
@@ -235,11 +235,11 @@ static pgprRC pgprParseSigSubPkts(const uint8_t *h, size_t hlen, pgprItem item, 
 		}
 	    }
 	    if (p[1] == 4 && plen - 1 == 21 && !(item->saved & PGPRITEM_SAVED_ID)) {
-		memcpy(item->signid, p + plen - sizeof(item->signid), sizeof(item->signid));
+		memcpy(item->keyid, p + plen - sizeof(item->keyid), sizeof(item->keyid));
 		item->saved |= PGPRITEM_SAVED_ID;
 	    }
 	    if ((p[1] == 5 || p[1] == 6) && plen - 1 == 33 && !(item->saved & PGPRITEM_SAVED_ID)) {
-		memcpy(item->signid, p + 2, sizeof(item->signid));
+		memcpy(item->keyid, p + 2, sizeof(item->keyid));
 		item->saved |= PGPRITEM_SAVED_ID;
 	    }
 	    break;
@@ -339,7 +339,7 @@ pgprRC pgprParseSigNoParams(pgprPkt *pkt, pgprItem item)
 	item->sigtype = v->sigtype;
 	item->hash = pgprMemdup(&v->sigtype, v->hashlen);
 	item->time = pgprGrab4(v->time);
-	memcpy(item->signid, v->signid, sizeof(item->signid));
+	memcpy(item->keyid, v->keyid, sizeof(item->keyid));
 	item->saved = PGPRITEM_SAVED_TIME | PGPRITEM_SAVED_ID;
 	item->pubkey_algo = v->pubkey_algo;
 	item->hash_algo = v->hash_algo;
@@ -496,9 +496,9 @@ pgprRC pgprParseKeyFp(pgprPkt *pkt, pgprItem item)
     free(out);
     /* calculate the keyid from the fingerprint */
     if (version == 4)
-	memcpy(item->signid, (item->fp + (outlen - 8)), 8);
+	memcpy(item->keyid, (item->fp + (outlen - 8)), 8);
     else
-	memcpy(item->signid, item->fp, 8);
+	memcpy(item->keyid, item->fp, 8);
     item->saved |= PGPRITEM_SAVED_FP | PGPRITEM_SAVED_ID;
     return PGPR_OK;
 }

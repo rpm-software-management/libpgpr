@@ -52,7 +52,7 @@ struct pgprItem_s {
     uint8_t fp[PGPR_MAX_FP_LENGTH];	/*!< fingerprint of key or sig */
     int fp_len;				/*!< length of fp or zero */
     int fp_version;			/*!< key version of fp */
-    pgprKeyID_t signid;		/*!< key id of pubkey or signature */
+    pgprKeyID_t keyid;		/*!< key id of pubkey or signature */
     uint32_t key_expire;	/*!< key expire time. */
     uint32_t sig_expire;	/*!< signature expire time. */
     int revoked;		/*!< is the key revoked? */
