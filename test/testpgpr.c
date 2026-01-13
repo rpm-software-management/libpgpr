@@ -46,15 +46,26 @@ printhex(const char *what, const uint8_t *d, size_t l)
     printf("\n");
 }
 
+static void
+die(const char *str, pgprRC rc)
+{
+    if (rc == PGPR_OK)
+	fprintf(stderr, "%s\n", str);
+    else
+	fprintf(stderr, "%s: %s\n", str, pgprErrorStr(rc));
+    exit(1);
+}
+
+
 pgprItem
 select_subkey(const uint8_t *pkts, size_t pktlen, pgprItem key, int subkey)
 {
+    pgprRC rc;
     pgprItem *subkeys;
     int nsubkeys = 0;
-    if (pgprPubkeyParseSubkeys(pkts, pktlen, key, &subkeys, &nsubkeys) != PGPR_OK) {
-	fprintf(stderr, "subkeys parse error\n");
-	exit(1);
-    }
+
+    if ((rc = pgprPubkeyParseSubkeys(pkts, pktlen, key, &subkeys, &nsubkeys)) != PGPR_OK)
+	die("subkeys parse error", rc);
     if (subkey <= 0 || subkey > nsubkeys) {
 	fprintf(stderr, "no subkey #%d\n", subkey);
 	exit(1);
@@ -71,6 +82,7 @@ select_subkey(const uint8_t *pkts, size_t pktlen, pgprItem key, int subkey)
 static int
 verifysignature(int argc, char **argv)
 {
+    pgprRC rc;
     char *pubkey_a;
     char *signature_a;
     unsigned char *data;
@@ -108,20 +120,15 @@ verifysignature(int argc, char **argv)
     signature_a = slurp(argv[optind + 1], NULL);
     data = slurp(argv[optind + 2], &datalen);
 
-    if (pgprArmorUnwrap("PUBLIC KEY BLOCK", pubkey_a, &pubkey, &pubkeyl) != PGPR_OK) {
-	fprintf(stderr, "pubkey unwrap error\n");
-	exit(1);
-    }
-    if (pgprArmorUnwrap("SIGNATURE", signature_a, &signature, &signaturel) != PGPR_OK) {
-	fprintf(stderr, "signature unwrap error\n");
-	exit(1);
-    }
+    if ((rc = pgprArmorUnwrap("PUBLIC KEY BLOCK", pubkey_a, &pubkey, &pubkeyl)) != PGPR_OK)
+	die("pubkey unwrap error", rc);
+    if ((rc = pgprArmorUnwrap("SIGNATURE", signature_a, &signature, &signaturel)) != PGPR_OK)
+	die("signature unwrap error", rc);
     lints = 0;
-    if (pgprPubkeyParse(pubkey, pubkeyl, &key, &lints) != PGPR_OK) {
-	if (lints)
-	    fprintf(stderr, "pubkey parse error: %s\n", lints);
-	else
-	    fprintf(stderr, "pubkey parse error\n");
+    if ((rc = pgprPubkeyParse(pubkey, pubkeyl, &key, &lints)) != PGPR_OK) {
+	if (!lints)
+	    die("pubkey parse error", rc);
+	fprintf(stderr, "pubkey parse error: %s\n", lints);
 	exit(1);
     }
     free(lints);
@@ -130,19 +137,16 @@ verifysignature(int argc, char **argv)
 	key = select_subkey(pubkey, pubkeyl, key, subkey);
 
     lints = 0;
-    if (pgprSignatureParse(signature, signaturel, &sig, &lints) != PGPR_OK) {
-	if (lints)
-	    fprintf(stderr, "signature parse error: %s\n", lints);
-	else
-	    fprintf(stderr, "signature parse error\n");
+    if ((rc = pgprSignatureParse(signature, signaturel, &sig, &lints)) != PGPR_OK) {
+	if (!lints)
+	    die("signature parse error", rc);
+	fprintf(stderr, "signature parse error: %s\n", lints);
 	exit(1);
     }
     free(lints);
 
-    if (pgprDigestInit(pgprItemHashAlgo(sig), &ctx) != PGPR_OK || !ctx) {
-	fprintf(stderr, "unsupported hash algorithm in signature\n");
-	exit(1);
-    }
+    if ((rc = pgprDigestInit(pgprItemHashAlgo(sig), &ctx)) != PGPR_OK)
+	die("digest init error", rc);
     header = pgprItemHashHeader(sig, &headerlen);
     if (header)
 	pgprDigestUpdate(ctx, header, headerlen);
@@ -153,13 +157,13 @@ verifysignature(int argc, char **argv)
     pgprDigestFinal(ctx, &hash, &hashlen);
 
     lints = 0;
-    if (pgprVerifySignature(key, sig, hash, hashlen, &lints) != PGPR_OK) {
-	if (lints)
-	    fprintf(stderr, "signature verification error: %s\n", lints);
-	else
-	    fprintf(stderr, "signature verification error\n");
+    if ((rc = pgprVerifySignature(key, sig, hash, hashlen, &lints)) != PGPR_OK) {
+	if (!lints)
+	    die("signature verification error", rc == PGPR_ERROR_SIGNATURE_VERIFICATION ? PGPR_OK : rc);
+	fprintf(stderr, "signature verification error: %s\n", lints);
 	exit(1);
     }
+    free(lints);
     printf("signature verified OK\n");
 
     free(hash);
@@ -181,6 +185,7 @@ const char *nullify(const char *str)
 static int
 keyinfo(int argc, char **argv)
 {
+    pgprRC rc;
     char *pubkey_a;
     unsigned char *pubkey;
     size_t pubkeyl;
@@ -206,18 +211,16 @@ keyinfo(int argc, char **argv)
 	exit(1);
     }
     pubkey_a = slurp(argv[optind], NULL);
-    if (pgprArmorUnwrap("PUBLIC KEY BLOCK", pubkey_a, &pubkey, &pubkeyl) != PGPR_OK) {
-	fprintf(stderr, "pubkey unwrap error\n");
-	exit(1);
-    }
+    if ((rc = pgprArmorUnwrap("PUBLIC KEY BLOCK", pubkey_a, &pubkey, &pubkeyl)) != PGPR_OK)
+	die("pubkey unwrap error", rc);
     lints = 0;
-    if (pgprPubkeyParse(pubkey, pubkeyl, &key, &lints) != PGPR_OK) {
-	if (lints)
-	    fprintf(stderr, "pubkey parse error: %s\n", lints);
-	else
-	    fprintf(stderr, "pubkey parse error\n");
+    if ((rc = pgprPubkeyParse(pubkey, pubkeyl, &key, &lints)) != PGPR_OK) {
+	if (!lints)
+	    die("pubkey parse error", rc);
+	fprintf(stderr, "pubkey parse error: %s\n", lints);
 	exit(1);
     }
+    free(lints);
     if (subkey)
 	key = select_subkey(pubkey, pubkeyl, key, subkey);
     printf("Version: %d\n", pgprItemVersion(key));
@@ -240,6 +243,7 @@ keyinfo(int argc, char **argv)
 static int
 certinfo(int argc, char **argv)
 {
+    pgprRC rc;
     char *pubkey_a;
     unsigned char *pubkey;
     size_t pubkeyl;
@@ -255,25 +259,17 @@ certinfo(int argc, char **argv)
 	exit(1);
     }
     pubkey_a = slurp(argv[optind], NULL);
-    if (pgprArmorUnwrap("PUBLIC KEY BLOCK", pubkey_a, &pubkey, &pubkeyl) != PGPR_OK) {
-	fprintf(stderr, "pubkey unwrap error\n");
-	exit(1);
-    }
-    if (pgprPubkeyFingerprint(pubkey, pubkeyl, &fp, &fplen, NULL) != PGPR_OK) {
-	fprintf(stderr, "pgprPubkeyFingerprint error\n");
-	exit(1);
-    }
+    if ((rc = pgprArmorUnwrap("PUBLIC KEY BLOCK", pubkey_a, &pubkey, &pubkeyl)) != PGPR_OK)
+	die("pubkey unwrap error", rc);
+    if ((rc = pgprPubkeyFingerprint(pubkey, pubkeyl, &fp, &fplen, NULL)) != PGPR_OK)
+	die("pgprPubkeyFingerprint error", rc);
     printhex("KeyFP", fp, fplen);
     memset(keyid, 0, sizeof(keyid));
-    if (pgprPubkeyKeyID(pubkey, pubkeyl, keyid) != PGPR_OK) {
-	fprintf(stderr, "pgprPubkeyKeyID error\n");
-	exit(1);
-    }
+    if ((rc = pgprPubkeyKeyID(pubkey, pubkeyl, keyid)) != PGPR_OK)
+	die("pgprPubkeyKeyID error", rc);
     printhex("KeyID", keyid, 8);
-    if (pgprPubkeyCertLen(pubkey, pubkeyl, &certlen) != PGPR_OK) {
-	fprintf(stderr, "pgprPubkeyCertLen error\n");
-	exit(1);
-    }
+    if ((rc = pgprPubkeyCertLen(pubkey, pubkeyl, &certlen)) != PGPR_OK)
+	die("pgprPubkeyCertLen error", rc);
     printf("CertLen: %zd\n", certlen);
     free(fp);
     free(pubkey_a);
@@ -284,6 +280,7 @@ certinfo(int argc, char **argv)
 static int
 siginfo(int argc, char **argv)
 {
+    pgprRC rc;
     char *signature_a;
     unsigned char *signature;
     size_t signaturel;
@@ -299,18 +296,16 @@ siginfo(int argc, char **argv)
 	exit(1);
     }
     signature_a = slurp(argv[1], NULL);
-    if (pgprArmorUnwrap("SIGNATURE", signature_a, &signature, &signaturel) != PGPR_OK) {
-	fprintf(stderr, "signature unwrap error\n");
-	exit(1);
-    }
+    if ((rc = pgprArmorUnwrap("SIGNATURE", signature_a, &signature, &signaturel)) != PGPR_OK)
+	die("signature unwrap error", rc);
     lints = 0;
-    if (pgprSignatureParse(signature, signaturel, &sig, &lints) != PGPR_OK) {
-	if (lints)
-	    fprintf(stderr, "signature parse error: %s\n", lints);
-	else
-	    fprintf(stderr, "signature parse error\n");
+    if ((rc = pgprSignatureParse(signature, signaturel, &sig, &lints)) != PGPR_OK) {
+	if (!lints)
+	    die("signature parse error", rc);
+	fprintf(stderr, "signature parse error: %s\n", lints);
 	exit(1);
     }
+    free(lints);
     printf("Version: %d\n", pgprItemVersion(sig));
     printf("CreationTime: %d\n", pgprItemCreationTime(sig));
     printf("Algorithm: %d\n", pgprItemPubkeyAlgo(sig));

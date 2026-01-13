@@ -1,3 +1,6 @@
+/*
+ * internal definitions and function declarations
+ */
 
 #if     __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ > 4)
 # define PGPR_GNUC_PRINTF( format_idx, arg_idx )    \
@@ -12,6 +15,8 @@
 # define PGPR_GNUC_INTERNAL
 #endif
 
+
+#include "pgpr.h"
 
 
 /* max number of bytes in a key */
@@ -126,7 +131,6 @@ typedef enum pgprSubType_e {
 PGPR_GNUC_INTERNAL
 pgprRC pgprDecodePkt(const uint8_t *p, size_t plen, pgprPkt *pkt);
 
-
 /* allocation */
 PGPR_GNUC_INTERNAL
 pgprAlg pgprAlgNew(void);
@@ -140,7 +144,7 @@ pgprRC pgprAlgInitPubkey(pgprAlg alg, int algo, int curve);
 PGPR_GNUC_INTERNAL
 pgprRC pgprAlgInitSignature(pgprAlg alg, int algo);
 
-/* pgpr packet data extraction */
+/* pgp packet data extraction */
 PGPR_GNUC_INTERNAL
 pgprRC pgprParseKey(pgprPkt *pkt, pgprItem item);
 
@@ -159,17 +163,16 @@ pgprRC pgprParseUserID(pgprPkt *pkt, pgprItem item);
 PGPR_GNUC_INTERNAL
 pgprRC pgprParseKeyFp(pgprPkt *pkt,  pgprItem item);
 
-
 /* diagnostics */
 PGPR_GNUC_INTERNAL
 void pgprAddLint(pgprItem item, char **lints, pgprRC error);
 
 /* transferable pubkey parsing */
 PGPR_GNUC_INTERNAL
-pgprRC pgprParseTransferablePubkey(const uint8_t * pkts, size_t pktlen, pgprItem item);
+pgprRC pgprParseTransferablePubkey(const uint8_t * pkts, size_t pktslen, pgprItem item);
 
 PGPR_GNUC_INTERNAL
-pgprRC pgprParseTransferablePubkeySubkeys(const uint8_t * pkts, size_t pktlen, pgprItem mainkey,
+pgprRC pgprParseTransferablePubkeySubkeys(const uint8_t * pkts, size_t pktslen, pgprItem mainkey,
 				   pgprItem **subkeys, int *subkeysCount);
 
 /* signature verification */

@@ -1,6 +1,5 @@
 #include <gcrypt.h>
 
-#include "pgpr.h"
 #include "pgpr_internal.h"
 
 static int hashalgo2gcryalgo(int hashalgo)

@@ -1,7 +1,6 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include "pgpr.h"
 #include "pgpr_internal.h"
 
 pgprRC pgprVerifySignatureRaw(pgprItem key, pgprItem sig, const uint8_t *hash, size_t hashlen)

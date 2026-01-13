@@ -194,24 +194,24 @@ pgprRC pgprVerifySignature(pgprItem key, pgprItem sig, const uint8_t *hash, size
 pgprRC pgprVerifySignatureNoKey(pgprItem sig, const uint8_t *hash, size_t hashlen, char **lints);
 
 /* pgp packet parsing */
-pgprRC pgprSignatureParse(const uint8_t * pkts, size_t pktlen, pgprItem * ret, char **lints);
+pgprRC pgprSignatureParse(const uint8_t *pkts, size_t pktslen, pgprItem *ret, char **lints);
 
-pgprRC pgprPubkeyParse(const uint8_t * pkts, size_t pktlen, pgprItem * ret, char **lints);
+pgprRC pgprPubkeyParse(const uint8_t *pkts, size_t pktslen, pgprItem *ret, char **lints);
 
-pgprRC pgprPubkeyParseSubkeys(const uint8_t *pkts, size_t pktlen, pgprItem key, pgprItem **subkeys, int *subkeysCount);
+pgprRC pgprPubkeyParseSubkeys(const uint8_t *pkts, size_t pktslen, pgprItem key, pgprItem **subkeys, int *subkeysCount);
 
 pgprRC pgprPubkeyCertLen(const uint8_t *pkts, size_t pktslen, size_t *certlen);
 
-pgprRC pgprPubkeyKeyID(const uint8_t * pkts, size_t pktslen, pgprKeyID_t keyid);
+pgprRC pgprPubkeyKeyID(const uint8_t *pkts, size_t pktslen, pgprKeyID_t keyid);
 
-pgprRC pgprPubkeyFingerprint(const uint8_t * pkts, size_t pktslen, uint8_t **fp, size_t *fp_len, int *fp_version);
+pgprRC pgprPubkeyFingerprint(const uint8_t *pkts, size_t pktslen, uint8_t **fp, size_t *fp_len, int *fp_version);
 
 pgprRC pgprPubkeyMerge(const uint8_t *pkts1, size_t pkts1len, const uint8_t *pkts2, size_t pkts2len, uint8_t **pktsm, size_t *pktsmlen);
 
 /* armor functions */
-char *pgprArmorWrap(const char *armortype, const char *keys, const unsigned char * s, size_t ns);
+char *pgprArmorWrap(const char *armortype, const char *keys, const unsigned char *s, size_t ns);
 
-pgprRC pgprArmorUnwrap(const char *armortype, const char *armor, uint8_t ** pkt, size_t * pktlen);
+pgprRC pgprArmorUnwrap(const char *armortype, const char *armor, uint8_t **pkts, size_t *pktslen);
 
 /* digest functions */
 pgprRC pgprDigestInit(int hashalgo, pgprDigCtx *ret);
@@ -223,4 +223,7 @@ pgprRC pgprDigestFinal(pgprDigCtx ctx, void **datap, size_t *lenp);
 pgprRC pgprDigestDup(pgprDigCtx oldctx, pgprDigCtx *ret);
 
 size_t pgprDigestLength(int hashalgo);
+
+/* error reporting */
+const char *pgprErrorStr(pgprRC rc);
 

@@ -4,7 +4,6 @@
 
 #include <string.h>
 
-#include "pgpr.h"
 #include "pgpr_internal.h"
 
 /*
@@ -104,7 +103,7 @@ pgprRC pgprDecodePkt(const uint8_t *p, size_t plen, pgprPkt *pkt)
     return rc;
 }
 
-pgprRC pgprSignatureParse(const uint8_t * pkts, size_t pktlen, pgprItem * ret, char **lints)
+pgprRC pgprSignatureParse(const uint8_t * pkts, size_t pktslen, pgprItem * ret, char **lints)
 {
     pgprItem item = NULL;
     pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;	/* assume failure */
@@ -112,7 +111,7 @@ pgprRC pgprSignatureParse(const uint8_t * pkts, size_t pktlen, pgprItem * ret, c
 
     if (lints)
         *lints = NULL;
-    if (pktlen > PGPR_MAX_OPENPGP_BYTES || pgprDecodePkt(pkts, pktlen, &pkt))
+    if (pktslen > PGPR_MAX_OPENPGP_BYTES || pgprDecodePkt(pkts, pktslen, &pkt))
 	goto exit;
 
     if (pkt.tag != PGPRTAG_SIGNATURE) {
@@ -123,7 +122,7 @@ pgprRC pgprSignatureParse(const uint8_t * pkts, size_t pktlen, pgprItem * ret, c
     item = pgprItemNew(pkt.tag);
     rc = pgprParseSig(&pkt, item);
     /* treat trailing data as error */
-    if (rc == PGPR_OK && (pkt.body - pkt.head) + pkt.blen != pktlen)
+    if (rc == PGPR_OK && (pkt.body - pkt.head) + pkt.blen != pktslen)
 	rc = PGPR_ERROR_CORRUPT_PGP_PACKET;
 
 exit:
@@ -137,7 +136,7 @@ exit:
     return rc;
 }
 
-pgprRC pgprPubkeyParse(const uint8_t * pkts, size_t pktlen, pgprItem * ret, char **lints)
+pgprRC pgprPubkeyParse(const uint8_t * pkts, size_t pktslen, pgprItem * ret, char **lints)
 {
     pgprItem key = NULL;
     pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;	/* assume failure */
@@ -145,7 +144,7 @@ pgprRC pgprPubkeyParse(const uint8_t * pkts, size_t pktlen, pgprItem * ret, char
 
     if (lints)
         *lints = NULL;
-    if (pktlen > PGPR_MAX_OPENPGP_BYTES || pgprDecodePkt(pkts, pktlen, &pkt))
+    if (pktslen > PGPR_MAX_OPENPGP_BYTES || pgprDecodePkt(pkts, pktslen, &pkt))
 	goto exit;
     if (pkt.tag != PGPRTAG_PUBLIC_KEY) {
 	rc = PGPR_ERROR_UNEXPECTED_PGP_PACKET;
@@ -154,7 +153,7 @@ pgprRC pgprPubkeyParse(const uint8_t * pkts, size_t pktlen, pgprItem * ret, char
 
     /* use specialized transferable pubkey implementation */
     key = pgprItemNew(pkt.tag);
-    rc = pgprParseTransferablePubkey(pkts, pktlen, key);
+    rc = pgprParseTransferablePubkey(pkts, pktslen, key);
 exit:
     if (ret && rc == PGPR_OK)
 	*ret = key;
@@ -166,11 +165,11 @@ exit:
     return rc;
 }
 
-pgprRC pgprPubkeyParseSubkeys(const uint8_t *pkts, size_t pktlen,
+pgprRC pgprPubkeyParseSubkeys(const uint8_t *pkts, size_t pktslen,
 			pgprItem key, pgprItem **subkeys,
 			int *subkeysCount)
 {
-    return pgprParseTransferablePubkeySubkeys(pkts, pktlen, key, subkeys, subkeysCount);
+    return pgprParseTransferablePubkeySubkeys(pkts, pktslen, key, subkeys, subkeysCount);
 }
 
 pgprRC pgprPubkeyCertLen(const uint8_t *pkts, size_t pktslen, size_t *certlen)
@@ -192,7 +191,7 @@ pgprRC pgprPubkeyCertLen(const uint8_t *pkts, size_t pktslen, size_t *certlen)
     return PGPR_OK;
 }
 
-pgprRC pgprPubkeyKeyID(const uint8_t * pkts, size_t pktslen, pgprKeyID_t keyid)
+pgprRC pgprPubkeyKeyID(const uint8_t *pkts, size_t pktslen, pgprKeyID_t keyid)
 {
     pgprPkt pkt;
     struct pgprItem_s key;
@@ -212,7 +211,7 @@ pgprRC pgprPubkeyKeyID(const uint8_t * pkts, size_t pktslen, pgprKeyID_t keyid)
     return rc;
 }
 
-pgprRC pgprPubkeyFingerprint(const uint8_t * pkts, size_t pktslen,
+pgprRC pgprPubkeyFingerprint(const uint8_t *pkts, size_t pktslen,
                          uint8_t **fp, size_t *fp_len, int *fp_version)
 {
     pgprPkt pkt;

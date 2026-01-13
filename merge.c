@@ -4,7 +4,6 @@
 
 #include <string.h>
 
-#include "pgpr.h"
 #include "pgpr_internal.h"
 
 

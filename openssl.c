@@ -6,7 +6,6 @@
 #include <openssl/dsa.h>
 #include <openssl/ec.h>
 
-#include "pgpr.h"
 #include "pgpr_internal.h"
 
 static const EVP_MD *getEVPMD(int hashalgo)

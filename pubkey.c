@@ -4,7 +4,6 @@
 
 #include <string.h>
 
-#include "pgpr.h"
 #include "pgpr_internal.h"
 
 static pgprRC hashKey(pgprDigCtx ctx, const pgprPkt *pkt, int exptag, int version)
@@ -56,7 +55,7 @@ static pgprRC hashUserID(pgprDigCtx ctx, const pgprPkt *pkt, int exptag, int ver
     return rc;
 }
 
-static pgprRC pgprVerifySelf(pgprItem key, pgprItem selfsig,
+static pgprRC pgprVerifySelfSig(pgprItem key, pgprItem selfsig,
 			const pgprPkt *mainpkt, const pgprPkt *sectionpkt)
 {
     int rc = PGPR_ERROR_SELFSIG_VERIFICATION;
@@ -125,7 +124,7 @@ static pgprRC verifyPrimaryBindingSig(pgprPkt *mainpkt, pgprPkt *subkeypkt, pgpr
     emb = pgprItemNew(sigpkt.tag);
     if (pgprParseSig(&sigpkt, emb) == PGPR_OK)
 	if (emb->sigtype == PGPRSIGTYPE_PRIMARY_BINDING)
-	    rc = pgprVerifySelf(subkey, emb, mainpkt, subkeypkt);
+	    rc = pgprVerifySelfSig(subkey, emb, mainpkt, subkeypkt);
     emb = pgprItemFree(emb);
     return rc;
 }
@@ -138,10 +137,10 @@ static int is_same_keyid(pgprItem item1, pgprItem item2)
 
 /* Parse a complete pubkey with all associated packets */
 /* This is similar to gnupg's merge_selfsigs_main() function */
-pgprRC pgprParseTransferablePubkey(const uint8_t * pkts, size_t pktlen, pgprItem item)
+pgprRC pgprParseTransferablePubkey(const uint8_t * pkts, size_t pktslen, pgprItem item)
 {
     const uint8_t *p = pkts;
-    const uint8_t *pend = pkts + pktlen;
+    const uint8_t *pend = pkts + pktslen;
     pgprItem sigitem = NULL;
     pgprItem newest_item = NULL;
     pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;		/* assume failure */
@@ -152,7 +151,7 @@ pgprRC pgprParseTransferablePubkey(const uint8_t * pkts, size_t pktlen, pgprItem
     uint32_t now = 0;
 
     /* parse the main pubkey */
-    if (pktlen > PGPR_MAX_OPENPGP_BYTES)
+    if (pktslen > PGPR_MAX_OPENPGP_BYTES)
 	return PGPR_ERROR_CORRUPT_PGP_PACKET;
     if (pgprDecodePkt(p, (pend - p), &mainpkt) != PGPR_OK)
 	return PGPR_ERROR_CORRUPT_PGP_PACKET;
@@ -269,7 +268,7 @@ pgprRC pgprParseTransferablePubkey(const uint8_t * pkts, size_t pktlen, pgprItem
 		/* add MPIs so we can verify */
 	        if ((rc = pgprParseSigParams(&pkt, sigitem)) != PGPR_OK)
 		    break;
-		if ((rc = pgprVerifySelf(item, sigitem, &mainpkt, &sectionpkt)) != PGPR_OK)
+		if ((rc = pgprVerifySelfSig(item, sigitem, &mainpkt, &sectionpkt)) != PGPR_OK)
 		    break;		/* verification failed */
 		if (sigitem->sigtype != PGPRSIGTYPE_KEY_REVOKE)
 		    haveselfsig = 1;
@@ -325,12 +324,12 @@ pgprRC pgprParseTransferablePubkey(const uint8_t * pkts, size_t pktlen, pgprItem
 /* Return the subkeys for a pubkey. Note that the code in pgprParseParamsPubkey() already
  * made sure that the signatures are self-signatures and verified ok. */
 /* This is similar to gnupg's merge_selfsigs_subkey() function */
-pgprRC pgprParseTransferablePubkeySubkeys(const uint8_t *pkts, size_t pktlen,
+pgprRC pgprParseTransferablePubkeySubkeys(const uint8_t *pkts, size_t pktslen,
 			pgprItem mainkey, pgprItem **subkeys,
 			int *subkeysCount)
 {
     const uint8_t *p = pkts;
-    const uint8_t *pend = pkts + pktlen;
+    const uint8_t *pend = pkts + pktslen;
     pgprItem *items = NULL, subitem = NULL;
     pgprItem sigitem = NULL;
     pgprItem newest_item = NULL;
@@ -344,7 +343,7 @@ pgprRC pgprParseTransferablePubkeySubkeys(const uint8_t *pkts, size_t pktlen,
     if (mainkey->tag != PGPRTAG_PUBLIC_KEY || !mainkey->version)
 	return PGPR_ERROR_INTERNAL;	/* main key must be a parsed pubkey */
 
-    if (pktlen > PGPR_MAX_OPENPGP_BYTES)
+    if (pktslen > PGPR_MAX_OPENPGP_BYTES)
 	return PGPR_ERROR_CORRUPT_PGP_PACKET;
     if (pgprDecodePkt(p, (pend - p), &mainpkt) != PGPR_OK)
 	return PGPR_ERROR_CORRUPT_PGP_PACKET;
@@ -426,6 +425,8 @@ pgprRC pgprParseTransferablePubkeySubkeys(const uint8_t *pkts, size_t pktlen,
 		if (!(key_flags & 0x02) || verifyPrimaryBindingSig(&mainpkt, &subkeypkt, subitem, sigitem) == PGPR_OK)
 		    needsig = 1;
 	    }
+	    /* the code in pgprParseTransferablePubkey always checks that SUBKEY_BINDING
+             * and SUBKEY_REVOKE are self-signatures and verify ok */
 
 	    /* check if this signature is expired */
 	    if (needsig && (sigitem->saved & PGPRITEM_SAVED_SIG_EXPIRE) != 0 && sigitem->sig_expire) {

@@ -4,7 +4,6 @@
 
 #include <string.h>
 
-#include "pgpr.h"
 #include "pgpr_internal.h"
 
 #define CRC24_INIT	0xb704ce
@@ -187,13 +186,15 @@ static pgprRC decodePkts(const char *armortype, uint8_t *b, uint8_t **pkt, size_
 	    }
 	    *t = '\0';		/* Terminate encoded crc */
 	    t += sizeof("-----END PGP ")-1;
-	    if (t >= te) continue;
+	    if (t >= te)
+		continue;
 
 	    if (strncmp(t, armortype, strlen(armortype)) != 0)
 		continue;
 
 	    t += strlen(armortype);
-	    if (t >= te) continue;
+	    if (t >= te)
+		continue;
 
 	    if (!TOKEQ(t, "-----")) {
 		ec = PGPR_ERROR_ARMOR_NO_END_PGP;
@@ -203,7 +204,8 @@ static pgprRC decodePkts(const char *armortype, uint8_t *b, uint8_t **pkt, size_
 	    /* Handle EOF without EOL here, *t == '\0' at EOF */
 	    if (*t && (t >= te)) continue;
 	    /* XXX permitting \r here is not RFC-2440 compliant <shrug> */
-	    if (!(*t == '\n' || *t == '\r' || *t == '\0')) continue;
+	    if (!(*t == '\n' || *t == '\r' || *t == '\0'))
+		continue;
 
 	    if (r64dec1(crcenc, &crcpkt, &crceof) == 0 || crceof != 0) {
 		ec = PGPR_ERROR_ARMOR_CRC_DECODE;
@@ -228,10 +230,10 @@ static pgprRC decodePkts(const char *armortype, uint8_t *b, uint8_t **pkt, size_
 		*pkt = dec;
 	    else
 		free(dec);
-	    if (pktlen) *pktlen = declen;
+	    if (pktlen)
+		*pktlen = declen;
 	    ec = PGPR_OK;
 	    goto exit;
-	    break;
 	}
     }
 
@@ -239,18 +241,18 @@ exit:
     return ec;
 }
 
-pgprRC pgprArmorUnwrap(const char *armortype, const char *armor, uint8_t ** pkt, size_t * pktlen)
+pgprRC pgprArmorUnwrap(const char *armortype, const char *armor, uint8_t **pkts, size_t *pktslen)
 {
     pgprRC rc = PGPR_ERROR_ARMOR_NO_BEGIN_PGP;
     if (armortype && armor && *armor) {
 	uint8_t *b = (uint8_t*) pgprStrdup(armor);
-	rc = decodePkts(armortype, b, pkt, pktlen);
+	rc = decodePkts(armortype, b, pkts, pktslen);
 	free(b);
     }
     return rc;
 }
 
-char *pgprArmorWrap(const char *armortype, const char *keys, const unsigned char * s, size_t ns)
+char *pgprArmorWrap(const char *armortype, const char *keys, const unsigned char *s, size_t ns)
 {
     char *buf = NULL, *val = NULL, *enc;
     unsigned int crc;

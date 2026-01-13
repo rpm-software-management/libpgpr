@@ -1,7 +1,6 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include "pgpr.h"
 #include "pgpr_internal.h"
 
 pgprItem pgprItemNew(uint8_t tag)
@@ -87,7 +86,7 @@ int pgprItemPubkeyAlgo(pgprItem item)
 
 int pgprItemHashAlgo(pgprItem item)
 {
-    return item ? item->hash_algo : -1;
+    return item && item->tag == PGPRTAG_SIGNATURE ? item->hash_algo : -1;
 }
 
 int pgprItemPubkeyAlgoInfo(pgprItem item)
@@ -131,7 +130,7 @@ uint32_t pgprItemModificationTime(pgprItem item)
 
 const uint8_t *pgprItemHashHeader(pgprItem item, size_t *headerlen)
 {
-    if (item->tag != PGPRTAG_SIGNATURE) {
+    if (!item || item->tag != PGPRTAG_SIGNATURE) {
 	*headerlen = 0;
 	return NULL;
     }
@@ -141,11 +140,11 @@ const uint8_t *pgprItemHashHeader(pgprItem item, size_t *headerlen)
 
 const uint8_t *pgprItemHashTrailer(pgprItem item, size_t *trailerlen)
 {
-    if (item->tag != PGPRTAG_SIGNATURE) {
+    if (!item || item->tag != PGPRTAG_SIGNATURE) {
 	*trailerlen = 0;
 	return NULL;
     }
     *trailerlen = item->hashlen;
-    return item->hash;
+    return item->hashlen ? item->hash : NULL;
 }
 

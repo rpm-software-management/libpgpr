@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <time.h>
 
-#include "pgpr.h"
 #include "pgpr_internal.h"
 
 uint32_t pgprCurrentTime(void) {

@@ -5,8 +5,68 @@
 #include <stdio.h>
 #include <time.h>
 
-#include "pgpr.h"
 #include "pgpr_internal.h"
+
+static const char unknown_error[] = "Unknown error";
+
+const char *pgprErrorStr(pgprRC rc)
+{
+    switch (rc) {
+    case PGPR_OK:
+	return "No error";
+    case PGPR_ERROR_INTERNAL:
+	return "Internal PGP parser error";
+    case PGPR_ERROR_CORRUPT_PGP_PACKET:
+	return "Corrupt PGP packet";
+    case PGPR_ERROR_UNEXPECTED_PGP_PACKET:
+	return "Unexpected PGP packet";
+    case PGPR_ERROR_NO_CREATION_TIME:
+	return "Signature without creation time";
+    case PGPR_ERROR_DUPLICATE_DATA:
+	return "Duplicate data in signature";
+    case PGPR_ERROR_UNKNOWN_CRITICAL_PKT:
+	return "Unknown critical packet in signature";
+    case PGPR_ERROR_BAD_PUBKEY_STRUCTURE:
+	return "Bad pubkey structure";
+    case PGPR_ERROR_SELFSIG_VERIFICATION:
+	return "Pubkey self-signature verification failure";
+    case PGPR_ERROR_MISSING_SELFSIG:
+	return "Pubkey misses a self-signature";
+    case PGPR_ERROR_UNSUPPORTED_VERSION:
+	return "Unsupported packet version";
+    case PGPR_ERROR_UNSUPPORTED_ALGORITHM:
+	return "Unsupported pubkey algorithm";
+    case PGPR_ERROR_UNSUPPORTED_CURVE:
+	return "Unsupported pubkey curve";
+    case PGPR_ERROR_UNSUPPORTED_DIGEST:
+	return "Unsupported digest algorithm";
+    case PGPR_ERROR_BAD_PUBKEY:
+	return "Pubkey not accepted by crypto backend";
+    case PGPR_ERROR_BAD_SIGNATURE:
+	return "Signature not accepted by crypto backend";
+    case PGPR_ERROR_SIGNATURE_VERIFICATION:
+	return "Signature verification failure";
+    case PGPR_ERROR_SIGNATURE_FROM_FUTURE:
+	return "Signature was created in the future";
+    case PGPR_ERROR_SIGNATURE_EXPIRED:
+	return "Signature has expired";
+    case PGPR_ERROR_KEY_EXPIRED:
+	return "Key has expired";
+    case PGPR_ERROR_KEY_REVOKED:
+	return "Key has been revoked";
+    case PGPR_ERROR_PRIMARY_REVOKED:
+	return "Primary key has been revoked";
+    case PGPR_ERROR_KEY_NOT_VALID:
+	return "Key has no valid binding signature";
+    case PGPR_ERROR_KEY_NO_SIGNING:
+	return "Key is not suitable for signing";
+    case PGPR_ERROR_KEY_CREATED_AFTER_SIG:
+	return "Key has been created after the signature";
+    default:
+	break;
+    }
+    return unknown_error;
+}
 
 static char *format_keyid(pgprKeyID_t keyid, char *userid)
 {
@@ -116,6 +176,9 @@ void pgprAddLint(pgprItem item, char **lints, pgprRC error)
 	case PGPR_ERROR_UNSUPPORTED_VERSION:
 	    pgprAsprintf(lints, "Unsupported signature version (V%d)", item->version);
 	    return;
+	case PGPR_ERROR_UNSUPPORTED_DIGEST:
+	    pgprAsprintf(lints, "Unsupported digest algorithm (%d)", item->hash_algo);
+	    return;
 	case PGPR_ERROR_SIGNATURE_EXPIRED:
 	    exp_msg = format_expired(item->time, item->sig_expire);
 	    pgprAddSigLint(item, lints, exp_msg);
@@ -139,91 +202,16 @@ void pgprAddLint(pgprItem item, char **lints, pgprRC error)
 	    else
 		pgprAsprintf(lints, "Unsupported pubkey curve");
 	    return;
-	case PGPR_ERROR_UNSUPPORTED_DIGEST:
-	    pgprAsprintf(lints, "Unsupported digest algorithm (%d)", item->hash_algo);
-	    return;
 	default:
 	    break;
 	}
     }
 
-    switch (error) {
-    case PGPR_ERROR_INTERNAL:
-	msg = "Internal PGP parser error";
-	break;
-    case PGPR_ERROR_CORRUPT_PGP_PACKET:
-	msg = "Corrupt PGP packet";
-	break;
-    case PGPR_ERROR_UNEXPECTED_PGP_PACKET:
-	msg = "Unexpected PGP packet";
-	break;
-    case PGPR_ERROR_NO_CREATION_TIME:
-	msg = "Signature without creation time";
-	break;
-    case PGPR_ERROR_DUPLICATE_DATA:
-	msg = "Duplicate data in signature";
-	break;
-    case PGPR_ERROR_UNKNOWN_CRITICAL_PKT:
-	msg = "Unknown critical packet in signature";
-	break;
-    case PGPR_ERROR_BAD_PUBKEY_STRUCTURE:
-	msg = "Bad pubkey structure";
-	break;
-    case PGPR_ERROR_SELFSIG_VERIFICATION:
-	msg = "Pubkey self-signature verification failure";
-	break;
-    case PGPR_ERROR_MISSING_SELFSIG:
-	msg = "Pubkey misses a self-signature";
-	break;
-    case PGPR_ERROR_UNSUPPORTED_VERSION:
-	msg = "Unsupported packet version";
-	break;
-    case PGPR_ERROR_UNSUPPORTED_ALGORITHM:
-	msg = "Unsupported pubkey algorithm";
-	break;
-    case PGPR_ERROR_UNSUPPORTED_CURVE:
-	msg = "Unsupported pubkey curve";
-	break;
-    case PGPR_ERROR_UNSUPPORTED_DIGEST:
-	msg = "Unsupported digest algorithm";
-	break;
-    case PGPR_ERROR_BAD_PUBKEY:
-	msg = "Pubkey not accepted by crypto backend";
-	break;
-    case PGPR_ERROR_BAD_SIGNATURE:
-	msg = "Signature not accepted by crypto backend";
-	break;
-    case PGPR_ERROR_SIGNATURE_VERIFICATION:
-	msg = "Signature verification failure";
-	break;
-    case PGPR_ERROR_SIGNATURE_FROM_FUTURE:
-	msg = "Signature was created in the future";
-	break;
-    case PGPR_ERROR_SIGNATURE_EXPIRED:
-	msg = "Signature has expired";
-	break;
-    case PGPR_ERROR_KEY_EXPIRED:
-	msg = "Key has expired";
-	break;
-    case PGPR_ERROR_KEY_REVOKED:
-	msg = "Key has been revoked";
-	break;
-    case PGPR_ERROR_PRIMARY_REVOKED:
-	msg = "Primary key has been revoked";
-	break;
-    case PGPR_ERROR_KEY_NOT_VALID:
-	msg = "Key has no valid binding signature";
-	break;
-    case PGPR_ERROR_KEY_NO_SIGNING:
-	msg = "Key is not suitable for signing";
-	break;
-    case PGPR_ERROR_KEY_CREATED_AFTER_SIG:
-	msg = "Key has been created after the signature";
-	break;
-    default:
+    msg = pgprErrorStr(error);
+    if (msg == unknown_error) {
 	pgprAsprintf(lints, "Unknown error (%d)", error);
-	return;
+    } else {
+	*lints = pgprStrdup(msg);
     }
-    *lints = pgprStrdup(msg);
 }
 
