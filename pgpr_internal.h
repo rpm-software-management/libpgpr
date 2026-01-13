@@ -138,22 +138,22 @@ pgprRC pgprAlgInitSignature(pgprAlg alg, int algo);
 
 /* pgpr packet data extraction */
 PGPR_GNUC_INTERNAL
-pgprRC pgprParseKey(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item);
+pgprRC pgprParseKey(pgprPkt *pkt, pgprItem item);
 
 PGPR_GNUC_INTERNAL
-pgprRC pgprParseSig(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item);
+pgprRC pgprParseSig(pgprPkt *pkt, pgprItem item);
 
 PGPR_GNUC_INTERNAL
-pgprRC pgprParseSigNoParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item);
+pgprRC pgprParseSigNoParams(pgprPkt *pkt, pgprItem item);
 
 PGPR_GNUC_INTERNAL
-pgprRC pgprParseSigParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem sigp);
+pgprRC pgprParseSigParams(pgprPkt *pkt, pgprItem sigp);
 
 PGPR_GNUC_INTERNAL
-pgprRC pgprParseUserID(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item);
+pgprRC pgprParseUserID(pgprPkt *pkt, pgprItem item);
 
 PGPR_GNUC_INTERNAL
-pgprRC pgprParseKeyFp(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item);
+pgprRC pgprParseKeyFp(pgprPkt *pkt,  pgprItem item);
 
 
 /* diagnostics */

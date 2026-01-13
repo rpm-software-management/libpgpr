@@ -149,7 +149,7 @@ pgprRC pgprSignatureParse(const uint8_t * pkts, size_t pktlen, pgprItem * ret, c
     }
 
     item = pgprItemNew(pkt.tag);
-    rc = pgprParseSig(pkt.tag, pkt.body, pkt.blen, item);
+    rc = pgprParseSig(&pkt, item);
     /* treat trailing data as error */
     if (rc == PGPR_OK && (pkt.body - pkt.head) + pkt.blen != pktlen)
 	rc = PGPR_ERROR_CORRUPT_PGP_PACKET;
@@ -232,7 +232,7 @@ pgprRC pgprPubkeyKeyID(const uint8_t * pkts, size_t pktslen, pgprKeyID_t keyid)
 	return PGPR_ERROR_UNEXPECTED_PGP_PACKET;
     memset(&key, 0, sizeof(key));
     key.tag = pkt.tag;
-    rc = pgprParseKeyFp(pkt.tag, pkt.body, pkt.blen, &key);
+    rc = pgprParseKeyFp(&pkt, &key);
     if (rc == PGPR_OK && !(key.saved & PGPRITEM_SAVED_ID))
 	rc = PGPR_ERROR_INTERNAL;
     if (rc == PGPR_OK)
@@ -253,7 +253,7 @@ pgprRC pgprPubkeyFingerprint(const uint8_t * pkts, size_t pktslen,
 	return PGPR_ERROR_UNEXPECTED_PGP_PACKET;
     memset(&key, 0, sizeof(key));
     key.tag = pkt.tag;
-    rc = pgprParseKeyFp(pkt.tag, pkt.body, pkt.blen, &key);
+    rc = pgprParseKeyFp(&pkt, &key);
     if (rc == PGPR_OK && !(key.saved & PGPRITEM_SAVED_FP))
         rc = PGPR_ERROR_INTERNAL;
     if (rc == PGPR_OK) {
