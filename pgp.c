@@ -703,7 +703,7 @@ pgprRC pgprPrtSig(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item)
     return rc;
 }
 
-static pgprRC pgprPrtKeyFp(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item)
+pgprRC pgprPrtKeyFp(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item)
 {
     uint8_t *fp = NULL;
     size_t fplen = 0;

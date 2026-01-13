@@ -223,23 +223,43 @@ pgprRC pgprPubkeyCertLen(const uint8_t *pkts, size_t pktslen, size_t *certlen)
 pgprRC pgprPubkeyKeyID(const uint8_t * pkts, size_t pktslen, pgprKeyID_t keyid)
 {
     pgprPkt pkt;
+    struct pgprItem_s key;
+    pgprRC rc;
 
     if (pgprDecodePkt(pkts, pktslen, &pkt))
 	return PGPR_ERROR_CORRUPT_PGP_PACKET;
     if (pkt.tag != PGPRTAG_PUBLIC_KEY && pkt.tag != PGPRTAG_PUBLIC_SUBKEY)
 	return PGPR_ERROR_UNEXPECTED_PGP_PACKET;
-    return pgprGetKeyID(pkt.body, pkt.blen, keyid);
+    memset(&key, 0, sizeof(key));
+    key.tag = pkt.tag;
+    rc = pgprPrtKeyFp(pkt.tag, pkt.body, pkt.blen, &key);
+    if (rc == PGPR_OK && !(key.saved & PGPRITEM_SAVED_ID))
+	rc = PGPR_ERROR_INTERNAL;
+    if (rc == PGPR_OK)
+	memcpy(keyid, key.signid, sizeof(key.signid));
+    return rc;
 }
 
 pgprRC pgprPubkeyFingerprint(const uint8_t * pkts, size_t pktslen,
                          uint8_t **fp, size_t *fplen)
 {
     pgprPkt pkt;
+    struct pgprItem_s key;
+    pgprRC rc;
 
     if (pgprDecodePkt(pkts, pktslen, &pkt))
 	return PGPR_ERROR_CORRUPT_PGP_PACKET;
     if (pkt.tag != PGPRTAG_PUBLIC_KEY && pkt.tag != PGPRTAG_PUBLIC_SUBKEY)
 	return PGPR_ERROR_UNEXPECTED_PGP_PACKET;
-    return pgprGetKeyFingerprint(pkt.body, pkt.blen, fp, fplen);
+    memset(&key, 0, sizeof(key));
+    key.tag = pkt.tag;
+    rc = pgprPrtKeyFp(pkt.tag, pkt.body, pkt.blen, &key);
+    if (rc == PGPR_OK && !(key.saved & PGPRITEM_SAVED_FP))
+        rc = PGPR_ERROR_INTERNAL;
+    if (rc == PGPR_OK) {
+	*fplen = key.fp_len;
+	*fp = pgprMemdup(key.fp, key.fp_len);
+    }
+    return rc;
 }
 
