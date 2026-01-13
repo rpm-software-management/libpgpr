@@ -285,20 +285,21 @@ void *pgprCalloc(size_t nmemb, size_t size)
     return rcalloc(nmemb, size);
 }
 
-pgprDigCtx pgprDigestInit(int hashalgo)
+pgprRC pgprDigestInit(int hashalgo, pgprDigCtx *ret)
 {
     /* might need to map from pgp hash algo to rpm hash algo in the future */
-    return rpmDigestInit(hashalgo, RPMDIGEST_NONE);
+    *ret = rpmDigestInit(hashalgo, RPMDIGEST_NONE);
+    return *ret ? PGPR_OK : PGPR_ERROR_UNSUPPORTED_DIGEST;
 }
 
-int pgprDigestUpdate(pgprDigCtx ctx,  const void *data, size_t len)
+pgprRC pgprDigestUpdate(pgprDigCtx ctx,  const void *data, size_t len)
 {
-    return rpmDigestUpdate(ctx, data, len);
+    return rpmDigestUpdate(ctx, data, len) == 0 ? PGPR_OK : PGPR_ERROR_INTERNAL;
 }
 
-int pgprDigestFinal(pgprDigCtx ctx, void ** datap, size_t * lenp)
+pgprRC pgprDigestFinal(pgprDigCtx ctx, void ** datap, size_t * lenp)
 {
-    return rpmDigestFinal(ctx, datap, lenp, 0);
+    return rpmDigestFinal(ctx, datap, lenp, 0) == 0 ? PGPR_OK : PGPR_ERROR_INTERNAL;
 }
 
 size_t pgprDigestLength(int hashalgo)

@@ -513,25 +513,28 @@ pgprRC pgprFreeCrypto(void)
     return PGPR_OK;
 }
 
-pgprDigCtx pgprDigestInit(int hashalgo)
+pgprRC pgprDigestInit(int hashalgo, pgprDigCtx *ret)
 {
     gcry_md_hd_t h = NULL;
     int gcryalgo = hashalgo2gcryalgo(hashalgo);
-    if (!gcryalgo || gcry_md_open(&h, gcryalgo, 0) != 0)
-	return NULL;
-    return h;
+    if (!gcryalgo)
+	return PGPR_ERROR_UNSUPPORTED_DIGEST;
+    if (gcry_md_open(&h, gcryalgo, 0) != 0)
+	return PGPR_ERROR_INTERNAL;
+    *ret = h;
+    return h ? PGPR_OK : PGPR_ERROR_INTERNAL;
 }
 
-int pgprDigestUpdate(pgprDigCtx ctx, const void * data, size_t len)
+pgprRC pgprDigestUpdate(pgprDigCtx ctx, const void * data, size_t len)
 {
     gcry_md_hd_t h = ctx;
     if (!ctx)
-	return -1;
+	return PGPR_ERROR_INTERNAL;
     gcry_md_write(h, data, len);
-    return 0;
+    return PGPR_OK;
 }
 
-int pgprDigestFinal(pgprDigCtx ctx, void ** datap, size_t *lenp)
+pgprRC pgprDigestFinal(pgprDigCtx ctx, void ** datap, size_t *lenp)
 {
     int gcryalgo;
     unsigned char *digest;
@@ -539,25 +542,26 @@ int pgprDigestFinal(pgprDigCtx ctx, void ** datap, size_t *lenp)
     gcry_md_hd_t h = ctx;
     
     if (!h || (gcryalgo = gcry_md_get_algo(h)) == 0)
-	return -1;
+	return PGPR_ERROR_INTERNAL;
     digestlen = gcry_md_get_algo_dlen(gcryalgo);
     if (digestlen == 0 || (digest = gcry_md_read(h, 0)) == NULL)
-	return -1;
+	return PGPR_ERROR_INTERNAL;
     if (lenp)
 	*lenp = digestlen;
     if (datap)
 	*datap = pgprMemdup(digest, digestlen);
     gcry_md_close(h);
-    return 0;
+    return PGPR_OK;
 }
 
-pgprDigCtx pgprDigestDup(pgprDigCtx oldctx)
+pgprRC pgprDigestDup(pgprDigCtx oldctx, pgprDigCtx *ret)
 {
     gcry_md_hd_t oldh = oldctx;
     gcry_md_hd_t h = NULL;
     if (oldh && gcry_md_copy(&h, oldh) != 0)
 	h = NULL;
-    return h;
+    *ret = h;
+    return h ? PGPR_OK : PGPR_ERROR_INTERNAL;
 }
 
 size_t pgprDigestLength(int hashalgo)

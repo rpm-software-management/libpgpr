@@ -17,23 +17,24 @@ typedef enum pgprRC_e {
     PGPR_ERROR_UNSUPPORTED_VERSION	= 13,
     PGPR_ERROR_UNSUPPORTED_ALGORITHM	= 14,
     PGPR_ERROR_UNSUPPORTED_CURVE	= 15,
-    PGPR_ERROR_NO_CREATION_TIME		= 16,
-    PGPR_ERROR_DUPLICATE_DATA		= 17,
-    PGPR_ERROR_UNKNOWN_CRITICAL_PKT	= 18,
-    PGPR_ERROR_BAD_PUBKEY_STRUCTURE	= 19,
-    PGPR_ERROR_MISSING_SELFSIG		= 20,
-    PGPR_ERROR_SELFSIG_VERIFICATION	= 21,
-    PGPR_ERROR_SIGNATURE_VERIFICATION	= 22,
-    PGPR_ERROR_BAD_PUBKEY		= 23,
-    PGPR_ERROR_BAD_SIGNATURE		= 24,
-    PGPR_ERROR_SIGNATURE_FROM_FUTURE  	= 25,
-    PGPR_ERROR_SIGNATURE_EXPIRED	= 26,
-    PGPR_ERROR_KEY_EXPIRED		= 27,
-    PGPR_ERROR_KEY_REVOKED		= 28,
-    PGPR_ERROR_PRIMARY_REVOKED		= 39,
-    PGPR_ERROR_KEY_NOT_VALID		= 30,
-    PGPR_ERROR_KEY_NO_SIGNING		= 31,
-    PGPR_ERROR_KEY_CREATED_AFTER_SIG	= 32,
+    PGPR_ERROR_UNSUPPORTED_DIGEST	= 16,
+    PGPR_ERROR_NO_CREATION_TIME		= 17,
+    PGPR_ERROR_DUPLICATE_DATA		= 18,
+    PGPR_ERROR_UNKNOWN_CRITICAL_PKT	= 19,
+    PGPR_ERROR_BAD_PUBKEY_STRUCTURE	= 20,
+    PGPR_ERROR_MISSING_SELFSIG		= 21,
+    PGPR_ERROR_SELFSIG_VERIFICATION	= 22,
+    PGPR_ERROR_SIGNATURE_VERIFICATION	= 23,
+    PGPR_ERROR_BAD_PUBKEY		= 24,
+    PGPR_ERROR_BAD_SIGNATURE		= 25,
+    PGPR_ERROR_SIGNATURE_FROM_FUTURE  	= 26,
+    PGPR_ERROR_SIGNATURE_EXPIRED	= 27,
+    PGPR_ERROR_KEY_EXPIRED		= 28,
+    PGPR_ERROR_KEY_REVOKED		= 29,
+    PGPR_ERROR_PRIMARY_REVOKED		= 30,
+    PGPR_ERROR_KEY_NOT_VALID		= 31,
+    PGPR_ERROR_KEY_NO_SIGNING		= 32,
+    PGPR_ERROR_KEY_CREATED_AFTER_SIG	= 33,
 
     PGPR_ERROR_ARMOR_NO_BEGIN_PGP	= 50,
     PGPR_ERROR_ARMOR_NO_END_PGP		= 51,
@@ -158,7 +159,6 @@ pgprItem pgprItemNew(uint8_t tag);
 
 pgprItem pgprItemFree(pgprItem item);
 
-
 /* item introspection methods */
 int pgprItemTag(pgprItem item);
 
@@ -214,13 +214,13 @@ char *pgprArmorWrap(const char *armortype, const char *keys, const unsigned char
 pgprRC pgprArmorUnwrap(const char *armortype, const char *armor, uint8_t ** pkt, size_t * pktlen);
 
 /* digest functions */
-pgprDigCtx pgprDigestInit(int hashalgo);
+pgprRC pgprDigestInit(int hashalgo, pgprDigCtx *ret);
 
-int pgprDigestUpdate(pgprDigCtx ctx,  const void *data, size_t len);
+pgprRC pgprDigestUpdate(pgprDigCtx ctx,  const void *data, size_t len);
 
-int pgprDigestFinal(pgprDigCtx ctx, void ** datap, size_t * lenp);
+pgprRC pgprDigestFinal(pgprDigCtx ctx, void **datap, size_t *lenp);
 
-pgprDigCtx pgprDigestDup(pgprDigCtx oldctx);
+pgprRC pgprDigestDup(pgprDigCtx oldctx, pgprDigCtx *ret);
 
 size_t pgprDigestLength(int hashalgo);
 

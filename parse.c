@@ -457,7 +457,8 @@ pgprRC pgprParseSig(pgprPkt *pkt, pgprItem item)
 
 pgprRC pgprParseKeyFp(pgprPkt *pkt, pgprItem item)
 {
-    pgprDigCtx ctx;
+    pgprRC rc;
+    pgprDigCtx ctx = NULL;
     uint8_t *out = NULL;
     size_t outlen = 0;
     int version;
@@ -474,7 +475,9 @@ pgprRC pgprParseKeyFp(pgprPkt *pkt, pgprItem item)
     if (version != 4 && version != 5 && version != 6)
 	return PGPR_ERROR_UNSUPPORTED_VERSION;
 
-    ctx = pgprDigestInit(version == 4 ? PGPRHASHALGO_SHA1 : PGPRHASHALGO_SHA256);
+    rc = pgprDigestInit(version == 4 ? PGPRHASHALGO_SHA1 : PGPRHASHALGO_SHA256, &ctx);
+    if (rc != PGPR_OK)
+	return rc;
     if (version == 4) {
 	uint8_t in[3] = { 0x99, (blen >> 8), blen };
 	pgprDigestUpdate(ctx, in, 3);
@@ -482,8 +485,8 @@ pgprRC pgprParseKeyFp(pgprPkt *pkt, pgprItem item)
 	uint8_t in[5] = { version == 6 ? 0x9b : 0x9a, (blen >> 24), (blen >> 16), (blen >> 8), blen };
 	pgprDigestUpdate(ctx, in, 5);
     }
-    (void)pgprDigestUpdate(ctx, pkt->body, blen);
-    (void)pgprDigestFinal(ctx, (void **)&out, &outlen);
+    pgprDigestUpdate(ctx, pkt->body, blen);
+    pgprDigestFinal(ctx, (void **)&out, &outlen);
     if (outlen != (version == 4 ? 20 : 32)) {
 	free(out);
 	return PGPR_ERROR_INTERNAL;

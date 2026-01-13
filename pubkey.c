@@ -60,12 +60,11 @@ static pgprRC pgprVerifySelf(pgprItem key, pgprItem selfsig,
 			const pgprPkt *mainpkt, const pgprPkt *sectionpkt)
 {
     int rc = PGPR_ERROR_SELFSIG_VERIFICATION;
-    pgprDigCtx ctx;
+    pgprDigCtx ctx = NULL;
     uint8_t *hash = NULL;
     size_t hashlen = 0;
 
-    ctx = pgprDigestInit(selfsig->hash_algo);
-    if (!ctx)
+    if (pgprDigestInit(selfsig->hash_algo, &ctx) != PGPR_OK || !ctx)
 	return rc;
 
     /* hash header */

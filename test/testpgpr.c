@@ -81,7 +81,7 @@ verifysignature(int argc, char **argv)
     size_t signaturel;
     pgprItem key = NULL, sig = NULL;
     char *lints;
-    pgprDigCtx ctx;
+    pgprDigCtx ctx = NULL;
     const uint8_t *trailer;
     size_t trailerlen;
     const uint8_t *header;
@@ -139,8 +139,7 @@ verifysignature(int argc, char **argv)
     }
     free(lints);
 
-    ctx = pgprDigestInit(pgprItemHashAlgo(sig));
-    if (!ctx) {
+    if (pgprDigestInit(pgprItemHashAlgo(sig), &ctx) != PGPR_OK || !ctx) {
 	fprintf(stderr, "unsupported hash algorithm in signature\n");
 	exit(1);
     }

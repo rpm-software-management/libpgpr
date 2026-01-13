@@ -139,6 +139,9 @@ void pgprAddLint(pgprItem item, char **lints, pgprRC error)
 	    else
 		pgprAsprintf(lints, "Unsupported pubkey curve");
 	    return;
+	case PGPR_ERROR_UNSUPPORTED_DIGEST:
+	    pgprAsprintf(lints, "Unsupported digest algorithm (%d)", item->hash_algo);
+	    return;
 	default:
 	    break;
 	}
@@ -180,6 +183,9 @@ void pgprAddLint(pgprItem item, char **lints, pgprRC error)
 	break;
     case PGPR_ERROR_UNSUPPORTED_CURVE:
 	msg = "Unsupported pubkey curve";
+	break;
+    case PGPR_ERROR_UNSUPPORTED_DIGEST:
+	msg = "Unsupported digest algorithm";
 	break;
     case PGPR_ERROR_BAD_PUBKEY:
 	msg = "Pubkey not accepted by crypto backend";

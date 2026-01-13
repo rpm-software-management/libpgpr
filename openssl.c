@@ -975,34 +975,35 @@ pgprRC pgprFreeCrypto(void)
     return PGPR_OK;
 }
 
-pgprDigCtx pgprDigestInit(int hashalgo)
+pgprRC pgprDigestInit(int hashalgo, pgprDigCtx *ret)
 {
     const EVP_MD *md = getEVPMD(hashalgo);
     EVP_MD_CTX *ctx = NULL;
-    if (md && md != EVP_md_null()) {
-	ctx = EVP_MD_CTX_new();
-	if (ctx && !EVP_DigestInit_ex(ctx, md, NULL)) {
-	    EVP_MD_CTX_free(ctx);
-	    ctx = NULL;
-	}
+    if (!md || md == EVP_md_null())
+	return PGPR_ERROR_UNSUPPORTED_DIGEST;
+    ctx = EVP_MD_CTX_new();
+    if (ctx && !EVP_DigestInit_ex(ctx, md, NULL)) {
+	EVP_MD_CTX_free(ctx);
+	ctx = NULL;
     }
-    return ctx;
+    *ret = ctx;
+    return ctx ? PGPR_OK : PGPR_ERROR_INTERNAL;
 }
 
-int pgprDigestUpdate(pgprDigCtx ctx, const void * data, size_t len)
+pgprRC pgprDigestUpdate(pgprDigCtx ctx, const void * data, size_t len)
 {
     if (!ctx)
-	return -1;
+	return PGPR_ERROR_INTERNAL;
     EVP_DigestUpdate(ctx, data, len);
-    return 0;
+    return PGPR_OK;
 }
 
-int pgprDigestFinal(pgprDigCtx ctx, void ** datap, size_t *lenp)
+pgprRC pgprDigestFinal(pgprDigCtx ctx, void ** datap, size_t *lenp)
 {
     uint8_t *digest = NULL;
     int digestlen;
     if (!ctx)
-	return -1;
+	return PGPR_ERROR_INTERNAL;
     digestlen = EVP_MD_CTX_size(ctx);
     if (digestlen > 0) {
 	digest = (uint8_t *)pgprCalloc(digestlen, sizeof(*digest));
@@ -1020,20 +1021,21 @@ int pgprDigestFinal(pgprDigCtx ctx, void ** datap, size_t *lenp)
     if (digest)
 	free(digest);
     EVP_MD_CTX_free(ctx);
-    return digestlen > 0 ? 0 : -1;
+    return digestlen > 0 ? PGPR_OK : PGPR_ERROR_INTERNAL;
 }
 
-pgprDigCtx pgprDigestDup(pgprDigCtx oldctx)
+pgprRC pgprDigestDup(pgprDigCtx oldctx,  pgprDigCtx *ret)
 {
     pgprDigCtx ctx;
     if (!oldctx)
-	return NULL;
+	return PGPR_ERROR_INTERNAL;
     ctx = EVP_MD_CTX_new();
     if (ctx && !EVP_MD_CTX_copy(ctx, oldctx)) {
 	EVP_MD_CTX_free(ctx);
 	ctx = NULL;
     }
-    return ctx;
+    *ret = ctx;
+    return ctx ? PGPR_OK : PGPR_ERROR_INTERNAL;
 }
 
 size_t pgprDigestLength(int hashalgo)
