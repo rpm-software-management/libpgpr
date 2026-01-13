@@ -1,5 +1,5 @@
 /*
- * Routines to parse pgp key/signature packets
+ * Routines to parse pgp key/signature packets into a pgprItem
  */
 
 #include <string.h>
@@ -52,157 +52,34 @@ static inline unsigned int pgprGrab4(const uint8_t *s)
     return s[0] << 24 | s[1] << 16 | s[2] << 8 | s[3];
 }
 
+static uint8_t curve_oids[] = {
+    PGPRCURVE_NIST_P_256,	0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07,
+    PGPRCURVE_NIST_P_384,	0x05, 0x2b, 0x81, 0x04, 0x00, 0x22,
+    PGPRCURVE_NIST_P_521,	0x05, 0x2b, 0x81, 0x04, 0x00, 0x23,
+    PGPRCURVE_BRAINPOOL_P256R1,	0x09, 0x2b, 0x24, 0x03, 0x03, 0x02, 0x08, 0x01, 0x01, 0x07,
+    PGPRCURVE_BRAINPOOL_P384R1,	0x09, 0x2b, 0x24, 0x03, 0x03, 0x02, 0x08, 0x01, 0x01, 0x0b,
+    PGPRCURVE_BRAINPOOL_P512R1,	0x09, 0x2b, 0x24, 0x03, 0x03, 0x02, 0x08, 0x01, 0x01, 0x0d,
+    PGPRCURVE_ED25519,		0x09, 0x2b, 0x06, 0x01, 0x04, 0x01, 0xda, 0x47, 0x0f, 0x01,
+    PGPRCURVE_CURVE25519,	0x0a, 0x2b, 0x06, 0x01, 0x04, 0x01, 0x97, 0x55, 0x01, 0x05, 0x01,
+    PGPRCURVE_ED25519_ALT,	0x03, 0x2b, 0x65, 0x70,
+    PGPRCURVE_CURVE25519_ALT,	0x03, 0x2b, 0x65, 0x6e,
+    PGPRCURVE_ED448,		0x03, 0x2b, 0x65, 0x71,
+    PGPRCURVE_X448,		0x03, 0x2b, 0x65, 0x6f,
+    0,
+};
 
-/*
- * PGP packet decoding
- *
- * Note that we reject indefinite length/partial bodies and lengths >= 16 MByte
- * right away so that we do not have to worry about integer overflows.
- */
-
-/** \ingroup pgpr
- * Decode length in old format packet headers.
- * @param s		pointer to packet (including tag)
- * @param slen		buffer size
- * @param[out] *lenp	decoded length
- * @return		packet header length, 0 on error
- */
-static inline size_t pgprOldLen(const uint8_t *s, size_t slen, size_t * lenp)
+static int pgprCurveByOid(const uint8_t *p, int l)
 {
-    size_t dlen, lenlen;
-
-    if (slen < 2)
-	return 0;
-    lenlen = 1 << (s[0] & 0x3);
-    /* Reject indefinite length packets and check bounds */
-    if (lenlen == 8 || slen < lenlen + 1)
-	return 0;
-    if (lenlen == 1)
-	dlen = s[1];
-    else if (lenlen == 2)
-	dlen = s[1] << 8 | s[2];
-    else if (lenlen == 4 && s[1] == 0)
-	dlen = s[2] << 16 | s[3] << 8 | s[4];
-    else
-	return 0;
-    if (slen - (1 + lenlen) < dlen)
-	return 0;
-    *lenp = dlen;
-    return lenlen + 1;
+    uint8_t *curve;
+    for (curve = curve_oids; *curve; curve += 2 + curve[1])
+        if (l == (int)curve[1] && !memcmp(p, curve + 2, l))
+            return (int)curve[0];
+    return 0;
 }
-
-/** \ingroup pgpr
- * Decode length from 1, 2, or 5 octet body length encoding, used in
- * new format packet headers.
- * Partial body lengths are (intentionally) not supported.
- * @param s		pointer to packet (including tag)
- * @param slen		buffer size
- * @param[out] *lenp	decoded length
- * @return		packet header length, 0 on error
- */
-static inline size_t pgprNewLen(const uint8_t *s, size_t slen, size_t *lenp)
-{
-    size_t dlen, hlen;
-
-    if (slen > 1 && s[1] < 192) {
-	hlen = 2;
-	dlen = s[1];
-    } else if (slen > 3 && s[1] < 224) {
-	hlen = 3;
-	dlen = (((s[1]) - 192) << 8) + s[2] + 192;
-    } else if (slen > 6 && s[1] == 255 && s[2] == 0) {
-	hlen = 6;
-	dlen = s[3] << 16 | s[4] << 8 | s[5];
-    } else {
-	return 0;
-    }
-    if (slen - hlen < dlen)
-	return 0;
-    *lenp = dlen;
-    return hlen;
-}
-
-/** \ingroup pgpr
- * Decode length from 1, 2, or 5 octet body length encoding, used in
- * V4 signature subpackets. Note that this is slightly different from
- * the pgprNewLen function.
- * @param s		pointer to subpacket (including tag)
- * @param slen		buffer size
- * @param[out] *lenp	decoded length
- * @return		subpacket header length (excluding type), 0 on error
- */
-static inline size_t pgprSubPktLen(const uint8_t *s, size_t slen, size_t *lenp)
-{
-    size_t dlen, lenlen;
-
-    if (slen > 0 && *s < 192) {
-	lenlen = 1;
-	dlen = *s;
-    } else if (slen > 2 && *s < 255) {
-	lenlen = 2;
-	dlen = (((s[0]) - 192) << 8) + s[1] + 192;
-    } else if (slen > 5 && *s == 255 && s[1] == 0) {
-	lenlen = 5;
-	dlen = s[2] << 16 | s[3] << 8 | s[4];
-    } else {
-	return 0;
-    }
-    if (slen - lenlen < dlen)
-	return 0;
-    *lenp = dlen;
-    return lenlen;
-}
-
-pgprRC pgprDecodePkt(const uint8_t *p, size_t plen, pgprPkt *pkt)
-{
-    pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET; /* assume failure */
-
-    /* Valid PGP packet header must always have two or more bytes in it */
-    if (p && plen >= 2 && p[0] & 0x80) {
-	size_t hlen;
-
-	if (p[0] & 0x40) {
-	    /* New format packet, body length encoding in second byte */
-	    hlen = pgprNewLen(p, plen, &pkt->blen);
-	    pkt->tag = (p[0] & 0x3f);
-	} else {
-	    /* Old format packet */
-	    hlen = pgprOldLen(p, plen, &pkt->blen);
-	    pkt->tag = (p[0] >> 2) & 0xf;
-	}
-
-	/* Does the packet header and its body fit in our boundaries? */
-	if (hlen && (hlen + pkt->blen <= plen)) {
-	    pkt->head = p;
-	    pkt->body = pkt->head + hlen;
-	    rc = PGPR_OK;
-	}
-    }
-    return rc;
-}
-
 
 /*
  * Key/Signature algorithm parameter handling
  */
-
-static pgprAlg pgprAlgNew(void)
-{
-    pgprAlg alg;
-    alg = pgprCalloc(1, sizeof(*alg));
-    alg->mpis = -1;
-    return alg;
-}
-
-pgprAlg pgprAlgFree(pgprAlg alg)
-{
-    if (alg) {
-        if (alg->free)
-            alg->free(alg);
-        free(alg);
-    }
-    return NULL;
-}
 
 static inline int pgprMpiLen(const uint8_t *p)
 {
@@ -230,36 +107,6 @@ static pgprRC pgprAlgProcessMpis(pgprAlg alg, const int mpis,
 
     /* Does the size and number of MPI's match our expectations? */
     return p == pend && i == mpis ? PGPR_OK : PGPR_ERROR_CORRUPT_PGP_PACKET;
-}
-
-
-/*
- * Key/Signature parameter parsing
- */
-
-static uint8_t curve_oids[] = {
-    PGPRCURVE_NIST_P_256,	0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07,
-    PGPRCURVE_NIST_P_384,	0x05, 0x2b, 0x81, 0x04, 0x00, 0x22,
-    PGPRCURVE_NIST_P_521,	0x05, 0x2b, 0x81, 0x04, 0x00, 0x23,
-    PGPRCURVE_BRAINPOOL_P256R1,	0x09, 0x2b, 0x24, 0x03, 0x03, 0x02, 0x08, 0x01, 0x01, 0x07,
-    PGPRCURVE_BRAINPOOL_P384R1,	0x09, 0x2b, 0x24, 0x03, 0x03, 0x02, 0x08, 0x01, 0x01, 0x0b,
-    PGPRCURVE_BRAINPOOL_P512R1,	0x09, 0x2b, 0x24, 0x03, 0x03, 0x02, 0x08, 0x01, 0x01, 0x0d,
-    PGPRCURVE_ED25519,		0x09, 0x2b, 0x06, 0x01, 0x04, 0x01, 0xda, 0x47, 0x0f, 0x01,
-    PGPRCURVE_CURVE25519,	0x0a, 0x2b, 0x06, 0x01, 0x04, 0x01, 0x97, 0x55, 0x01, 0x05, 0x01,
-    PGPRCURVE_ED25519_ALT,	0x03, 0x2b, 0x65, 0x70,
-    PGPRCURVE_CURVE25519_ALT,	0x03, 0x2b, 0x65, 0x6e,
-    PGPRCURVE_ED448,		0x03, 0x2b, 0x65, 0x71,
-    PGPRCURVE_X448,		0x03, 0x2b, 0x65, 0x6f,
-    0,
-};
-
-static int pgprCurveByOid(const uint8_t *p, int l)
-{
-    uint8_t *curve;
-    for (curve = curve_oids; *curve; curve += 2 + curve[1])
-        if (l == (int)curve[1] && !memcmp(p, curve + 2, l))
-            return (int)curve[0];
-    return 0;
 }
 
 static pgprRC pgprParseKeyParams(pgprPkt *pkt, pgprItem item)
@@ -303,11 +150,40 @@ pgprRC pgprParseSigParams(pgprPkt *pkt, pgprItem item)
     rc = pgprAlgInitSignature(item->alg, item->pubkey_algo);
     if (rc == PGPR_OK)
 	rc = pgprAlgProcessMpis(item->alg, item->alg->mpis, pkt->body + item->mpi_offset, pkt->body + pkt->blen);
-    if (rc != PGPR_OK) {
-	pgprAlgFree(item->alg);
-	item->alg = NULL;
-    }
+    if (rc != PGPR_OK)
+	item->alg = pgprAlgFree(item->alg);
     return rc;
+}
+
+/** \ingroup pgpr
+ * Decode length from 1, 2, or 5 octet body length encoding, used in
+ * signature subpackets. Note that this is slightly different from
+ * the pgprNewLen function.
+ * @param s		pointer to subpacket (including tag)
+ * @param slen		buffer size
+ * @param[out] *lenp	decoded length
+ * @return		subpacket header length (excluding type), 0 on error
+ */
+static inline size_t pgprSubPktLen(const uint8_t *s, size_t slen, size_t *lenp)
+{
+    size_t dlen, lenlen;
+
+    if (slen > 0 && *s < 192) {
+	lenlen = 1;
+	dlen = *s;
+    } else if (slen > 2 && *s < 255) {
+	lenlen = 2;
+	dlen = (((s[0]) - 192) << 8) + s[1] + 192;
+    } else if (slen > 5 && *s == 255 && s[1] == 0) {
+	lenlen = 5;
+	dlen = s[2] << 16 | s[3] << 8 | s[4];
+    } else {
+	return 0;
+    }
+    if (slen - lenlen < dlen)
+	return 0;
+    *lenp = dlen;
+    return lenlen;
 }
 
 static pgprRC pgprParseSigSubPkts(const uint8_t *h, size_t hlen, pgprItem item, int hashed)

@@ -24,6 +24,24 @@ pgprItem pgprItemFree(pgprItem item)
     return NULL;
 }
 
+pgprAlg pgprAlgNew(void)
+{
+    pgprAlg alg;
+    alg = pgprCalloc(1, sizeof(*alg));
+    alg->mpis = -1;
+    return alg;
+}
+
+pgprAlg pgprAlgFree(pgprAlg alg)
+{
+    if (alg) {
+        if (alg->free)
+            alg->free(alg);
+        free(alg);
+    }
+    return NULL;
+}
+
 /* compare data of two signatures or keys */
 int pgprItemCmp(pgprItem p1, pgprItem p2)
 {
@@ -129,137 +147,5 @@ const uint8_t *pgprItemHashTrailer(pgprItem item, size_t *trailerlen)
     }
     *trailerlen = item->hashlen;
     return item->hash;
-}
-
-
-pgprRC pgprSignatureParse(const uint8_t * pkts, size_t pktlen, pgprItem * ret, char **lints)
-{
-    pgprItem item = NULL;
-    pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;	/* assume failure */
-    pgprPkt pkt;
-
-    if (lints)
-        *lints = NULL;
-    if (pktlen > PGPR_MAX_OPENPGP_BYTES || pgprDecodePkt(pkts, pktlen, &pkt))
-	goto exit;
-
-    if (pkt.tag != PGPRTAG_SIGNATURE) {
-	rc = PGPR_ERROR_UNEXPECTED_PGP_PACKET;
-	goto exit;
-    }
-
-    item = pgprItemNew(pkt.tag);
-    rc = pgprParseSig(&pkt, item);
-    /* treat trailing data as error */
-    if (rc == PGPR_OK && (pkt.body - pkt.head) + pkt.blen != pktlen)
-	rc = PGPR_ERROR_CORRUPT_PGP_PACKET;
-
-exit:
-    if (ret && rc == PGPR_OK)
-	*ret = item;
-    else {
-	if (lints)
-	    pgprAddLint(item, lints, rc);
-	pgprItemFree(item);
-    }
-    return rc;
-}
-
-pgprRC pgprPubkeyParse(const uint8_t * pkts, size_t pktlen, pgprItem * ret, char **lints)
-{
-    pgprItem key = NULL;
-    pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;	/* assume failure */
-    pgprPkt pkt;
-
-    if (lints)
-        *lints = NULL;
-    if (pktlen > PGPR_MAX_OPENPGP_BYTES || pgprDecodePkt(pkts, pktlen, &pkt))
-	goto exit;
-    if (pkt.tag != PGPRTAG_PUBLIC_KEY) {
-	rc = PGPR_ERROR_UNEXPECTED_PGP_PACKET;
-	goto exit;
-    }
-
-    /* use specialized transferable pubkey implementation */
-    key = pgprItemNew(pkt.tag);
-    rc = pgprParseTransferablePubkey(pkts, pktlen, key);
-exit:
-    if (ret && rc == PGPR_OK)
-	*ret = key;
-    else {
-	if (lints)
-	    pgprAddLint(key, lints, rc);
-	pgprItemFree(key);
-    }
-    return rc;
-}
-
-pgprRC pgprPubkeyParseSubkeys(const uint8_t *pkts, size_t pktlen,
-			pgprItem key, pgprItem **subkeys,
-			int *subkeysCount)
-{
-    return pgprParseTransferablePubkeySubkeys(pkts, pktlen, key, subkeys, subkeysCount);
-}
-
-pgprRC pgprPubkeyCertLen(const uint8_t *pkts, size_t pktslen, size_t *certlen)
-{
-    const uint8_t *p = pkts;
-    const uint8_t *pend = pkts + pktslen;
-    pgprPkt pkt;
-
-    while (p < pend) {
-	if (pgprDecodePkt(p, (pend - p), &pkt))
-	    return PGPR_ERROR_CORRUPT_PGP_PACKET;
-	if (pkt.tag == PGPRTAG_PUBLIC_KEY && pkts != p) {
-	    pktslen = p - pkts;
-	    break;
-	}
-	p += (pkt.body - pkt.head) + pkt.blen;
-    }
-    *certlen = pktslen;
-    return PGPR_OK;
-}
-
-pgprRC pgprPubkeyKeyID(const uint8_t * pkts, size_t pktslen, pgprKeyID_t keyid)
-{
-    pgprPkt pkt;
-    struct pgprItem_s key;
-    pgprRC rc;
-
-    if (pgprDecodePkt(pkts, pktslen, &pkt))
-	return PGPR_ERROR_CORRUPT_PGP_PACKET;
-    if (pkt.tag != PGPRTAG_PUBLIC_KEY && pkt.tag != PGPRTAG_PUBLIC_SUBKEY)
-	return PGPR_ERROR_UNEXPECTED_PGP_PACKET;
-    memset(&key, 0, sizeof(key));
-    key.tag = pkt.tag;
-    rc = pgprParseKeyFp(&pkt, &key);
-    if (rc == PGPR_OK && !(key.saved & PGPRITEM_SAVED_ID))
-	rc = PGPR_ERROR_INTERNAL;
-    if (rc == PGPR_OK)
-	memcpy(keyid, key.signid, sizeof(key.signid));
-    return rc;
-}
-
-pgprRC pgprPubkeyFingerprint(const uint8_t * pkts, size_t pktslen,
-                         uint8_t **fp, size_t *fplen)
-{
-    pgprPkt pkt;
-    struct pgprItem_s key;
-    pgprRC rc;
-
-    if (pgprDecodePkt(pkts, pktslen, &pkt))
-	return PGPR_ERROR_CORRUPT_PGP_PACKET;
-    if (pkt.tag != PGPRTAG_PUBLIC_KEY && pkt.tag != PGPRTAG_PUBLIC_SUBKEY)
-	return PGPR_ERROR_UNEXPECTED_PGP_PACKET;
-    memset(&key, 0, sizeof(key));
-    key.tag = pkt.tag;
-    rc = pgprParseKeyFp(&pkt, &key);
-    if (rc == PGPR_OK && !(key.saved & PGPRITEM_SAVED_FP))
-        rc = PGPR_ERROR_INTERNAL;
-    if (rc == PGPR_OK) {
-	*fplen = key.fp_len;
-	*fp = pgprMemdup(key.fp, key.fp_len);
-    }
-    return rc;
 }
 

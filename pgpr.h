@@ -159,12 +159,12 @@ pgprItem pgprItemNew(uint8_t tag);
 pgprItem pgprItemFree(pgprItem item);
 
 
-/* item methods */
-int pgprItemTag(pgprItem _item);
+/* item introspection methods */
+int pgprItemTag(pgprItem item);
 
 int pgprItemCmp(pgprItem p1, pgprItem p2);
 
-int pgprItemSignatureType(pgprItem _item);
+int pgprItemSignatureType(pgprItem item);
 
 int pgprItemPubkeyAlgo(pgprItem item);
 
@@ -189,7 +189,6 @@ const uint8_t *pgprItemHashHeader(pgprItem item, size_t *headerlen);
 const uint8_t *pgprItemHashTrailer(pgprItem item, size_t *trailerlen);
 
 /* signature verification*/
-
 pgprRC pgprVerifySignature(pgprItem key, pgprItem sig, const uint8_t *hash, size_t hashlen, char **lints);
 
 pgprRC pgprVerifySignatureNoKey(pgprItem sig, const uint8_t *hash, size_t hashlen, char **lints);

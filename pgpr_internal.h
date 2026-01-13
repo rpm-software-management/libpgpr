@@ -72,6 +72,7 @@ struct pgprItem_s {
     uint8_t * hash;
     uint32_t hashlen;
     uint32_t saltlen;
+
     uint8_t signhash16[2];
 
     size_t mpi_offset;		/* start of mpi data */
@@ -104,8 +105,8 @@ typedef enum pgprSubType_e {
     PGPRSUBTYPE_NOTATION	=  20, /*!< notation data */
     PGPRSUBTYPE_PREFER_HASH	=  21, /*!< preferred hash algorithms */
     PGPRSUBTYPE_PREFER_COMPRESS	=  22, /*!< preferred compression algorithms */
-    PGPRSUBTYPE_KEYSERVER_PREFERS=  23, /*!< key server preferences */
-    PGPRSUBTYPE_PREFER_KEYSERVER=  24, /*!< preferred key server */
+    PGPRSUBTYPE_KEYSERVER_PREFERS = 23, /*!< key server preferences */
+    PGPRSUBTYPE_PREFER_KEYSERVER = 24, /*!< preferred key server */
     PGPRSUBTYPE_PRIMARY_USERID	=  25, /*!< primary user id */
     PGPRSUBTYPE_POLICY_URL	=  26, /*!< policy URL */
     PGPRSUBTYPE_KEY_FLAGS	=  27, /*!< key flags */
@@ -113,8 +114,8 @@ typedef enum pgprSubType_e {
     PGPRSUBTYPE_REVOKE_REASON	=  29, /*!< reason for revocation */
     PGPRSUBTYPE_FEATURES	=  30, /*!< feature flags (gpg) */
     PGPRSUBTYPE_EMBEDDED_SIG	=  32, /*!< embedded signature (gpg) */
-    PGPRSUBTYPE_ISSUER_FINGERPRINT= 33, /*!< issuer fingerprint */
-    PGPRSUBTYPE_INTREC_FINGERPRINT= 35, /*!< intended recipient fingerprint */
+    PGPRSUBTYPE_ISSUER_FINGERPRINT = 33, /*!< issuer fingerprint */
+    PGPRSUBTYPE_INTREC_FINGERPRINT = 35, /*!< intended recipient fingerprint */
     PGPRSUBTYPE_PREFER_AEAD	= 39,  /*!<  preferred AEAD ciphercuites */
 
     PGPRSUBTYPE_CRITICAL	= 128  /*!< critical subpacket marker */
@@ -127,6 +128,9 @@ pgprRC pgprDecodePkt(const uint8_t *p, size_t plen, pgprPkt *pkt);
 
 
 /* allocation */
+PGPR_GNUC_INTERNAL
+pgprAlg pgprAlgNew(void);
+
 PGPR_GNUC_INTERNAL
 pgprAlg pgprAlgFree(pgprAlg alg);
 
