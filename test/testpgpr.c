@@ -36,6 +36,16 @@ static char *slurp(const char *fn, size_t *lenp)
     return buf;
 }
 
+static void
+printhex(const char *what, const uint8_t *d, size_t l)
+{
+    size_t i;
+    printf("%s: ", what);
+    for (i = 0; i < l; i++)
+	printf("%02x", d[i]);
+    printf("\n");
+}
+
 pgprItem
 select_subkey(const uint8_t *pkts, size_t pktlen, pgprItem key, int subkey)
 {
@@ -217,20 +227,56 @@ keyinfo(int argc, char **argv)
     printf("AlgorithmInfo: %d\n", pgprItemPubkeyAlgoInfo(key));
     printf("UserID: %s\n", nullify(pgprItemUserID(key)));
     keyfp = pgprItemKeyFingerprint(key, &keyfp_len, NULL);
-    if (keyfp) {
-	printf("KeyFP: ");
-	for (i = 0; i < keyfp_len; i++)
-	    printf("%02x", keyfp[i]);
-	printf("\n");
-    }
+    if (keyfp)
+	printhex("KeyFP", keyfp, keyfp_len);
     keyid = pgprItemKeyID(key);
-    if (keyid) {
-	printf("KeyID: ");
-	for (i = 0; i < 8; i++)
-	    printf("%02x", keyid[i]);
-	printf("\n");
-    }
+    if (keyid)
+	printhex("KeyID", keyid, 8);
     pgprItemFree(key);
+    free(pubkey_a);
+    free(pubkey);
+    return 0;
+}
+
+static int
+certinfo(int argc, char **argv)
+{
+    char *pubkey_a;
+    unsigned char *pubkey;
+    size_t pubkeyl;
+    pgprKeyID_t keyid;
+    uint8_t *fp = NULL;
+    size_t fplen = 0;
+    size_t certlen = 0;
+    
+    int i;
+
+    if (argc - 1 != 1) {
+	fprintf(stderr, "usage: testpgpr certinfo <pubkey>\n");
+	exit(1);
+    }
+    pubkey_a = slurp(argv[optind], NULL);
+    if (pgprArmorUnwrap("PUBLIC KEY BLOCK", pubkey_a, &pubkey, &pubkeyl) != PGPR_OK) {
+	fprintf(stderr, "pubkey unwrap error\n");
+	exit(1);
+    }
+    if (pgprPubkeyFingerprint(pubkey, pubkeyl, &fp, &fplen) != PGPR_OK) {
+	fprintf(stderr, "pgprPubkeyFingerprint error\n");
+	exit(1);
+    }
+    printhex("KeyFP", fp, fplen);
+    memset(keyid, 0, sizeof(keyid));
+    if (pgprPubkeyKeyID(pubkey, pubkeyl, keyid) != PGPR_OK) {
+	fprintf(stderr, "pgprPubkeyKeyID error\n");
+	exit(1);
+    }
+    printhex("KeyID", keyid, 8);
+    if (pgprPubkeyCertLen(pubkey, pubkeyl, &certlen) != PGPR_OK) {
+	fprintf(stderr, "pgprPubkeyCertLen error\n");
+	exit(1);
+    }
+    printf("CertLen: %zd\n", certlen);
+    free(fp);
     free(pubkey_a);
     free(pubkey);
     return 0;
@@ -271,19 +317,11 @@ siginfo(int argc, char **argv)
     printf("Algorithm: %d\n", pgprItemPubkeyAlgo(sig));
     printf("Hash: %d\n", pgprItemHashAlgo(sig));
     keyfp = pgprItemKeyFingerprint(sig, &keyfp_len, NULL);
-    if (keyfp) {
-	printf("KeyFP: ");
-	for (i = 0; i < keyfp_len; i++)
-	    printf("%02x", keyfp[i]);
-	printf("\n");
-    }
+    if (keyfp)
+	printhex("KeyFP", keyfp, keyfp_len);
     keyid = pgprItemKeyID(sig);
-    if (keyid) {
-	printf("KeyID: ");
-	for (i = 0; i < 8; i++)
-	    printf("%02x", keyid[i]);
-	printf("\n");
-    }
+    if (keyid)
+	printhex("KeyID", keyid, 8);
     pgprItemFree(sig);
     free(signature_a);
     free(signature);
@@ -304,6 +342,9 @@ int main(int argc, char **argv)
     }
     if (!strcmp(argv[1], "siginfo")) {
         return siginfo(argc - 1, argv + 1);
+    }
+    if (!strcmp(argv[1], "certinfo")) {
+        return certinfo(argc - 1, argv + 1);
     }
     fprintf(stderr, "unknown command '%s'\n", argv[1]);
     exit(1);
