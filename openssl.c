@@ -41,8 +41,7 @@ static const EVP_MD *getEVPMD(int hashalgo)
 
 #if OPENSSL_VERSION_MAJOR >= 3
 
-static EVP_PKEY *
-construct_pkey_from_param(int id, OSSL_PARAM *params)
+static EVP_PKEY *construct_pkey_from_param(int id, OSSL_PARAM *params)
 {
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_id(id, NULL);
@@ -53,8 +52,7 @@ construct_pkey_from_param(int id, OSSL_PARAM *params)
     return pkey;
 }
 
-static OSSL_PARAM 
-create_bn_param(char *key, BIGNUM *bn)
+static OSSL_PARAM create_bn_param(char *key, BIGNUM *bn)
 {
     unsigned char *buf;
     int sz = bn ? BN_num_bytes(bn) : -1;
@@ -70,8 +68,7 @@ create_bn_param(char *key, BIGNUM *bn)
     return param;
 }
 
-static void
-free_bn_param(OSSL_PARAM *param)
+static void free_bn_param(OSSL_PARAM *param)
 {
     free(param->data);
 }

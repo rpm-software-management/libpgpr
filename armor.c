@@ -217,7 +217,9 @@ static pgprRC decodePkts(const char *armortype, uint8_t *b, uint8_t **pkt, size_
 	    }
 	    crc = pgprCRC(dec, declen);
 	    if (crcpkt != crc) {
-printf("=%c%c%c%c\n", bintoasc[(crc >> 18) & 63], bintoasc[(crc >> 12) & 63], bintoasc[(crc >> 6) & 63], bintoasc[crc & 63]);
+#if 0
+		printf("=%c%c%c%c\n", bintoasc[(crc >> 18) & 63], bintoasc[(crc >> 12) & 63], bintoasc[(crc >> 6) & 63], bintoasc[crc & 63]);
+#endif
 		ec = PGPR_ERROR_ARMOR_CRC_CHECK;
 		free(dec);
 		goto exit;

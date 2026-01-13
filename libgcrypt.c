@@ -300,8 +300,7 @@ static pgprRC pgprSetKeyMpiECC(pgprAlg ka, int num, const uint8_t *p, int mlen)
     return rc;
 }
 
-static int
-eddsa_zero_extend(gcry_mpi_t x, unsigned char *buf, int bufl)
+static int eddsa_zero_extend(gcry_mpi_t x, unsigned char *buf, int bufl)
 {
     int n = (gcry_mpi_get_nbits(x) + 7) / 8;
     if (n == 0 || n > bufl)
