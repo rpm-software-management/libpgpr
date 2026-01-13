@@ -149,7 +149,7 @@ pgprRC pgprSignatureParse(const uint8_t * pkts, size_t pktlen, pgprItem * ret, c
     }
 
     item = pgprItemNew(pkt.tag);
-    rc = pgprPrtSig(pkt.tag, pkt.body, pkt.blen, item);
+    rc = pgprParseSig(pkt.tag, pkt.body, pkt.blen, item);
     /* treat trailing data as error */
     if (rc == PGPR_OK && (pkt.body - pkt.head) + pkt.blen != pktlen)
 	rc = PGPR_ERROR_CORRUPT_PGP_PACKET;
@@ -182,7 +182,7 @@ pgprRC pgprPubkeyParse(const uint8_t * pkts, size_t pktlen, pgprItem * ret, char
 
     /* use specialized transferable pubkey implementation */
     key = pgprItemNew(pkt.tag);
-    rc = pgprPrtTransferablePubkey(pkts, pktlen, key);
+    rc = pgprParseTransferablePubkey(pkts, pktlen, key);
 exit:
     if (ret && rc == PGPR_OK)
 	*ret = key;
@@ -198,7 +198,7 @@ pgprRC pgprPubkeyParseSubkeys(const uint8_t *pkts, size_t pktlen,
 			pgprItem key, pgprItem **subkeys,
 			int *subkeysCount)
 {
-    return pgprPrtTransferablePubkeySubkeys(pkts, pktlen, key, subkeys, subkeysCount);
+    return pgprParseTransferablePubkeySubkeys(pkts, pktlen, key, subkeys, subkeysCount);
 }
 
 pgprRC pgprPubkeyCertLen(const uint8_t *pkts, size_t pktslen, size_t *certlen)
@@ -232,7 +232,7 @@ pgprRC pgprPubkeyKeyID(const uint8_t * pkts, size_t pktslen, pgprKeyID_t keyid)
 	return PGPR_ERROR_UNEXPECTED_PGP_PACKET;
     memset(&key, 0, sizeof(key));
     key.tag = pkt.tag;
-    rc = pgprPrtKeyFp(pkt.tag, pkt.body, pkt.blen, &key);
+    rc = pgprParseKeyFp(pkt.tag, pkt.body, pkt.blen, &key);
     if (rc == PGPR_OK && !(key.saved & PGPRITEM_SAVED_ID))
 	rc = PGPR_ERROR_INTERNAL;
     if (rc == PGPR_OK)
@@ -253,7 +253,7 @@ pgprRC pgprPubkeyFingerprint(const uint8_t * pkts, size_t pktslen,
 	return PGPR_ERROR_UNEXPECTED_PGP_PACKET;
     memset(&key, 0, sizeof(key));
     key.tag = pkt.tag;
-    rc = pgprPrtKeyFp(pkt.tag, pkt.body, pkt.blen, &key);
+    rc = pgprParseKeyFp(pkt.tag, pkt.body, pkt.blen, &key);
     if (rc == PGPR_OK && !(key.saved & PGPRITEM_SAVED_FP))
         rc = PGPR_ERROR_INTERNAL;
     if (rc == PGPR_OK) {

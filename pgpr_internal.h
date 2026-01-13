@@ -138,22 +138,22 @@ pgprRC pgprAlgInitSignature(pgprAlg alg, int algo);
 
 /* pgpr packet data extraction */
 PGPR_GNUC_INTERNAL
-pgprRC pgprPrtKey(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item);
+pgprRC pgprParseKey(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item);
 
 PGPR_GNUC_INTERNAL
-pgprRC pgprPrtSig(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item);
+pgprRC pgprParseSig(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item);
 
 PGPR_GNUC_INTERNAL
-pgprRC pgprPrtSigNoParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item);
+pgprRC pgprParseSigNoParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item);
 
 PGPR_GNUC_INTERNAL
-pgprRC pgprPrtSigParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem sigp);
+pgprRC pgprParseSigParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem sigp);
 
 PGPR_GNUC_INTERNAL
-pgprRC pgprPrtUserID(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item);
+pgprRC pgprParseUserID(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item);
 
 PGPR_GNUC_INTERNAL
-pgprRC pgprPrtKeyFp(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item);
+pgprRC pgprParseKeyFp(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item);
 
 
 /* diagnostics */
@@ -162,10 +162,10 @@ void pgprAddLint(pgprItem item, char **lints, pgprRC error);
 
 /* transferable pubkey parsing */
 PGPR_GNUC_INTERNAL
-pgprRC pgprPrtTransferablePubkey(const uint8_t * pkts, size_t pktlen, pgprItem item);
+pgprRC pgprParseTransferablePubkey(const uint8_t * pkts, size_t pktlen, pgprItem item);
 
 PGPR_GNUC_INTERNAL
-pgprRC pgprPrtTransferablePubkeySubkeys(const uint8_t * pkts, size_t pktlen, pgprItem mainkey,
+pgprRC pgprParseTransferablePubkeySubkeys(const uint8_t * pkts, size_t pktlen, pgprItem mainkey,
 				   pgprItem **subkeys, int *subkeysCount);
 
 /* signature verification */

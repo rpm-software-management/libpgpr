@@ -77,7 +77,7 @@ static pgprRC pgprMergePktNew(pgprPkt *pkt, int source, pgprKeyID_t primaryid, p
     mp->hashlen = pkt->blen;
     if (pkt->tag == PGPRTAG_SIGNATURE) {
         pgprItem sigitem = pgprItemNew(pkt->tag);
-	rc = pgprPrtSigNoParams(pkt->tag, pkt->body, pkt->blen, sigitem);
+	rc = pgprParseSigNoParams(pkt->tag, pkt->body, pkt->blen, sigitem);
 	if (rc == PGPR_OK) {
 	    mp->time = sigitem->time;
 	    memcpy(mp->signid, sigitem->signid, sizeof(pgprKeyID_t));

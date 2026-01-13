@@ -120,7 +120,7 @@ static pgprRC verifyPrimaryBindingSig(pgprPkt *mainpkt, pgprPkt *subkeypkt, pgpr
     if (!bindsig || !bindsig->embedded_sig)
 	return rc;
     emb = pgprItemNew(PGPRTAG_SIGNATURE);
-    if (pgprPrtSig(PGPRTAG_SIGNATURE, bindsig->embedded_sig, bindsig->embedded_sig_len, emb) == PGPR_OK)
+    if (pgprParseSig(PGPRTAG_SIGNATURE, bindsig->embedded_sig, bindsig->embedded_sig_len, emb) == PGPR_OK)
 	if (emb->sigtype == PGPRSIGTYPE_PRIMARY_BINDING)
 	    rc = pgprVerifySelf(subkey, emb, mainpkt, subkeypkt);
     emb = pgprItemFree(emb);
@@ -135,7 +135,7 @@ static int is_same_keyid(pgprItem item1, pgprItem item2)
 
 /* Parse a complete pubkey with all associated packets */
 /* This is similar to gnupg's merge_selfsigs_main() function */
-pgprRC pgprPrtTransferablePubkey(const uint8_t * pkts, size_t pktlen, pgprItem item)
+pgprRC pgprParseTransferablePubkey(const uint8_t * pkts, size_t pktlen, pgprItem item)
 {
     const uint8_t *p = pkts;
     const uint8_t *pend = pkts + pktlen;
@@ -158,7 +158,7 @@ pgprRC pgprPrtTransferablePubkey(const uint8_t * pkts, size_t pktlen, pgprItem i
     p += (mainpkt.body - mainpkt.head) + mainpkt.blen;
 
     /* Parse the pubkey packet */
-    if ((rc = pgprPrtKey(mainpkt.tag, mainpkt.body, mainpkt.blen, item)) != PGPR_OK)
+    if ((rc = pgprParseKey(mainpkt.tag, mainpkt.body, mainpkt.blen, item)) != PGPR_OK)
 	return rc;
     sectionpkt = mainpkt;
     haveselfsig = 1;
@@ -211,7 +211,7 @@ pgprRC pgprPrtTransferablePubkey(const uint8_t * pkts, size_t pktlen, pgprItem i
 		}
 		if (sectionpkt.tag == PGPRTAG_USER_ID) {
 		    if (!item->userid || ((newest_item->saved & PGPRITEM_SAVED_PRIMARY) != 0 && (item->saved & PGPRITEM_SAVED_PRIMARY) == 0)) {
-			if ((rc = pgprPrtUserID(sectionpkt.tag, sectionpkt.body, sectionpkt.blen, item)) != PGPR_OK)
+			if ((rc = pgprParseUserID(sectionpkt.tag, sectionpkt.body, sectionpkt.blen, item)) != PGPR_OK)
 			    break;
 			if ((newest_item->saved & PGPRITEM_SAVED_PRIMARY) != 0)
 			    item->saved |= PGPRITEM_SAVED_PRIMARY;
@@ -228,7 +228,7 @@ pgprRC pgprPrtTransferablePubkey(const uint8_t * pkts, size_t pktlen, pgprItem i
 	    int isselfsig, needsig = 0;
 	    sigitem = pgprItemNew(pkt.tag);
 	    /* use the NoParams variant because we want to ignore non self-sigs */
-	    if ((rc = pgprPrtSigNoParams(pkt.tag, pkt.body, pkt.blen, sigitem)) != PGPR_OK)
+	    if ((rc = pgprParseSigNoParams(pkt.tag, pkt.body, pkt.blen, sigitem)) != PGPR_OK)
 		break;
 	    isselfsig = is_same_keyid(item, sigitem);
 
@@ -264,7 +264,7 @@ pgprRC pgprPrtTransferablePubkey(const uint8_t * pkts, size_t pktlen, pgprItem i
 		    break;
 		}
 		/* add MPIs so we can verify */
-	        if ((rc = pgprPrtSigParams(pkt.tag, pkt.body, pkt.blen, sigitem)) != PGPR_OK)
+	        if ((rc = pgprParseSigParams(pkt.tag, pkt.body, pkt.blen, sigitem)) != PGPR_OK)
 		    break;
 		if ((rc = pgprVerifySelf(item, sigitem, &mainpkt, &sectionpkt)) != PGPR_OK)
 		    break;		/* verification failed */
@@ -319,10 +319,10 @@ pgprRC pgprPrtTransferablePubkey(const uint8_t * pkts, size_t pktlen, pgprItem i
     return rc;
 }
 	
-/* Return the subkeys for a pubkey. Note that the code in pgprPrtParamsPubkey() already
+/* Return the subkeys for a pubkey. Note that the code in pgprParseParamsPubkey() already
  * made sure that the signatures are self-signatures and verified ok. */
 /* This is similar to gnupg's merge_selfsigs_subkey() function */
-pgprRC pgprPrtTransferablePubkeySubkeys(const uint8_t *pkts, size_t pktlen,
+pgprRC pgprParseTransferablePubkeySubkeys(const uint8_t *pkts, size_t pktlen,
 			pgprItem mainkey, pgprItem **subkeys,
 			int *subkeysCount)
 {
@@ -396,7 +396,7 @@ pgprRC pgprPrtTransferablePubkeySubkeys(const uint8_t *pkts, size_t pktlen,
 	    subitem->userid = mainkey->userid ? pgprStrdup(mainkey->userid) : NULL;
 	    /* if the main key is revoked, all the subkeys are also revoked */
 	    subitem->revoked = mainkey->revoked ? 2 : 0;
-	    if (pgprPrtKey(pkt.tag, pkt.body, pkt.blen, subitem)) {
+	    if (pgprParseKey(pkt.tag, pkt.body, pkt.blen, subitem)) {
 		subitem = pgprItemFree(subitem);
 	    } else {
 		if (count == alloced) {
@@ -410,7 +410,7 @@ pgprRC pgprPrtTransferablePubkeySubkeys(const uint8_t *pkts, size_t pktlen,
 	    int needsig = 0;
 	    sigitem = pgprItemNew(pkt.tag);
 	    /* we use the NoParams variant because we do not verify */
-	    if (pgprPrtSigNoParams(pkt.tag, pkt.body, pkt.blen, sigitem) != PGPR_OK) {
+	    if (pgprParseSigNoParams(pkt.tag, pkt.body, pkt.blen, sigitem) != PGPR_OK) {
 		sigitem = pgprItemFree(sigitem);
 	    }
 

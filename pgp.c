@@ -262,7 +262,7 @@ static int pgprCurveByOid(const uint8_t *p, int l)
     return 0;
 }
 
-static pgprRC pgprPrtKeyParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item)
+static pgprRC pgprParseKeyParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item)
 {
     pgprRC rc;
     const uint8_t *p;
@@ -291,7 +291,7 @@ static pgprRC pgprPrtKeyParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprI
     return rc;
 }
 
-pgprRC pgprPrtSigParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item)
+pgprRC pgprParseSigParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item)
 {
     pgprRC rc;
     if (item->tag != PGPRTAG_SIGNATURE)
@@ -316,7 +316,7 @@ pgprRC pgprPrtSigParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem ite
  *  PGP packet data extraction
  */
 
-static pgprRC pgprPrtSubPkts(const uint8_t *h, size_t hlen, pgprItem item, int hashed)
+static pgprRC pgprParseSubPkts(const uint8_t *h, size_t hlen, pgprItem item, int hashed)
 {
     const uint8_t *p = h;
 
@@ -446,7 +446,7 @@ static pgprRC pgprPrtSubPkts(const uint8_t *h, size_t hlen, pgprItem item, int h
     return PGPR_OK;
 }
 
-pgprRC pgprPrtSigNoParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item)
+pgprRC pgprParseSigNoParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item)
 {
     pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;		/* assume failure */
     const uint8_t * p;
@@ -520,7 +520,7 @@ pgprRC pgprPrtSigNoParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem i
 		item->hash = pgprCalloc(1, item->hashlen);
 		memcpy(item->hash, v, sizeof(*v) + plen + (item->version == 6 ? 2 : 0));
 	    }
-	    rc = pgprPrtSubPkts(p, plen, item, hashed);
+	    rc = pgprParseSubPkts(p, plen, item, hashed);
 	    if (rc != PGPR_OK)
 		return rc;
 	    p += plen;
@@ -579,15 +579,15 @@ pgprRC pgprPrtSigNoParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem i
     return rc;
 }
 
-pgprRC pgprPrtSig(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item)
+pgprRC pgprParseSig(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item)
 {
-    pgprRC rc = pgprPrtSigNoParams(tag, h, hlen, item);
+    pgprRC rc = pgprParseSigNoParams(tag, h, hlen, item);
     if (rc == PGPR_OK)
-	rc = pgprPrtSigParams(tag, h, hlen, item);
+	rc = pgprParseSigParams(tag, h, hlen, item);
     return rc;
 }
 
-pgprRC pgprPrtKeyFp(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item)
+pgprRC pgprParseKeyFp(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item)
 {
     pgprDigCtx ctx;
     uint8_t *out = NULL;
@@ -630,7 +630,7 @@ pgprRC pgprPrtKeyFp(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item)
     return PGPR_OK;
 }
 
-pgprRC pgprPrtKey(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item)
+pgprRC pgprParseKey(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item)
 {
     pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;		/* assume failure */
 
@@ -679,15 +679,15 @@ pgprRC pgprPrtKey(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item)
 
     /* read mpi data if there was no error */
     if (rc == PGPR_OK)
-	rc = pgprPrtKeyParams(tag, h, hlen, item);
+	rc = pgprParseKeyParams(tag, h, hlen, item);
 
     /* calculate the key fingerprint and key id if we could parse the key */
     if (rc == PGPR_OK)
-	rc = pgprPrtKeyFp(tag, h, hlen, item);
+	rc = pgprParseKeyFp(tag, h, hlen, item);
     return rc;
 }
 
-pgprRC pgprPrtUserID(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item)
+pgprRC pgprParseUserID(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item)
 {
     if (item->tag != PGPRTAG_PUBLIC_KEY || tag != PGPRTAG_USER_ID)
 	return PGPR_ERROR_INTERNAL;
