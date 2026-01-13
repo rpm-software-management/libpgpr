@@ -316,7 +316,7 @@ pgprRC pgprPrtSigParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem ite
  *  PGP packet data extraction
  */
 
-static pgprRC pgprPrtSubType(const uint8_t *h, size_t hlen, pgprItem item, int hashed)
+static pgprRC pgprPrtSubPkts(const uint8_t *h, size_t hlen, pgprItem item, int hashed)
 {
     const uint8_t *p = h;
 
@@ -520,7 +520,7 @@ pgprRC pgprPrtSigNoParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem i
 		item->hash = pgprCalloc(1, item->hashlen);
 		memcpy(item->hash, v, sizeof(*v) + plen + (item->version == 6 ? 2 : 0));
 	    }
-	    rc = pgprPrtSubType(p, plen, item, hashed);
+	    rc = pgprPrtSubPkts(p, plen, item, hashed);
 	    if (rc != PGPR_OK)
 		return rc;
 	    p += plen;
@@ -587,71 +587,47 @@ pgprRC pgprPrtSig(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item)
     return rc;
 }
 
-/* fingerprint calculation helper */
-static pgprRC gen_key_fingerprint(const uint8_t *d, size_t dlen, const uint8_t *h, size_t hlen, int hashalgo, uint8_t *fp, size_t fplen)
-{
-    uint8_t *out = NULL;
-    size_t outlen = 0;
-    pgprRC rc = PGPR_ERROR_INTERNAL;
-    pgprDigCtx ctx = pgprDigestInit(hashalgo);
-
-    (void)pgprDigestUpdate(ctx, d, dlen);
-    (void)pgprDigestUpdate(ctx, h, hlen);
-    (void)pgprDigestFinal(ctx, (void **)&out, &outlen);
-    if (outlen == fplen) {
-	memcpy(fp, out, outlen);
-	rc = PGPR_OK;
-    }
-    free(out);
-    return rc;
-}
-
 pgprRC pgprPrtKeyFp(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item)
 {
-    uint8_t *fp = NULL;
-    size_t fplen = 0;
-    pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;		/* assume failure */
+    pgprDigCtx ctx;
+    uint8_t *out = NULL;
+    size_t outlen = 0;
 
     if  ((item->tag != PGPRTAG_PUBLIC_KEY && item->tag != PGPRTAG_PUBLIC_SUBKEY) || tag != item->tag)
 	return PGPR_ERROR_INTERNAL;
 
     if (hlen == 0)
-	return rc;
+	return PGPR_ERROR_CORRUPT_PGP_PACKET;
 
     /* We only permit V4/5/6 keys, V3 keys are long long since deprecated */
-    switch (h[0]) {
-    case 4:
-      {
+    if (h[0] != 4 && h[0] != 5 && h[0] != 6)
+	return PGPR_ERROR_UNSUPPORTED_VERSION;
+
+    ctx = pgprDigestInit(h[0] == 4 ? PGPRHASHALGO_SHA1 : PGPRHASHALGO_SHA256);
+    if (h[0] == 4) {
 	uint8_t in[3] = { 0x99, (hlen >> 8), hlen };
-	rc = gen_key_fingerprint(in, 3, h, hlen, PGPRHASHALGO_SHA1, item->fp, 20);
-	if (rc == PGPR_OK)
-	    item->fp_len = 20;
-      }	break;
-    case 5:
-    case 6:
-      {
+	pgprDigestUpdate(ctx, in, 3);
+    } else {
 	uint8_t in[5] = { h[0] == 6 ? 0x9b : 0x9a, (hlen >> 24), (hlen >> 16), (hlen >> 8), hlen };
-	rc = gen_key_fingerprint(in, 5, h, hlen, PGPRHASHALGO_SHA256, item->fp, 32);
-	if (rc == PGPR_OK)
-	    item->fp_len = 32;
-      }	break;
-    default:
-	rc = PGPR_ERROR_UNSUPPORTED_VERSION;
-	break;
+	pgprDigestUpdate(ctx, in, 5);
     }
-    if (rc == PGPR_OK && item->fp_len <= 8)
-	rc = PGPR_ERROR_INTERNAL;
-    if (rc == PGPR_OK) {
-	item->fp_version = h[0];
-	/* calculate the keyid from the fp */
-	if (h[0] == 4)
-	    memcpy(item->signid, (item->fp + (item->fp_len - 8)), 8);
-	else
-	    memcpy(item->signid, item->fp, 8);
-	item->saved |= PGPRITEM_SAVED_FP | PGPRITEM_SAVED_ID;
+    (void)pgprDigestUpdate(ctx, h, hlen);
+    (void)pgprDigestFinal(ctx, (void **)&out, &outlen);
+    if (outlen != (h[0] == 4 ? 20 : 32)) {
+	free(out);
+	return PGPR_ERROR_INTERNAL;
     }
-    free(fp);
-    return rc;
+    memcpy(item->fp, out, outlen);
+    item->fp_len = outlen;
+    item->fp_version = h[0];
+    free(out);
+    /* calculate the keyid from the fingerprint */
+    if (h[0] == 4)
+	memcpy(item->signid, (item->fp + (outlen - 8)), 8);
+    else
+	memcpy(item->signid, item->fp, 8);
+    item->saved |= PGPRITEM_SAVED_FP | PGPRITEM_SAVED_ID;
+    return PGPR_OK;
 }
 
 pgprRC pgprPrtKey(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item)
