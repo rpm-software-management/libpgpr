@@ -83,8 +83,11 @@ static pgprRC pgprMergePktNew(pgprPkt *pkt, int source, pgprKeyID_t primaryid, p
 	    memcpy(mp->keyid, sigitem->keyid, sizeof(pgprKeyID_t));
 	    if (primaryid && memcmp(primaryid, mp->keyid, sizeof(pgprKeyID_t)) == 0)
 		mp->selfsig = 1;
-	    if (sigitem->version > 3 && sigitem->hashlen > 6)
+	    /* tweak hashlen so that it only contains the hashed part of the sig */
+	    if ((sigitem->version == 4 || sigitem->version == 6) && sigitem->hashlen > 6)
 		mp->hashlen = sigitem->hashlen - 6;	/* 6: size of trailer */
+	    else if (sigitem->version == 5 && sigitem->hashlen > 10)
+		mp->hashlen = sigitem->hashlen - 10;	/* 10: size of trailer */
 	}
 	pgprItemFree(sigitem);
     }
