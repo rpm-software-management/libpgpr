@@ -213,7 +213,7 @@ pgprRC pgprPubkeyKeyID(const uint8_t * pkts, size_t pktslen, pgprKeyID_t keyid)
 }
 
 pgprRC pgprPubkeyFingerprint(const uint8_t * pkts, size_t pktslen,
-                         uint8_t **fp, size_t *fplen)
+                         uint8_t **fp, size_t *fp_len, int *fp_version)
 {
     pgprPkt pkt;
     struct pgprItem_s key;
@@ -229,8 +229,10 @@ pgprRC pgprPubkeyFingerprint(const uint8_t * pkts, size_t pktslen,
     if (rc == PGPR_OK && !(key.saved & PGPRITEM_SAVED_FP))
         rc = PGPR_ERROR_INTERNAL;
     if (rc == PGPR_OK) {
-	*fplen = key.fp_len;
+	*fp_len = key.fp_len;
 	*fp = pgprMemdup(key.fp, key.fp_len);
+	if (fp_version)
+	    *fp_version = key.fp_version;
     }
     return rc;
 }

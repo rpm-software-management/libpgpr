@@ -229,7 +229,7 @@ int pgpPubkeyKeyID(const uint8_t * pkts, size_t pktslen, pgpKeyID_t keyid)
 int pgpPubkeyFingerprint(const uint8_t * pkts, size_t pktslen,
                          uint8_t **fp, size_t *fplen)
 {
-    return pgprPubkeyFingerprint(pkts, pktslen, fp, fplen) == PGPR_OK ? 0 : -1;
+    return pgprPubkeyFingerprint(pkts, pktslen, fp, fplen, NULL) == PGPR_OK ? 0 : -1;
 }
 
 rpmRC pgpPubkeyMerge(const uint8_t *pkts1, size_t pkts1len, const uint8_t *pkts2, size_t pkts2len, uint8_t **pktsm, size_t *pktsmlen, int flags)

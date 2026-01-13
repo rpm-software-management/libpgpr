@@ -260,7 +260,7 @@ certinfo(int argc, char **argv)
 	fprintf(stderr, "pubkey unwrap error\n");
 	exit(1);
     }
-    if (pgprPubkeyFingerprint(pubkey, pubkeyl, &fp, &fplen) != PGPR_OK) {
+    if (pgprPubkeyFingerprint(pubkey, pubkeyl, &fp, &fplen, NULL) != PGPR_OK) {
 	fprintf(stderr, "pgprPubkeyFingerprint error\n");
 	exit(1);
     }
