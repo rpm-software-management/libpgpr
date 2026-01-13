@@ -216,7 +216,7 @@ static pgprRC pgprMergeKeyAddPubkey(pgprMergeKey *mk, int source, const uint8_t 
 	return PGPR_ERROR_CORRUPT_PGP_PACKET;
     if (pkt.tag != PGPRTAG_PUBLIC_KEY)
 	return PGPR_ERROR_UNEXPECTED_PGP_PACKET;
-    if ((rc = pgprGetKeyID(pkt.body, pkt.blen, mainkeyid)) != PGPR_OK)
+    if ((rc = pgprPubkeyKeyID(p, (pend - p), mainkeyid)) != PGPR_OK)
 	return rc;
     if ((rc = pgprMergePktNew(&pkt, source, mainkeyid, &mp)) != PGPR_OK)
 	return rc;

@@ -155,12 +155,6 @@ pgprRC pgprPrtUserID(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item);
 PGPR_GNUC_INTERNAL
 pgprRC pgprPrtKeyFp(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item);
 
-PGPR_GNUC_INTERNAL
-pgprRC pgprGetKeyFingerprint(const uint8_t *h, size_t hlen, uint8_t **fp, size_t *fplen);
-
-PGPR_GNUC_INTERNAL
-pgprRC pgprGetKeyID(const uint8_t *h, size_t hlen, pgprKeyID_t keyid);
-
 
 /* diagnostics */
 PGPR_GNUC_INTERNAL

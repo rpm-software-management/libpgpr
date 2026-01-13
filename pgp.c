@@ -347,60 +347,21 @@ pgprRC pgprPrtSigParams(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem ite
  *  Key fingerprint calculation
  */
 
-static pgprRC gen_key_fingerprint(uint8_t **fp, size_t *fplen, const uint8_t *d, size_t dlen, const uint8_t *h, size_t hlen, int hashalgo, int expected_len)
+static pgprRC gen_key_fingerprint(const uint8_t *d, size_t dlen, const uint8_t *h, size_t hlen, int hashalgo, uint8_t *fp, size_t fplen)
 {
     uint8_t *out = NULL;
     size_t outlen = 0;
+    pgprRC rc = PGPR_ERROR_INTERNAL;
     pgprDigCtx ctx = pgprDigestInit(hashalgo);
+
     (void)pgprDigestUpdate(ctx, d, dlen);
     (void)pgprDigestUpdate(ctx, h, hlen);
     (void)pgprDigestFinal(ctx, (void **)&out, &outlen);
-    if (outlen != expected_len) {
-	free(out);
-	return PGPR_ERROR_INTERNAL;
+    if (outlen == fplen) {
+	memcpy(fp, out, outlen);
+	rc = PGPR_OK;
     }
-    *fp = out;
-    *fplen = outlen;
-    return PGPR_OK;
-}
-
-pgprRC pgprGetKeyFingerprint(const uint8_t *h, size_t hlen,
-			  uint8_t **fp, size_t *fplen)
-{
-    pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;		/* assume failure */
-
-    if (hlen == 0)
-	return rc;
-
-    /* We only permit V4 keys, V3 keys are long long since deprecated */
-    switch (h[0]) {
-    case 4:
-      {	pgprPktKeyV4 v = (pgprPktKeyV4)h;
-	if (hlen < sizeof(*v))
-	    return rc;
-	/* Does the size and number of MPI's match our expectations? */
-	rc = pgprValidateKeyParamsSize(v->pubkey_algo, (uint8_t *)(v + 1), hlen - sizeof(*v));
-	if (rc == PGPR_OK) {
-	    uint8_t in[3] = { 0x99, (hlen >> 8), hlen };
-	    rc = gen_key_fingerprint(fp, fplen, in, 3, h, hlen, PGPRHASHALGO_SHA1, 20);
-	}
-      }	break;
-    case 5:
-    case 6:
-      {	pgprPktKeyV56 v = (pgprPktKeyV56)h;
-	if (hlen < sizeof(*v))
-	    return rc;
-	/* Does the size and number of MPI's match our expectations? */
-	rc = pgprValidateKeyParamsSize(v->pubkey_algo, (uint8_t *)(v + 1), hlen - sizeof(*v));
-	if (rc == PGPR_OK) {
-	    uint8_t in[5] = { h[0] == 6 ? 0x9b : 0x9a, (hlen >> 24), (hlen >> 16), (hlen >> 8), hlen };
-	    rc = gen_key_fingerprint(fp, fplen, in, 5, h, hlen, PGPRHASHALGO_SHA256, 32);
-	}
-      }	break;
-    default:
-	rc = PGPR_ERROR_UNSUPPORTED_VERSION;
-	break;
-    }
+    free(out);
     return rc;
 }
 
@@ -414,17 +375,6 @@ static pgprRC pgprGetKeyIDFromFp(const uint8_t *fp, int fplen, int fpversion, pg
 	    memcpy(keyid, (fp + (fplen - 8)), 8);
 	rc = PGPR_OK;
     }
-    return rc;
-}
-
-pgprRC pgprGetKeyID(const uint8_t *h, size_t hlen, pgprKeyID_t keyid)
-{
-    uint8_t *fp = NULL;
-    size_t fplen = 0;
-    pgprRC rc = pgprGetKeyFingerprint(h, hlen, &fp, &fplen);
-    if (rc == PGPR_OK)
-	rc = pgprGetKeyIDFromFp(fp, fplen, hlen ? h[0] : 0, keyid);
-    free(fp);
     return rc;
 }
 
@@ -475,10 +425,12 @@ static pgprRC pgprPrtSubType(const uint8_t *h, size_t hlen, pgprItem item, int h
 		break;
 	    impl = 1;
 	    if (!(item->saved & PGPRITEM_SAVED_FP) && plen - 2 <= PGPR_MAX_FP_LENGTH) {
-		memcpy(item->fp, p + 2, plen - 2);
-		item->fp_len = plen - 2;
-		item->fp_version = p[1];
-		item->saved |= PGPRITEM_SAVED_FP;
+		if ((p[1] == 4 && plen - 1 == 21) || ((p[1] == 5 || p[1] == 6) && plen - 1 == 33)) {
+		    memcpy(item->fp, p + 2, plen - 2);
+		    item->fp_len = plen - 2;
+		    item->fp_version = p[1];
+		    item->saved |= PGPRITEM_SAVED_FP;
+		}
 	    }
 	    if (p[1] == 4 && plen - 1 == 21 && !(item->saved & PGPRITEM_SAVED_ID)) {
 		memcpy(item->signid, p + plen - sizeof(item->signid), sizeof(item->signid));
@@ -707,16 +659,52 @@ pgprRC pgprPrtKeyFp(pgprTag tag, const uint8_t *h, size_t hlen, pgprItem item)
 {
     uint8_t *fp = NULL;
     size_t fplen = 0;
-    pgprRC rc;
+    pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;		/* assume failure */
 
-    rc = pgprGetKeyFingerprint(h, hlen, &fp, &fplen);
-    if (rc == PGPR_OK && (fplen == 0 || fplen > PGPR_MAX_FP_LENGTH)) {
-	rc = PGPR_ERROR_INTERNAL;
+    if  ((item->tag != PGPRTAG_PUBLIC_KEY && item->tag != PGPRTAG_PUBLIC_SUBKEY) || tag != item->tag)
+	return PGPR_ERROR_INTERNAL;
+
+    if (hlen == 0)
+	return rc;
+
+
+    /* We only permit V4/5/6 keys, V3 keys are long long since deprecated */
+    switch (h[0]) {
+    case 4:
+      {	pgprPktKeyV4 v = (pgprPktKeyV4)h;
+	if (hlen < sizeof(*v))
+	    return rc;
+	/* Does the size and number of MPI's match our expectations? */
+	rc = pgprValidateKeyParamsSize(v->pubkey_algo, (uint8_t *)(v + 1), hlen - sizeof(*v));
+	if (rc == PGPR_OK) {
+	    uint8_t in[3] = { 0x99, (hlen >> 8), hlen };
+	    rc = gen_key_fingerprint(in, 3, h, hlen, PGPRHASHALGO_SHA1, item->fp, 20);
+	    if (rc == PGPR_OK)
+		item->fp_len = 20;
+	}
+      }	break;
+    case 5:
+    case 6:
+      {	pgprPktKeyV56 v = (pgprPktKeyV56)h;
+	if (hlen < sizeof(*v))
+	    return rc;
+	/* Does the size and number of MPI's match our expectations? */
+	rc = pgprValidateKeyParamsSize(v->pubkey_algo, (uint8_t *)(v + 1), hlen - sizeof(*v));
+	if (rc == PGPR_OK) {
+	    uint8_t in[5] = { h[0] == 6 ? 0x9b : 0x9a, (hlen >> 24), (hlen >> 16), (hlen >> 8), hlen };
+	    rc = gen_key_fingerprint(in, 5, h, hlen, PGPRHASHALGO_SHA256, item->fp, 32);
+	    if (rc == PGPR_OK)
+		item->fp_len = 32;
+	}
+      }	break;
+    default:
+	rc = PGPR_ERROR_UNSUPPORTED_VERSION;
+	break;
     }
+    if (rc == PGPR_OK && item->fp_len == 0)
+	rc = PGPR_ERROR_INTERNAL;
     if (rc == PGPR_OK) {
-	memcpy(item->fp, fp, fplen);
-	item->fp_len = fplen;
-	item->fp_version = item->version;
+	item->fp_version = h[0];
 	item->saved |= PGPRITEM_SAVED_FP;
 	if ((rc = pgprGetKeyIDFromFp(item->fp, item->fp_len, item->fp_version, item->signid)) == PGPR_OK)
 	    item->saved |= PGPRITEM_SAVED_ID;
