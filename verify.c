@@ -13,12 +13,12 @@ pgprRC pgprVerifySignatureRaw(pgprItem key, pgprItem sig, const uint8_t *hash, s
     if (hash == NULL || hashlen == 0 || hashlen != pgprDigestLength(sig->hash_algo))
 	return PGPR_ERROR_INTERNAL;
     if (sig->pubkey_algo != key->pubkey_algo)
-	return PGPR_ERROR_SIGNATURE_VERIFICATION;
+	return PGPR_ERROR_BAD_SIGNATURE;
     /* Compare leading 16 bits of digest for a quick check. */
     if (memcmp(hash, sig->signhash16, 2) != 0)
-	return PGPR_ERROR_SIGNATURE_VERIFICATION;
+	return PGPR_ERROR_BAD_SIGNATURE;
     if (!key->alg || !sig->alg || !sig->alg->verify)
-	return PGPR_ERROR_SIGNATURE_VERIFICATION;
+	return PGPR_ERROR_INTERNAL;
     return sig->alg->verify(key->alg, sig->alg, hash, hashlen, sig->hash_algo);
 }
 
@@ -94,7 +94,7 @@ pgprRC pgprVerifySignatureNoKey(pgprItem sig, const uint8_t *hash, size_t hashle
 	    return PGPR_ERROR_INTERNAL;
 	/* Compare leading 16 bits of digest for a quick check. */
 	if (memcmp(hash, sig->signhash16, 2) != 0)
-	    return PGPR_ERROR_SIGNATURE_VERIFICATION;
+	    return PGPR_ERROR_BAD_SIGNATURE;
     }
     /* now check the meta information of the signature */
     if ((sig->saved & PGPRITEM_SAVED_SIG_EXPIRE) != 0 && sig->sig_expire) {

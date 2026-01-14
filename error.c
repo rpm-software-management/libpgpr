@@ -40,12 +40,12 @@ const char *pgprErrorStr(pgprRC rc)
 	return "Unsupported pubkey curve";
     case PGPR_ERROR_UNSUPPORTED_DIGEST:
 	return "Unsupported digest algorithm";
-    case PGPR_ERROR_BAD_PUBKEY:
+    case PGPR_ERROR_REJECTED_PUBKEY:
 	return "Pubkey not accepted by crypto backend";
-    case PGPR_ERROR_BAD_SIGNATURE:
+    case PGPR_ERROR_REJECTED_SIGNATURE:
 	return "Signature not accepted by crypto backend";
-    case PGPR_ERROR_SIGNATURE_VERIFICATION:
-	return "Signature verification failure";
+    case PGPR_ERROR_BAD_SIGNATURE:
+	return "Bad signature";
     case PGPR_ERROR_SIGNATURE_FROM_FUTURE:
 	return "Signature was created in the future";
     case PGPR_ERROR_SIGNATURE_EXPIRED:

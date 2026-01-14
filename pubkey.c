@@ -104,7 +104,7 @@ static pgprRC pgprVerifySelfSig(pgprItem key, pgprItem selfsig,
 	    rc = PGPR_ERROR_INTERNAL;
 	else
 	    rc = pgprVerifySignatureRaw(key, selfsig, hash, hashlen);
-	if (rc == PGPR_ERROR_SIGNATURE_VERIFICATION)
+	if (rc == PGPR_ERROR_BAD_SIGNATURE)
 	    rc = PGPR_ERROR_SELFSIG_VERIFICATION;
     }
     free(hash);

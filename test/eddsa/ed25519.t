@@ -28,5 +28,5 @@ TEST ed25519 signature verification error
 RUN verifysignature ed25519.key ed25519_bad.asc hello
 ---
 Exit status: 1
-signature verification error
+signature verification error: Bad signature
 ---

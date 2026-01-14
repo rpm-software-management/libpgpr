@@ -28,5 +28,5 @@ TEST rsa2048 signature verification error
 RUN verifysignature rsa2048.key rsa2048_bad.asc hello
 ---
 Exit status: 1
-signature verification error
+signature verification error: Bad signature
 ---

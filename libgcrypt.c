@@ -36,7 +36,7 @@ struct pgprAlgKeyRSA_s {
 static pgprRC pgprSetSigMpiRSA(pgprAlg sa, int num, const uint8_t *p, int mlen)
 {
     struct pgprAlgSigRSA_s *sig = sa->data;
-    pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;
+    pgprRC rc = PGPR_ERROR_REJECTED_SIGNATURE;
 
     if (!sig)
 	sig = sa->data = pgprCalloc(1, sizeof(*sig));
@@ -53,7 +53,7 @@ static pgprRC pgprSetSigMpiRSA(pgprAlg sa, int num, const uint8_t *p, int mlen)
 static pgprRC pgprSetKeyMpiRSA(pgprAlg ka, int num, const uint8_t *p, int mlen)
 {
     struct pgprAlgKeyRSA_s *key = ka->data;
-    pgprRC rc = PGPR_ERROR_BAD_PUBKEY;
+    pgprRC rc = PGPR_ERROR_REJECTED_PUBKEY;
 
     if (!key)
 	key = ka->data = pgprCalloc(1, sizeof(*key));
@@ -78,7 +78,7 @@ static pgprRC pgprVerifySigRSA(pgprAlg ka, pgprAlg sa, const uint8_t *hash, size
     struct pgprAlgSigRSA_s *sig = sa->data;
     gcry_sexp_t sexp_sig = NULL, sexp_data = NULL, sexp_pkey = NULL;
     int gcry_hash_algo = hashalgo2gcryalgo(hash_algo);
-    pgprRC rc = PGPR_ERROR_SIGNATURE_VERIFICATION;
+    pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;
 
     if (!sig || !key || !gcry_hash_algo)
 	return rc;
@@ -134,7 +134,7 @@ struct pgprAlgKeyDSA_s {
 static pgprRC pgprSetSigMpiDSA(pgprAlg sa, int num, const uint8_t *p, int mlen)
 {
     struct pgprAlgSigDSA_s *sig = sa->data;
-    pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;
+    pgprRC rc = PGPR_ERROR_REJECTED_SIGNATURE;
 
     if (!sig)
 	sig = sa->data = pgprCalloc(1, sizeof(*sig));
@@ -155,7 +155,7 @@ static pgprRC pgprSetSigMpiDSA(pgprAlg sa, int num, const uint8_t *p, int mlen)
 static pgprRC pgprSetKeyMpiDSA(pgprAlg ka, int num, const uint8_t *p, int mlen)
 {
     struct pgprAlgKeyDSA_s *key = ka->data;
-    pgprRC rc = PGPR_ERROR_BAD_PUBKEY;
+    pgprRC rc = PGPR_ERROR_REJECTED_PUBKEY;
 
     if (!key)
 	key = ka->data = pgprCalloc(1, sizeof(*key));
@@ -187,7 +187,7 @@ static pgprRC pgprVerifySigDSA(pgprAlg ka, pgprAlg sa, const uint8_t *hash, size
     struct pgprAlgKeyDSA_s *key = ka->data;
     struct pgprAlgSigDSA_s *sig = sa->data;
     gcry_sexp_t sexp_sig = NULL, sexp_data = NULL, sexp_pkey = NULL;
-    pgprRC rc = PGPR_ERROR_SIGNATURE_VERIFICATION;
+    pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;
     size_t qlen;
 
     if (!sig || !key)
@@ -249,7 +249,7 @@ struct pgprAlgKeyECC_s {
 static pgprRC pgprSetSigMpiECC(pgprAlg sa, int num, const uint8_t *p, int mlen)
 {
     struct pgprAlgSigECC_s *sig = sa->data;
-    pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;
+    pgprRC rc = PGPR_ERROR_REJECTED_SIGNATURE;
 
     if (!sig)
 	sig = sa->data = pgprCalloc(1, sizeof(*sig));
@@ -277,7 +277,7 @@ static pgprRC pgprSetSigMpiECC(pgprAlg sa, int num, const uint8_t *p, int mlen)
 static pgprRC pgprSetKeyMpiECC(pgprAlg ka, int num, const uint8_t *p, int mlen)
 {
     struct pgprAlgKeyECC_s *key = ka->data;
-    pgprRC rc = PGPR_ERROR_BAD_PUBKEY;
+    pgprRC rc = PGPR_ERROR_REJECTED_PUBKEY;
 
     if (!key)
 	key = ka->data = pgprCalloc(1, sizeof(*key));
@@ -316,7 +316,7 @@ static pgprRC pgprVerifySigECC(pgprAlg ka, pgprAlg sa, const uint8_t *hash, size
     struct pgprAlgKeyECC_s *key = ka->data;
     struct pgprAlgSigECC_s *sig = sa->data;
     gcry_sexp_t sexp_sig = NULL, sexp_data = NULL, sexp_pkey = NULL;
-    pgprRC rc = PGPR_ERROR_SIGNATURE_VERIFICATION;
+    pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;
 
     if (!sig || !key)
 	return rc;

@@ -28,5 +28,5 @@ TEST nistp384 signature verification error
 RUN verifysignature nistp384.key nistp384_bad.asc hello
 ---
 Exit status: 1
-signature verification error
+signature verification error: Bad signature
 ---

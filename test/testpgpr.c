@@ -159,7 +159,7 @@ verifysignature(int argc, char **argv)
     lints = 0;
     if ((rc = pgprVerifySignature(key, sig, hash, hashlen, &lints)) != PGPR_OK) {
 	if (!lints)
-	    die("signature verification error", rc == PGPR_ERROR_SIGNATURE_VERIFICATION ? PGPR_OK : rc);
+	    die("signature verification error", rc);
 	fprintf(stderr, "signature verification error: %s\n", lints);
 	exit(1);
     }

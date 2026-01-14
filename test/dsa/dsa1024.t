@@ -28,7 +28,7 @@ TEST dsa1024 signature verification error
 RUN verifysignature dsa1024.key dsa1024_bad.asc hello
 ---
 Exit status: 1
-signature verification error
+signature verification error: Bad signature
 ---
 TEST dsa2_1024 signature parsing
 RUN siginfo dsa2_1024.asc
