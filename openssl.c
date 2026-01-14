@@ -720,7 +720,7 @@ static int constructEDDSASigningKey(struct pgprAlgKeyEDDSA_s *key, int curve)
     if (key->evp_pkey)
 	return 1;	/* We've already constructed it, so just reuse it */
 #ifdef EVP_PKEY_ED25519
-    if (curve == PGPRCURVE_ED25519 || curve == PGPRCURVE_ED25519_ALT)
+    if (curve == PGPRCURVE_ED25519)
 	key->evp_pkey = EVP_PKEY_new_raw_public_key(EVP_PKEY_ED25519, NULL, key->q, key->qlen);
 #endif
 #ifdef EVP_PKEY_ED448
@@ -749,7 +749,7 @@ static pgprRC pgprSetKeyMpiEDDSA(pgprAlg ka, int num, const uint8_t *p, int mlen
 	}
 	return rc;
     }
-    if ((ka->curve == PGPRCURVE_ED25519 || ka->curve == PGPRCURVE_ED25519_ALT) && num == 0 && !key->q && mlen > 3 && p[2] == 0x40) {
+    if (ka->curve == PGPRCURVE_ED25519 && num == 0 && !key->q && mlen > 3 && p[2] == 0x40) {
 	key->qlen = mlen - 3;
 	key->q = pgprMemdup(p + 3, mlen - 3);	/* we do not copy the leading 0x40 */
 	rc = PGPR_OK;
@@ -830,7 +830,7 @@ static pgprRC pgprVerifySigEDDSA(pgprAlg ka, pgprAlg sa,
     md_ctx = EVP_MD_CTX_new();
     if (EVP_DigestVerifyInit(md_ctx, NULL, EVP_md_null(), NULL, key->evp_pkey) != 1)
 	goto done;
-    if ((ka->curve == PGPRCURVE_ED25519 || ka->curve == PGPRCURVE_ED25519_ALT) && !sig->not_ed25519) {
+    if (ka->curve == PGPRCURVE_ED25519 && !sig->not_ed25519) {
 	unsigned char esig[64];
 	memcpy(esig, sig->sig + 57 - 32, 32);
 	memcpy(esig + 32, sig->sig + 2 * 57 - 32, 32);
@@ -856,7 +856,7 @@ done:
 static int pgprSupportedCurve(int algo, int curve)
 {
 #ifdef EVP_PKEY_ED25519
-    if (algo == PGPRPUBKEYALGO_EDDSA && (curve == PGPRCURVE_ED25519 || curve == PGPRCURVE_ED25519_ALT))
+    if (algo == PGPRPUBKEYALGO_EDDSA && curve == PGPRCURVE_ED25519)
 	return 1;
 #endif
 #ifdef EVP_PKEY_ED448

@@ -143,10 +143,8 @@ typedef enum pgprCurveId_e {
     PGPRCURVE_BRAINPOOL_P512R1	=  6,	/*!< brainpoolP512r1 */
     PGPRCURVE_ED25519		=  7,	/*!< Ed25519 */
     PGPRCURVE_CURVE25519	=  8,	/*!< Curve25519 */
-    PGPRCURVE_ED25519_ALT	=  9,	/*!< Ed25519 alternate */
-    PGPRCURVE_CURVE25519_ALT	=  10,	/*!< Curve25519 alternate */
-    PGPRCURVE_ED448		=  11,	/*!< Ed448 */
-    PGPRCURVE_X448		=  12,	/*!< X448 */
+    PGPRCURVE_ED448		=  9,	/*!< Ed448 */
+    PGPRCURVE_X448		=  10,	/*!< X448 */
 } pgprCurveId;
 
 

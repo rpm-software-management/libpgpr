@@ -320,7 +320,7 @@ static pgprRC pgprVerifySigECC(pgprAlg ka, pgprAlg sa, const uint8_t *hash, size
 
     if (!sig || !key)
 	return rc;
-    if (ka->curve == PGPRCURVE_ED25519 || ka->curve == PGPRCURVE_ED25519_ALT) {
+    if (ka->curve == PGPRCURVE_ED25519) {
 	unsigned char buf_r[32], buf_s[32];
 	if (eddsa_zero_extend(sig->r, buf_r, 32) || eddsa_zero_extend(sig->s, buf_s, 32))
 	    return rc;
@@ -404,7 +404,7 @@ static int check_gcrypt_supported(const char *sexpstr)
 
 static int pgprSupportedCurve(int algo, int curve)
 {
-    if (algo == PGPRPUBKEYALGO_EDDSA && (curve == PGPRCURVE_ED25519 || curve == PGPRCURVE_ED25519_ALT)) {
+    if (algo == PGPRPUBKEYALGO_EDDSA && curve == PGPRCURVE_ED25519) {
 	static int supported_ed25519;
 	if (!supported_ed25519)
 	    supported_ed25519 = check_gcrypt_supported("(public-key (ecc (curve \"Ed25519\")))");

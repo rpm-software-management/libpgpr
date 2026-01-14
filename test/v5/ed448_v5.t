@@ -4,7 +4,7 @@ RUN keyinfo ed448_v5.key
 Version: 5
 CreationTime: 1767950480
 Algorithm: 22
-AlgorithmInfo: 11
+AlgorithmInfo: 9
 UserID: ed448_v5 <ed448_v5@pgpr.lib>
 KeyFP: cfe61908887da5dc6fbdc5220f888b17e022b6da34e407b17cb208d24b3ba206
 KeyID: cfe61908887da5dc
