@@ -313,6 +313,37 @@ static pgprRC pgprParseSigSubPkts(const uint8_t *h, size_t hlen, pgprItem item, 
     return PGPR_OK;
 }
 
+/* create the trailer used in v4/5/6 signatures */
+static pgprRC create_sig_trailer(pgprItem item, const uint8_t *p, size_t plen)
+{
+    if (item->version == 4 || item->version == 6)
+	item->hashlen = plen + 6;
+    else if (item->version == 5)
+	item->hashlen = plen + (item->sigtype == 0x00 || item->sigtype == 0x01 ? 6 : 0) + 10;
+    else
+	return PGPR_ERROR_UNSUPPORTED_VERSION;
+    item->hash = pgprCalloc(1, item->hashlen);
+    memcpy(item->hash, p, plen);
+    if (item->version == 4 || item->version == 6) {
+	uint8_t *trailer = item->hash + item->hashlen - 6;
+	trailer[0] = item->version;
+	trailer[1] = 0xff;
+	trailer[2] = plen >> 24;
+	trailer[3] = plen >> 16;
+	trailer[4] = plen >> 8;
+	trailer[5] = plen;
+    } else if (item->version == 5) {
+	uint8_t *trailer = item->hash + item->hashlen - 10;
+	trailer[0] = 0x05;
+	trailer[1] = 0xff;
+	trailer[6] = plen >> 24;
+	trailer[7] = plen >> 16;
+	trailer[8] = plen >> 8;
+	trailer[9] = plen;
+    }
+    return PGPR_OK;
+}
+
 pgprRC pgprParseSigNoParams(pgprPkt *pkt, pgprItem item)
 {
     pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;		/* assume failure */
@@ -365,8 +396,6 @@ pgprRC pgprParseSigNoParams(pgprPkt *pkt, pgprItem item)
 		if (p > hend || hend - p < 4)
 		    return PGPR_ERROR_CORRUPT_PGP_PACKET;
 		plen = pgprGrab4(p);
-		if (plen >= PGPR_MAX_OPENPGP_BYTES)
-		    return PGPR_ERROR_CORRUPT_PGP_PACKET;
 		p += 4;
 	    } else {
 		if (p > hend || hend - p < 2)
@@ -374,18 +403,12 @@ pgprRC pgprParseSigNoParams(pgprPkt *pkt, pgprItem item)
 		plen = pgprGrab2(p);
 		p += 2;
 	    }
-	    if (hend - p < plen)
+	    if (plen >= PGPR_MAX_OPENPGP_BYTES || hend - p < plen)
 		return PGPR_ERROR_CORRUPT_PGP_PACKET;
 	    if (hashed) {
-		/* add bytes for the trailer */
-		if (item->version == 4)
-		    item->hashlen = sizeof(*v) + plen + 6;
-		else if (item->version == 5)
-		    item->hashlen = sizeof(*v) + plen + (item->sigtype == 0x00 || item->sigtype == 0x01 ? 6 : 0) + 10;
-		else if (item->version == 6)
-		    item->hashlen = sizeof(*v) + 2 + plen + 6;		/* len is 4 bytes */
-		item->hash = pgprCalloc(1, item->hashlen);
-		memcpy(item->hash, v, sizeof(*v) + plen + (item->version == 6 ? 2 : 0));
+		rc = create_sig_trailer(item, pkt->body, sizeof(*v) + (item->version == 6 ? 2 : 0) + plen);
+		if (rc != PGPR_OK)
+		    return rc;
 	    }
 	    rc = pgprParseSigSubPkts(p, plen, item, hashed);
 	    if (rc != PGPR_OK)
@@ -419,24 +442,6 @@ pgprRC pgprParseSigNoParams(pgprPkt *pkt, pgprItem item)
 	if (p > hend)
 	    return PGPR_ERROR_CORRUPT_PGP_PACKET;
 	item->mpi_offset = p - pkt->body;
-	if (item->version == 4 || item->version == 6) {
-	    trailer = item->hash + item->hashlen - 6;
-	    trailer[0] = item->version;
-	    trailer[1] = 0xff;
-	    trailer[2] = (item->hashlen - 6) >> 24;
-	    trailer[3] = (item->hashlen - 6) >> 16;
-	    trailer[4] = (item->hashlen - 6) >> 8;
-	    trailer[5] = (item->hashlen - 6);
-	} else if (item->version == 5) {
-	    uint32_t len = item->hashlen - 10 - (item->sigtype == 0x00 || item->sigtype == 0x01 ? 6 : 0);
-	    trailer = item->hash + item->hashlen - 10;
-	    trailer[0] = 0x05;
-	    trailer[1] = 0xff;
-	    trailer[6] = len >> 24;
-	    trailer[7] = len >> 16;
-	    trailer[8] = len >> 8;
-	    trailer[9] = len;
-	}
 	rc = PGPR_OK;
     }	break;
     default:
