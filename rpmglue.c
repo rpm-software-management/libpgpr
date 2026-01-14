@@ -84,7 +84,7 @@ int pgpDigParamsSalt(pgpDigParams _digp, const uint8_t **datap, size_t *lenp)
         return -1;
     *datap = NULL;
     *lenp = 0;
-    header = pgprItemHashTrailer(sig, &headerlen);
+    header = pgprItemHashHeader(sig, &headerlen);
     if (header && headerlen) {
 	*datap = memcpy(rmalloc(headerlen), header, headerlen);
 	*lenp = headerlen;
