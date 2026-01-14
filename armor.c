@@ -9,7 +9,7 @@
 #define CRC24_INIT	0xb704ce
 #define CRC24_POLY	0x1864cfb
 
-static unsigned int pgprCRC(const uint8_t *octets, size_t len)
+static unsigned int r64crc(const uint8_t *octets, size_t len)
 {
     unsigned int crc = CRC24_INIT;
     size_t i;
@@ -32,8 +32,6 @@ static inline const char *r64dec1(const char *p, unsigned int *vp, int *eofp)
 
     for (i = 0; i < 4; ) {
 	x = *p++;
-	if (!x && i)
-	    return 0;	/* expected '=' padding */
 	if (x >= 'A' && x <= 'Z')
 	    x -= 'A';
 	else if (x >= 'a' && x <= 'z')
@@ -45,12 +43,14 @@ static inline const char *r64dec1(const char *p, unsigned int *vp, int *eofp)
 	else if (x == '/')
 	    x = 63;
 	else if (x == '=' || x == 0) {
-	    x = 0;
 	    if (i == 0) {
 		*eofp = 3;
 		*vp = 0;
 		return p - 1;
 	    }
+	    if (!x)
+		return 0;	/* expected '=' padding */
+	    x = 0;
 	    *eofp += 1;
 	} else if (x > 0 && x <= 32) {
 	    continue;	/* ignore control chars */
@@ -64,10 +64,10 @@ static inline const char *r64dec1(const char *p, unsigned int *vp, int *eofp)
     return p;
 }
 
-static const char *pgprBase64Decode(const char *in, uint8_t **out, size_t *outlen)
+static const char *r64dec(const char *in, uint8_t **out, size_t *outlen)
 {
     size_t inlen = strlen(in);
-    unsigned char *obuf = pgprMalloc(inlen * 3 / 4 + 4);
+    unsigned char *obuf = pgprMalloc(inlen * 3 / 4 + 4);	/* can overshoot 3 bytes */
     unsigned char *optr = obuf;
     int eof = 0;
     while (!eof) {
@@ -88,7 +88,7 @@ static const char *pgprBase64Decode(const char *in, uint8_t **out, size_t *outle
 
 static const char bintoasc[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-static char *pgprBase64Encode(const unsigned char *data, size_t len)
+static char *r64enc(const unsigned char *data, size_t len)
 {
     char *out, *optr;
     size_t olen;
@@ -116,20 +116,23 @@ static char *pgprBase64Encode(const unsigned char *data, size_t len)
     return out;
 }
 
-static pgprRC decodePkts(const char *armortype, const uint8_t *b, uint8_t **pkt, size_t *pktlen)
+pgprRC pgprArmorUnwrap(const char *armortype, const char *armor, uint8_t **pkts, size_t *pktslen)
 {
-    const char * enc = NULL;
-    const char * crcenc = NULL;
+    const char *enc = NULL;
+    const char *crcenc = NULL;
     uint8_t * dec;
     size_t declen;
     unsigned int crcpkt;
     uint32_t crc;
-    const char * t, * te;
+    const char *t, *te;
     int pstate = 0;
     int crceof = 0;
-    pgprRC ec = PGPR_ERROR_ARMOR_NO_BEGIN_PGP;	/* XXX assume failure */
+    pgprRC rc = PGPR_ERROR_ARMOR_NO_BEGIN_PGP;	/* XXX assume failure */
 
-    for (t = (char *)b; t && *t; t = te) {
+    if (!armortype || !armor || !*armor)
+	return rc;
+
+    for (t = armor; t && *t; t = te) {
 	if ((te = strchr(t, '\n')) == NULL)
 	    te = t + strlen(t);
 	else
@@ -178,68 +181,57 @@ static pgprRC decodePkts(const char *armortype, const uint8_t *b, uint8_t **pkt,
 	case 3:
 	    pstate = 0;
 	    if (strncmp(t, "-----END PGP ", 13) != 0) {
-		ec = PGPR_ERROR_ARMOR_NO_END_PGP;
+		rc = PGPR_ERROR_ARMOR_NO_END_PGP;
 		goto exit;
 	    }
 	    t += 13;
 	    if (strncmp(t, armortype, strlen(armortype)) != 0) {
-		ec = PGPR_ERROR_ARMOR_NO_END_PGP;
+		rc = PGPR_ERROR_ARMOR_NO_END_PGP;
 		goto exit;
 	    }
 	    t += strlen(armortype);
 	    if (strncmp(t, "-----", 5) != 0) {
-		ec = PGPR_ERROR_ARMOR_NO_END_PGP;
+		rc = PGPR_ERROR_ARMOR_NO_END_PGP;
 		goto exit;
 	    }
 	    t += 5;
 	    /* XXX permitting \r here is not RFC-2440 compliant <shrug> */
 	    if (*t != '\n' && *t != '\r' && *t == '\0') {
-		ec = PGPR_ERROR_ARMOR_NO_END_PGP;
+		rc = PGPR_ERROR_ARMOR_NO_END_PGP;
 		goto exit;
 	    }
 	    if (r64dec1(crcenc + 1, &crcpkt, &crceof) == 0 || crceof != 0 || (crcenc[5] != '\n' && crcenc[5] != '\r')) {
-		ec = PGPR_ERROR_ARMOR_CRC_DECODE;
+		rc = PGPR_ERROR_ARMOR_CRC_DECODE;
 		goto exit;
 	    }
 	    dec = NULL;
 	    declen = 0;
-	    enc = pgprBase64Decode(enc, &dec, &declen);
+	    enc = r64dec(enc, &dec, &declen);
 	    if (enc == 0 || enc > crcenc || (*enc == '=' && enc != crcenc)) {
-		ec = PGPR_ERROR_ARMOR_BODY_DECODE;
+		rc = PGPR_ERROR_ARMOR_BODY_DECODE;
 		goto exit;
 	    }
-	    crc = pgprCRC(dec, declen);
+	    crc = r64crc(dec, declen);
 	    if (crcpkt != crc) {
 #if 0
 		printf("=%c%c%c%c\n", bintoasc[(crc >> 18) & 63], bintoasc[(crc >> 12) & 63], bintoasc[(crc >> 6) & 63], bintoasc[crc & 63]);
 #endif
-		ec = PGPR_ERROR_ARMOR_CRC_CHECK;
+		rc = PGPR_ERROR_ARMOR_CRC_CHECK;
 		free(dec);
 		goto exit;
 	    }
-	    if (pkt)
-		*pkt = dec;
+	    if (pkts)
+		*pkts = dec;
 	    else
 		free(dec);
-	    if (pktlen)
-		*pktlen = declen;
-	    ec = PGPR_OK;
+	    if (pktslen)
+		*pktslen = declen;
+	    rc = PGPR_OK;
 	    goto exit;
 	}
     }
 
 exit:
-    return ec;
-}
-
-pgprRC pgprArmorUnwrap(const char *armortype, const char *armor, uint8_t **pkts, size_t *pktslen)
-{
-    pgprRC rc = PGPR_ERROR_ARMOR_NO_BEGIN_PGP;
-    if (armortype && armor && *armor) {
-	uint8_t *b = (uint8_t*) pgprStrdup(armor);
-	rc = decodePkts(armortype, b, pkts, pktslen);
-	free(b);
-    }
     return rc;
 }
 
@@ -251,8 +243,8 @@ char *pgprArmorWrap(const char *armortype, const char *keys, const unsigned char
 
     if (keys && *keys && keys[strlen(keys) - 1] != '\n')
 	keysnl = "\n";
-    enc = pgprBase64Encode(s, ns);
-    crc = pgprCRC(s, ns);
+    enc = r64enc(s, ns);
+    crc = r64crc(s, ns);
     if (enc != NULL)
 	pgprAsprintf(&buf, "%s%s=%c%c%c%c", enc, (*enc ? "\n" : ""), bintoasc[(crc >> 18) & 63], bintoasc[(crc >> 12) & 63], bintoasc[(crc >> 6) & 63], bintoasc[crc & 63]);
     free(enc);
