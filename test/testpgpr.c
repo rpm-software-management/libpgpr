@@ -6,6 +6,16 @@
 
 #include "../pgpr.h"
 
+static void
+die(const char *str, pgprRC rc)
+{
+    if (rc == PGPR_OK)
+	fprintf(stderr, "%s\n", str);
+    else
+	fprintf(stderr, "%s: %s\n", str, pgprErrorStr(rc));
+    exit(1);
+}
+
 static char *slurp(const char *fn, size_t *lenp)
 {
     size_t len = 0;
@@ -36,24 +46,41 @@ static char *slurp(const char *fn, size_t *lenp)
     return buf;
 }
 
+static unsigned char *dehex(char *buf, size_t *lenp)
+{
+    size_t i, len = strlen(buf);
+    char *obuf = malloc((len / 2) + 1);
+    if (!strcmp(buf, "<empty>"))	/* hack */
+	len = 0;
+    int x = 0;
+    for (i = 0; i < len; i++) {
+	if (buf[i] >= '0' && buf[i] <= '9')
+	    x = (x << 4) + buf[i] - '0';
+	else if (buf[i] >= 'a' && buf[i] <= 'f')
+	    x = (x << 4) + buf[i] - ('a' - 10);
+	else if (buf[i] >= 'A' && buf[i] <= 'F')
+	    x = (x << 4) + buf[i] - ('A' - 10);
+	else
+	    die("dehex: bad character '%c', buf[i]", PGPR_OK);
+	if ((i & 1) != 0)
+	    obuf[i / 2] = x;
+    }
+    if ((i & 1) != 0)
+	die("dehex: odd length", PGPR_OK);
+    if (lenp)
+	*lenp = len / 2;
+    return obuf;
+}
+
 static void
 printhex(const char *what, const uint8_t *d, size_t l)
 {
     size_t i;
-    printf("%s: ", what);
+    if (what)
+	printf("%s: ", what);
     for (i = 0; i < l; i++)
 	printf("%02x", d[i]);
     printf("\n");
-}
-
-static void
-die(const char *str, pgprRC rc)
-{
-    if (rc == PGPR_OK)
-	fprintf(stderr, "%s\n", str);
-    else
-	fprintf(stderr, "%s: %s\n", str, pgprErrorStr(rc));
-    exit(1);
 }
 
 
@@ -322,6 +349,56 @@ siginfo(int argc, char **argv)
     return 0;
 }
 
+static int
+enarmor(int argc, char **argv)
+{
+    int c;
+    char *keys = NULL;
+    unsigned char *data = NULL;
+    size_t datal;
+    char *armor = NULL;
+
+    while ((c = getopt(argc, argv, "k:")) >= 0) {
+	switch(c) {
+	case 'k':
+	    keys = optarg;
+	    break;
+	default:
+	    break;
+	}
+    }
+    if (argc - optind != 2) {
+	fprintf(stderr, "usage: testpgpr enarmor [-k keyline] <type> <file>\n");
+	exit(1);
+    }
+    data = slurp(argv[optind + 1], &datal);
+    armor = pgprArmorWrap(argv[optind], keys, data, datal);
+    printf("%s", armor);
+    free(armor);
+    free(data);
+    return 0;
+}
+
+static int
+dearmor(int argc, char **argv)
+{
+    char *armor = NULL;
+    unsigned char *data = NULL;
+    size_t datal;
+    if (argc != 3) {
+	fprintf(stderr, "usage: testpgpr dearmor <type> <file>\n");
+	exit(1);
+    }
+    armor = slurp(argv[2], NULL);
+    pgprRC rc;
+    if ((rc = pgprArmorUnwrap(argv[1], armor, &data, &datal)) != PGPR_OK)
+	die("unwrap error", rc);
+    printhex(NULL, data, datal);
+    free(data);
+    free(armor);
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     if (argc < 2) {
@@ -339,6 +416,12 @@ int main(int argc, char **argv)
     }
     if (!strcmp(argv[1], "certinfo")) {
         return certinfo(argc - 1, argv + 1);
+    }
+    if (!strcmp(argv[1], "enarmor")) {
+        return enarmor(argc - 1, argv + 1);
+    }
+    if (!strcmp(argv[1], "dearmor")) {
+        return dearmor(argc - 1, argv + 1);
     }
     fprintf(stderr, "unknown command '%s'\n", argv[1]);
     exit(1);

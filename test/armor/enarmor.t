@@ -1,0 +1,2881 @@
+TEST enarmor len 0
+RUN enarmor DATA len0
+---
+-----BEGIN PGP DATA-----
+
+=twTO
+-----END PGP DATA-----
+---
+TEST enarmor len 1
+RUN enarmor DATA len1
+---
+-----BEGIN PGP DATA-----
+
+AA==
+=YWnT
+-----END PGP DATA-----
+---
+TEST enarmor len 2
+RUN enarmor DATA len2
+---
+-----BEGIN PGP DATA-----
+
+AAE=
+=fKE7
+-----END PGP DATA-----
+---
+TEST enarmor len 3
+RUN enarmor DATA len3
+---
+-----BEGIN PGP DATA-----
+
+AAEC
+=ybVn
+-----END PGP DATA-----
+---
+TEST enarmor len 4
+RUN enarmor DATA len4
+---
+-----BEGIN PGP DATA-----
+
+AAECAw==
+=tNdC
+-----END PGP DATA-----
+---
+TEST enarmor len 5
+RUN enarmor DATA len5
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQ=
+=LZrE
+-----END PGP DATA-----
+---
+TEST enarmor len 6
+RUN enarmor DATA len6
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQF
+=N5TQ
+-----END PGP DATA-----
+---
+TEST enarmor len 7
+RUN enarmor DATA len7
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBg==
+=2wOb
+-----END PGP DATA-----
+---
+TEST enarmor len 8
+RUN enarmor DATA len8
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgc=
+=3lYn
+-----END PGP DATA-----
+---
+TEST enarmor len 9
+RUN enarmor DATA len9
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcI
+=oL4T
+-----END PGP DATA-----
+---
+TEST enarmor len 10
+RUN enarmor DATA len10
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQ==
+=pkiP
+-----END PGP DATA-----
+---
+TEST enarmor len 11
+RUN enarmor DATA len11
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQo=
+=RX6V
+-----END PGP DATA-----
+---
+TEST enarmor len 12
+RUN enarmor DATA len12
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoL
+=34QH
+-----END PGP DATA-----
+---
+TEST enarmor len 13
+RUN enarmor DATA len13
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA==
+=ZzQJ
+-----END PGP DATA-----
+---
+TEST enarmor len 14
+RUN enarmor DATA len14
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0=
+=Ci8P
+-----END PGP DATA-----
+---
+TEST enarmor len 15
+RUN enarmor DATA len15
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0O
+=vOnh
+-----END PGP DATA-----
+---
+TEST enarmor len 16
+RUN enarmor DATA len16
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODw==
+=H6Ay
+-----END PGP DATA-----
+---
+TEST enarmor len 17
+RUN enarmor DATA len17
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxA=
+=nswu
+-----END PGP DATA-----
+---
+TEST enarmor len 18
+RUN enarmor DATA len18
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAR
+=wZeK
+-----END PGP DATA-----
+---
+TEST enarmor len 19
+RUN enarmor DATA len19
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREg==
+=dLkJ
+-----END PGP DATA-----
+---
+TEST enarmor len 20
+RUN enarmor DATA len20
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhM=
+=MwQs
+-----END PGP DATA-----
+---
+TEST enarmor len 21
+RUN enarmor DATA len21
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMU
+=l4L+
+-----END PGP DATA-----
+---
+TEST enarmor len 22
+RUN enarmor DATA len22
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFQ==
+=O2yp
+-----END PGP DATA-----
+---
+TEST enarmor len 23
+RUN enarmor DATA len23
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRY=
+=1FPK
+-----END PGP DATA-----
+---
+TEST enarmor len 24
+RUN enarmor DATA len24
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYX
+=dbeA
+-----END PGP DATA-----
+---
+TEST enarmor len 25
+RUN enarmor DATA len25
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGA==
+=FtkY
+-----END PGP DATA-----
+---
+TEST enarmor len 26
+RUN enarmor DATA len26
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBk=
+=5+Yu
+-----END PGP DATA-----
+---
+TEST enarmor len 27
+RUN enarmor DATA len27
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBka
+=sX41
+-----END PGP DATA-----
+---
+TEST enarmor len 28
+RUN enarmor DATA len28
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGw==
+=avd5
+-----END PGP DATA-----
+---
+TEST enarmor len 29
+RUN enarmor DATA len29
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxw=
+=PnZe
+-----END PGP DATA-----
+---
+TEST enarmor len 30
+RUN enarmor DATA len30
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd
+=dhYf
+-----END PGP DATA-----
+---
+TEST enarmor len 31
+RUN enarmor DATA len31
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHg==
+=ouwC
+-----END PGP DATA-----
+---
+TEST enarmor len 32
+RUN enarmor DATA len32
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=
+=ovHn
+-----END PGP DATA-----
+---
+TEST enarmor len 33
+RUN enarmor DATA len33
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8g
+=SHWp
+-----END PGP DATA-----
+---
+TEST enarmor len 34
+RUN enarmor DATA len34
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gIQ==
+=Rxb5
+-----END PGP DATA-----
+---
+TEST enarmor len 35
+RUN enarmor DATA len35
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISI=
+=FiEh
+-----END PGP DATA-----
+---
+TEST enarmor len 36
+RUN enarmor DATA len36
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIj
+=/RR6
+-----END PGP DATA-----
+---
+TEST enarmor len 37
+RUN enarmor DATA len37
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJA==
+=3B09
+-----END PGP DATA-----
+---
+TEST enarmor len 38
+RUN enarmor DATA len38
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCU=
+=2YvU
+-----END PGP DATA-----
+---
+TEST enarmor len 39
+RUN enarmor DATA len39
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUm
+=VlE4
+-----END PGP DATA-----
+---
+TEST enarmor len 40
+RUN enarmor DATA len40
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJw==
+=B0hJ
+-----END PGP DATA-----
+---
+TEST enarmor len 41
+RUN enarmor DATA len41
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJyg=
+=embH
+-----END PGP DATA-----
+---
+TEST enarmor len 42
+RUN enarmor DATA len42
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygp
+=trOt
+-----END PGP DATA-----
+---
+TEST enarmor len 43
+RUN enarmor DATA len43
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKg==
+=d8P1
+-----END PGP DATA-----
+---
+TEST enarmor len 44
+RUN enarmor DATA len44
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKis=
+=LX+D
+-----END PGP DATA-----
+---
+TEST enarmor len 45
+RUN enarmor DATA len45
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKiss
+=+c/7
+-----END PGP DATA-----
+---
+TEST enarmor len 46
+RUN enarmor DATA len46
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLQ==
+=s7ce
+-----END PGP DATA-----
+---
+TEST enarmor len 47
+RUN enarmor DATA len47
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4=
+=9TwO
+-----END PGP DATA-----
+---
+TEST enarmor len 48
+RUN enarmor DATA len48
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+=+PDL
+-----END PGP DATA-----
+---
+TEST enarmor len 49
+RUN enarmor DATA len49
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MA==
+=e65P
+-----END PGP DATA-----
+---
+TEST enarmor len 50
+RUN enarmor DATA len50
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDE=
+=nLjm
+-----END PGP DATA-----
+---
+TEST enarmor len 51
+RUN enarmor DATA len51
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEy
+=P8KY
+-----END PGP DATA-----
+---
+TEST enarmor len 52
+RUN enarmor DATA len52
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMw==
+=8P/Y
+-----END PGP DATA-----
+---
+TEST enarmor len 53
+RUN enarmor DATA len53
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ=
+=RtqX
+-----END PGP DATA-----
+---
+TEST enarmor len 54
+RUN enarmor DATA len54
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1
+=BjJE
+-----END PGP DATA-----
+---
+TEST enarmor len 55
+RUN enarmor DATA len55
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Ng==
+=+9tg
+-----END PGP DATA-----
+---
+TEST enarmor len 56
+RUN enarmor DATA len56
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc=
+=w+Ou
+-----END PGP DATA-----
+---
+TEST enarmor len 57
+RUN enarmor DATA len57
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4
+=rc3Z
+-----END PGP DATA-----
+---
+TEST enarmor len 58
+RUN enarmor DATA len58
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OQ==
+=qDbM
+-----END PGP DATA-----
+---
+TEST enarmor len 59
+RUN enarmor DATA len59
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo=
+=ShAg
+-----END PGP DATA-----
+---
+TEST enarmor len 60
+RUN enarmor DATA len60
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7
+=RlBJ
+-----END PGP DATA-----
+---
+TEST enarmor len 61
+RUN enarmor DATA len61
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PA==
+=qyGG
+-----END PGP DATA-----
+---
+TEST enarmor len 62
+RUN enarmor DATA len62
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0=
+=zrzB
+-----END PGP DATA-----
+---
+TEST enarmor len 63
+RUN enarmor DATA len63
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+
+=X7oW
+-----END PGP DATA-----
+---
+TEST enarmor len 64
+RUN enarmor DATA len64
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+Pw==
+=r2Q7
+-----END PGP DATA-----
+---
+TEST enarmor len 65
+RUN enarmor DATA len65
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0A=
+=fPCx
+-----END PGP DATA-----
+---
+TEST enarmor len 66
+RUN enarmor DATA len66
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BB
+=jQVD
+-----END PGP DATA-----
+---
+TEST enarmor len 67
+RUN enarmor DATA len67
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQg==
+=EVlY
+-----END PGP DATA-----
+---
+TEST enarmor len 68
+RUN enarmor DATA len68
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkM=
+=D2BW
+-----END PGP DATA-----
+---
+TEST enarmor len 69
+RUN enarmor DATA len69
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNE
+=1O0d
+-----END PGP DATA-----
+---
+TEST enarmor len 70
+RUN enarmor DATA len70
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERQ==
+=nVjW
+-----END PGP DATA-----
+---
+TEST enarmor len 71
+RUN enarmor DATA len71
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUY=
+=GmQw
+-----END PGP DATA-----
+---
+TEST enarmor len 72
+RUN enarmor DATA len72
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZH
+=DPZ4
+-----END PGP DATA-----
+---
+TEST enarmor len 73
+RUN enarmor DATA len73
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSA==
+=fD0z
+-----END PGP DATA-----
+---
+TEST enarmor len 74
+RUN enarmor DATA len74
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSEk=
+=4QZ6
+-----END PGP DATA-----
+---
+TEST enarmor len 75
+RUN enarmor DATA len75
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElK
+=lPSC
+-----END PGP DATA-----
+---
+TEST enarmor len 76
+RUN enarmor DATA len76
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKSw==
+=JdbR
+-----END PGP DATA-----
+---
+TEST enarmor len 77
+RUN enarmor DATA len77
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0w=
+=5G75
+-----END PGP DATA-----
+---
+TEST enarmor len 78
+RUN enarmor DATA len78
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xN
+=dqKP
+-----END PGP DATA-----
+---
+TEST enarmor len 79
+RUN enarmor DATA len79
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTg==
+=ypFZ
+-----END PGP DATA-----
+---
+TEST enarmor len 80
+RUN enarmor DATA len80
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk8=
+=t7S+
+-----END PGP DATA-----
+---
+TEST enarmor len 81
+RUN enarmor DATA len81
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9Q
+=DfSI
+-----END PGP DATA-----
+---
+TEST enarmor len 82
+RUN enarmor DATA len82
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUQ==
+=GgKD
+-----END PGP DATA-----
+---
+TEST enarmor len 83
+RUN enarmor DATA len83
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVI=
+=uqHr
+-----END PGP DATA-----
+---
+TEST enarmor len 84
+RUN enarmor DATA len84
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJT
+=oBNd
+-----END PGP DATA-----
+---
+TEST enarmor len 85
+RUN enarmor DATA len85
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVA==
+=Y8D3
+-----END PGP DATA-----
+---
+TEST enarmor len 86
+RUN enarmor DATA len86
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFU=
+=EFuM
+-----END PGP DATA-----
+---
+TEST enarmor len 87
+RUN enarmor DATA len87
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVW
+=Wxw+
+-----END PGP DATA-----
+---
+TEST enarmor len 88
+RUN enarmor DATA len88
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWVw==
+=LlnY
+-----END PGP DATA-----
+---
+TEST enarmor len 89
+RUN enarmor DATA len89
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1g=
+=kNde
+-----END PGP DATA-----
+---
+TEST enarmor len 90
+RUN enarmor DATA len90
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZ
+=2ne0
+-----END PGP DATA-----
+---
+TEST enarmor len 91
+RUN enarmor DATA len91
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWg==
+=RPOk
+-----END PGP DATA-----
+---
+TEST enarmor len 92
+RUN enarmor DATA len92
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWls=
+=CBSn
+-----END PGP DATA-----
+---
+TEST enarmor len 93
+RUN enarmor DATA len93
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltc
+=W6y6
+-----END PGP DATA-----
+---
+TEST enarmor len 94
+RUN enarmor DATA len94
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXQ==
+=tYns
+-----END PGP DATA-----
+---
+TEST enarmor len 95
+RUN enarmor DATA len95
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV4=
+=AsFQ
+-----END PGP DATA-----
+---
+TEST enarmor len 96
+RUN enarmor DATA len96
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+=qZZ4
+-----END PGP DATA-----
+---
+TEST enarmor len 97
+RUN enarmor DATA len97
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YA==
+=m1G0
+-----END PGP DATA-----
+---
+TEST enarmor len 98
+RUN enarmor DATA len98
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGE=
+=mZsi
+-----END PGP DATA-----
+---
+TEST enarmor len 99
+RUN enarmor DATA len99
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFi
+=1UHZ
+-----END PGP DATA-----
+---
+TEST enarmor len 100
+RUN enarmor DATA len100
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiYw==
+=ojIo
+-----END PGP DATA-----
+---
+TEST enarmor len 101
+RUN enarmor DATA len101
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2Q=
+=Af+a
+-----END PGP DATA-----
+---
+TEST enarmor len 102
+RUN enarmor DATA len102
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2Rl
+=eQ7a
+-----END PGP DATA-----
+---
+TEST enarmor len 103
+RUN enarmor DATA len103
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZg==
+=9Wqn
+-----END PGP DATA-----
+---
+TEST enarmor len 104
+RUN enarmor DATA len104
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmc=
+=Fnsg
+-----END PGP DATA-----
+---
+TEST enarmor len 105
+RUN enarmor DATA len105
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdo
+=E65n
+-----END PGP DATA-----
+---
+TEST enarmor len 106
+RUN enarmor DATA len106
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaQ==
+=VQ+G
+-----END PGP DATA-----
+---
+TEST enarmor len 107
+RUN enarmor DATA len107
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWo=
+=+OdO
+-----END PGP DATA-----
+---
+TEST enarmor len 108
+RUN enarmor DATA len108
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWpr
+=Hd7b
+-----END PGP DATA-----
+---
+TEST enarmor len 109
+RUN enarmor DATA len109
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbA==
+=iKtJ
+-----END PGP DATA-----
+---
+TEST enarmor len 110
+RUN enarmor DATA len110
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG0=
+=mNaF
+-----END PGP DATA-----
+---
+TEST enarmor len 111
+RUN enarmor DATA len111
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1u
+=LM36
+-----END PGP DATA-----
+---
+TEST enarmor len 112
+RUN enarmor DATA len112
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ubw==
+=2MAk
+-----END PGP DATA-----
+---
+TEST enarmor len 113
+RUN enarmor DATA len113
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3A=
+=XjN0
+-----END PGP DATA-----
+---
+TEST enarmor len 114
+RUN enarmor DATA len114
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3Bx
+=AVvH
+-----END PGP DATA-----
+---
+TEST enarmor len 115
+RUN enarmor DATA len115
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3Bxcg==
+=h2JE
+-----END PGP DATA-----
+---
+TEST enarmor len 116
+RUN enarmor DATA len116
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnM=
+=Etn3
+-----END PGP DATA-----
+---
+TEST enarmor len 117
+RUN enarmor DATA len117
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0
+=1bbX
+-----END PGP DATA-----
+---
+TEST enarmor len 118
+RUN enarmor DATA len118
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dQ==
+=iUFN
+-----END PGP DATA-----
+---
+TEST enarmor len 119
+RUN enarmor DATA len119
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXY=
+=nMg4
+-----END PGP DATA-----
+---
+TEST enarmor len 120
+RUN enarmor DATA len120
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3
+=QxVQ
+-----END PGP DATA-----
+---
+TEST enarmor len 121
+RUN enarmor DATA len121
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eA==
+=cdev
+-----END PGP DATA-----
+---
+TEST enarmor len 122
+RUN enarmor DATA len122
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHk=
+=di45
+-----END PGP DATA-----
+---
+TEST enarmor len 123
+RUN enarmor DATA len123
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6
+=HF7Y
+-----END PGP DATA-----
+---
+TEST enarmor len 124
+RUN enarmor DATA len124
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6ew==
+=1NUs
+-----END PGP DATA-----
+---
+TEST enarmor len 125
+RUN enarmor DATA len125
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3w=
+=Szt0
+-----END PGP DATA-----
+---
+TEST enarmor len 126
+RUN enarmor DATA len126
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9
+=69iM
+-----END PGP DATA-----
+---
+TEST enarmor len 127
+RUN enarmor DATA len127
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fg==
+=Oy83
+-----END PGP DATA-----
+---
+TEST enarmor len 128
+RUN enarmor DATA len128
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn8=
+=pXIz
+-----END PGP DATA-----
+---
+TEST enarmor len 129
+RUN enarmor DATA len129
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+A
+=a0jz
+-----END PGP DATA-----
+---
+TEST enarmor len 130
+RUN enarmor DATA len130
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgQ==
+=RZKr
+-----END PGP DATA-----
+---
+TEST enarmor len 131
+RUN enarmor DATA len131
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYI=
+=JzBh
+-----END PGP DATA-----
+---
+TEST enarmor len 132
+RUN enarmor DATA len132
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKD
+=nBGs
+-----END PGP DATA-----
+---
+TEST enarmor len 133
+RUN enarmor DATA len133
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhA==
+=dWOw
+-----END PGP DATA-----
+---
+TEST enarmor len 134
+RUN enarmor DATA len134
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIU=
+=gMsW
+-----END PGP DATA-----
+---
+TEST enarmor len 135
+RUN enarmor DATA len135
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWG
+=0iXs
+-----END PGP DATA-----
+---
+TEST enarmor len 136
+RUN enarmor DATA len136
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGhw==
+=7KtB
+-----END PGP DATA-----
+---
+TEST enarmor len 137
+RUN enarmor DATA len137
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4g=
+=LdXa
+-----END PGP DATA-----
+---
+TEST enarmor len 138
+RUN enarmor DATA len138
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJ
+=eaqs
+-----END PGP DATA-----
+---
+TEST enarmor len 139
+RUN enarmor DATA len139
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJig==
+=RU7g
+-----END PGP DATA-----
+---
+TEST enarmor len 140
+RUN enarmor DATA len140
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJios=
+=3Laj
+-----END PGP DATA-----
+---
+TEST enarmor len 141
+RUN enarmor DATA len141
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouM
+=ak5b
+-----END PGP DATA-----
+---
+TEST enarmor len 142
+RUN enarmor DATA len142
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjQ==
+=9xGI
+-----END PGP DATA-----
+---
+TEST enarmor len 143
+RUN enarmor DATA len143
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY4=
+=5nlw
+-----END PGP DATA-----
+---
+TEST enarmor len 144
+RUN enarmor DATA len144
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+=S8/5
+-----END PGP DATA-----
+---
+TEST enarmor len 145
+RUN enarmor DATA len145
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kA==
+=jUsw
+-----END PGP DATA-----
+---
+TEST enarmor len 146
+RUN enarmor DATA len146
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJE=
+=vBlR
+-----END PGP DATA-----
+---
+TEST enarmor len 147
+RUN enarmor DATA len147
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGS
+=rTI8
+-----END PGP DATA-----
+---
+TEST enarmor len 148
+RUN enarmor DATA len148
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSkw==
+=QxG1
+-----END PGP DATA-----
+---
+TEST enarmor len 149
+RUN enarmor DATA len149
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5Q=
+=YWDo
+-----END PGP DATA-----
+---
+TEST enarmor len 150
+RUN enarmor DATA len150
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SV
+=EHX3
+-----END PGP DATA-----
+---
+TEST enarmor len 151
+RUN enarmor DATA len151
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlg==
+=X4NI
+-----END PGP DATA-----
+---
+TEST enarmor len 152
+RUN enarmor DATA len152
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpc=
+=CC1P
+-----END PGP DATA-----
+---
+TEST enarmor len 153
+RUN enarmor DATA len153
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeY
+=20Yt
+-----END PGP DATA-----
+---
+TEST enarmor len 154
+RUN enarmor DATA len154
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmQ==
+=1Vvf
+-----END PGP DATA-----
+---
+TEST enarmor len 155
+RUN enarmor DATA len155
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZo=
+=fIL8
+-----END PGP DATA-----
+---
+TEST enarmor len 156
+RUN enarmor DATA len156
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqb
+=O7aI
+-----END PGP DATA-----
+---
+TEST enarmor len 157
+RUN enarmor DATA len157
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnA==
+=FmFa
+-----END PGP DATA-----
+---
+TEST enarmor len 158
+RUN enarmor DATA len158
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ0=
+=/wVr
+-----END PGP DATA-----
+---
+TEST enarmor len 159
+RUN enarmor DATA len159
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2e
+=llXA
+-----END PGP DATA-----
+---
+TEST enarmor len 160
+RUN enarmor DATA len160
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2enw==
+=cg3C
+-----END PGP DATA-----
+---
+TEST enarmor len 161
+RUN enarmor DATA len161
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6A=
+=aL3y
+-----END PGP DATA-----
+---
+TEST enarmor len 162
+RUN enarmor DATA len162
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6Ch
+=sNu0
+-----END PGP DATA-----
+---
+TEST enarmor len 163
+RUN enarmor DATA len163
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6Chog==
+=lC+E
+-----END PGP DATA-----
+---
+TEST enarmor len 164
+RUN enarmor DATA len164
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqM=
+=eWR3
+-----END PGP DATA-----
+---
+TEST enarmor len 165
+RUN enarmor DATA len165
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOk
+=P/bc
+-----END PGP DATA-----
+---
+TEST enarmor len 166
+RUN enarmor DATA len166
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpQ==
+=K4EZ
+-----END PGP DATA-----
+---
+TEST enarmor len 167
+RUN enarmor DATA len167
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaY=
+=BnWH
+-----END PGP DATA-----
+---
+TEST enarmor len 168
+RUN enarmor DATA len168
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaan
+=zF22
+-----END PGP DATA-----
+---
+TEST enarmor len 169
+RUN enarmor DATA len169
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqA==
+=2yLa
+-----END PGP DATA-----
+---
+TEST enarmor len 170
+RUN enarmor DATA len170
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKk=
+=eDO/
+-----END PGP DATA-----
+---
+TEST enarmor len 171
+RUN enarmor DATA len171
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmq
+=VsDy
+-----END PGP DATA-----
+---
+TEST enarmor len 172
+RUN enarmor DATA len172
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqqw==
+=l6I1
+-----END PGP DATA-----
+---
+TEST enarmor len 173
+RUN enarmor DATA len173
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6w=
+=xrKv
+-----END PGP DATA-----
+---
+TEST enarmor len 174
+RUN enarmor DATA len174
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6yt
+=CsX0
+-----END PGP DATA-----
+---
+TEST enarmor len 175
+RUN enarmor DATA len175
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrg==
+=aYSs
+-----END PGP DATA-----
+---
+TEST enarmor len 176
+RUN enarmor DATA len176
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq8=
+=t3ua
+-----END PGP DATA-----
+---
+TEST enarmor len 177
+RUN enarmor DATA len177
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+w
+=5OUX
+-----END PGP DATA-----
+---
+TEST enarmor len 178
+RUN enarmor DATA len178
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsQ==
+=LFBB
+-----END PGP DATA-----
+---
+TEST enarmor len 179
+RUN enarmor DATA len179
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbI=
+=Hvr4
+-----END PGP DATA-----
+---
+TEST enarmor len 180
+RUN enarmor DATA len180
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKz
+=cUVu
+-----END PGP DATA-----
+---
+TEST enarmor len 181
+RUN enarmor DATA len181
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztA==
+=eiBs
+-----END PGP DATA-----
+---
+TEST enarmor len 182
+RUN enarmor DATA len182
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLU=
+=NHZY
+-----END PGP DATA-----
+---
+TEST enarmor len 183
+RUN enarmor DATA len183
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2
+=z8qp
+-----END PGP DATA-----
+---
+TEST enarmor len 184
+RUN enarmor DATA len184
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2tw==
+=uxSL
+-----END PGP DATA-----
+---
+TEST enarmor len 185
+RUN enarmor DATA len185
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7g=
+=GBL2
+-----END PGP DATA-----
+---
+TEST enarmor len 186
+RUN enarmor DATA len186
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5
+=qyy2
+-----END PGP DATA-----
+---
+TEST enarmor len 187
+RUN enarmor DATA len187
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5ug==
+=b7Ry
+-----END PGP DATA-----
+---
+TEST enarmor len 188
+RUN enarmor DATA len188
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5urs=
+=yD4e
+-----END PGP DATA-----
+---
+TEST enarmor len 189
+RUN enarmor DATA len189
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8
+=fcRT
+-----END PGP DATA-----
+---
+TEST enarmor len 190
+RUN enarmor DATA len190
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vQ==
+=7rd2
+-----END PGP DATA-----
+---
+TEST enarmor len 191
+RUN enarmor DATA len191
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb4=
+=a5tb
+-----END PGP DATA-----
+---
+TEST enarmor len 192
+RUN enarmor DATA len192
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+=5xce
+-----END PGP DATA-----
+---
+TEST enarmor len 193
+RUN enarmor DATA len193
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wA==
+=hLD+
+-----END PGP DATA-----
+---
+TEST enarmor len 194
+RUN enarmor DATA len194
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wME=
+=vPfI
+-----END PGP DATA-----
+---
+TEST enarmor len 195
+RUN enarmor DATA len195
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHC
+=n0Zn
+-----END PGP DATA-----
+---
+TEST enarmor len 196
+RUN enarmor DATA len196
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCww==
+=qO2D
+-----END PGP DATA-----
+---
+TEST enarmor len 197
+RUN enarmor DATA len197
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8Q=
+=ypbj
+-----END PGP DATA-----
+---
+TEST enarmor len 198
+RUN enarmor DATA len198
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TF
+=qB0u
+-----END PGP DATA-----
+---
+TEST enarmor len 199
+RUN enarmor DATA len199
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxg==
+=sO7u
+-----END PGP DATA-----
+---
+TEST enarmor len 200
+RUN enarmor DATA len200
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsc=
+=oa2l
+-----END PGP DATA-----
+---
+TEST enarmor len 201
+RUN enarmor DATA len201
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfI
+=nxr5
+-----END PGP DATA-----
+---
+TEST enarmor len 202
+RUN enarmor DATA len202
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIyQ==
+=3ye3
+-----END PGP DATA-----
+---
+TEST enarmor len 203
+RUN enarmor DATA len203
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIyco=
+=91OT
+-----END PGP DATA-----
+---
+TEST enarmor len 204
+RUN enarmor DATA len204
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrL
+=qGu4
+-----END PGP DATA-----
+---
+TEST enarmor len 205
+RUN enarmor DATA len205
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzA==
+=7Sza
+-----END PGP DATA-----
+---
+TEST enarmor len 206
+RUN enarmor DATA len206
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM0=
+=IAvp
+-----END PGP DATA-----
+---
+TEST enarmor len 207
+RUN enarmor DATA len207
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3O
+=lW5K
+-----END PGP DATA-----
+---
+TEST enarmor len 208
+RUN enarmor DATA len208
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Ozw==
+=mfNv
+-----END PGP DATA-----
+---
+TEST enarmor len 209
+RUN enarmor DATA len209
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9A=
+=zQEQ
+-----END PGP DATA-----
+---
+TEST enarmor len 210
+RUN enarmor DATA len210
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR
+=9jlR
+-----END PGP DATA-----
+---
+TEST enarmor len 211
+RUN enarmor DATA len211
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0g==
+=pmYI
+-----END PGP DATA-----
+---
+TEST enarmor len 212
+RUN enarmor DATA len212
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tM=
+=o56o
+-----END PGP DATA-----
+---
+TEST enarmor len 213
+RUN enarmor DATA len213
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU
+=0eul
+-----END PGP DATA-----
+---
+TEST enarmor len 214
+RUN enarmor DATA len214
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1Q==
+=eEPh
+-----END PGP DATA-----
+---
+TEST enarmor len 215
+RUN enarmor DATA len215
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dY=
+=xMWY
+-----END PGP DATA-----
+---
+TEST enarmor len 216
+RUN enarmor DATA len216
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX
+=DE9/
+-----END PGP DATA-----
+---
+TEST enarmor len 217
+RUN enarmor DATA len217
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2A==
+=MzMe
+-----END PGP DATA-----
+---
+TEST enarmor len 218
+RUN enarmor DATA len218
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nk=
+=Pn+r
+-----END PGP DATA-----
+---
+TEST enarmor len 219
+RUN enarmor DATA len219
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna
+=ynh+
+-----END PGP DATA-----
+---
+TEST enarmor len 220
+RUN enarmor DATA len220
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna2w==
+=O3xy
+-----END PGP DATA-----
+---
+TEST enarmor len 221
+RUN enarmor DATA len221
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29w=
+=xTiI
+-----END PGP DATA-----
+---
+TEST enarmor len 222
+RUN enarmor DATA len222
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd
+=XEew
+-----END PGP DATA-----
+---
+TEST enarmor len 223
+RUN enarmor DATA len223
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3g==
+=/iKp
+-----END PGP DATA-----
+---
+TEST enarmor len 224
+RUN enarmor DATA len224
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t8=
+=qDQS
+-----END PGP DATA-----
+---
+TEST enarmor len 225
+RUN enarmor DATA len225
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g
+=jDDr
+-----END PGP DATA-----
+---
+TEST enarmor len 226
+RUN enarmor DATA len226
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4Q==
+=kbIY
+-----END PGP DATA-----
+---
+TEST enarmor len 227
+RUN enarmor DATA len227
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eI=
+=br1E
+-----END PGP DATA-----
+---
+TEST enarmor len 228
+RUN enarmor DATA len228
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj
+=OiiH
+-----END PGP DATA-----
+---
+TEST enarmor len 229
+RUN enarmor DATA len229
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5A==
+=f58q
+-----END PGP DATA-----
+---
+TEST enarmor len 230
+RUN enarmor DATA len230
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OU=
+=QncZ
+-----END PGP DATA-----
+---
+TEST enarmor len 231
+RUN enarmor DATA len231
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm
+=22ms
+-----END PGP DATA-----
+---
+TEST enarmor len 232
+RUN enarmor DATA len232
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5w==
+=klS4
+-----END PGP DATA-----
+---
+TEST enarmor len 233
+RUN enarmor DATA len233
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+g=
+=r9CG
+-----END PGP DATA-----
+---
+TEST enarmor len 234
+RUN enarmor DATA len234
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp
+=0BY+
+-----END PGP DATA-----
+---
+TEST enarmor len 235
+RUN enarmor DATA len235
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6g==
+=9PVU
+-----END PGP DATA-----
+---
+TEST enarmor len 236
+RUN enarmor DATA len236
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6us=
+=DuSn
+-----END PGP DATA-----
+---
+TEST enarmor len 237
+RUN enarmor DATA len237
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs
+=SEeS
+-----END PGP DATA-----
+---
+TEST enarmor len 238
+RUN enarmor DATA len238
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7Q==
+=ba5X
+-----END PGP DATA-----
+---
+TEST enarmor len 239
+RUN enarmor DATA len239
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e4=
+=kYlS
+-----END PGP DATA-----
+---
+TEST enarmor len 240
+RUN enarmor DATA len240
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v
+=4dxn
+-----END PGP DATA-----
+---
+TEST enarmor len 241
+RUN enarmor DATA len241
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v
+8A==
+=n2Vy
+-----END PGP DATA-----
+---
+TEST enarmor len 242
+RUN enarmor DATA len242
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v
+8PE=
+=yLLu
+-----END PGP DATA-----
+---
+TEST enarmor len 243
+RUN enarmor DATA len243
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v
+8PHy
+=UCVU
+-----END PGP DATA-----
+---
+TEST enarmor len 244
+RUN enarmor DATA len244
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v
+8PHy8w==
+=Flu7
+-----END PGP DATA-----
+---
+TEST enarmor len 245
+RUN enarmor DATA len245
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v
+8PHy8/Q=
+=91uS
+-----END PGP DATA-----
+---
+TEST enarmor len 246
+RUN enarmor DATA len246
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v
+8PHy8/T1
+=0UcN
+-----END PGP DATA-----
+---
+TEST enarmor len 247
+RUN enarmor DATA len247
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v
+8PHy8/T19g==
+=1KP+
+-----END PGP DATA-----
+---
+TEST enarmor len 248
+RUN enarmor DATA len248
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v
+8PHy8/T19vc=
+=o7Yf
+-----END PGP DATA-----
+---
+TEST enarmor len 249
+RUN enarmor DATA len249
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v
+8PHy8/T19vf4
+=x+qU
+-----END PGP DATA-----
+---
+TEST enarmor len 250
+RUN enarmor DATA len250
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v
+8PHy8/T19vf4+Q==
+=m7m1
+-----END PGP DATA-----
+---
+TEST enarmor len 251
+RUN enarmor DATA len251
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v
+8PHy8/T19vf4+fo=
+=KovA
+-----END PGP DATA-----
+---
+TEST enarmor len 252
+RUN enarmor DATA len252
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v
+8PHy8/T19vf4+fr7
+=4iYE
+-----END PGP DATA-----
+---
+TEST enarmor len 253
+RUN enarmor DATA len253
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v
+8PHy8/T19vf4+fr7/A==
+=W/hc
+-----END PGP DATA-----
+---
+TEST enarmor len 254
+RUN enarmor DATA len254
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v
+8PHy8/T19vf4+fr7/P0=
+=3vmh
+-----END PGP DATA-----
+---
+TEST enarmor len 255
+RUN enarmor DATA len255
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v
+8PHy8/T19vf4+fr7/P3+
+=9XDp
+-----END PGP DATA-----
+---
+TEST enarmor len 256
+RUN enarmor DATA len256
+---
+-----BEGIN PGP DATA-----
+
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P
+kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/
+wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v
+8PHy8/T19vf4+fr7/P3+/w==
+=W700
+-----END PGP DATA-----
+---
+TEST enarmor with keystr len 0
+RUN enarmor -k Verstion:1.0 DATA len0
+---
+-----BEGIN PGP DATA-----
+Verstion:1.0
+
+=twTO
+-----END PGP DATA-----
+---

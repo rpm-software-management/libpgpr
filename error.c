@@ -16,22 +16,14 @@ const char *pgprErrorStr(pgprRC rc)
 	return "No error";
     case PGPR_ERROR_INTERNAL:
 	return "Internal PGP parser error";
+    case PGPR_ERROR_BAD_ARGUMENT:
+	return "Bad argument";
+    case PGPR_ERROR_NO_MEMORY:
+	return "Out of memory";
     case PGPR_ERROR_CORRUPT_PGP_PACKET:
 	return "Corrupt PGP packet";
     case PGPR_ERROR_UNEXPECTED_PGP_PACKET:
 	return "Unexpected PGP packet";
-    case PGPR_ERROR_NO_CREATION_TIME:
-	return "Signature without creation time";
-    case PGPR_ERROR_DUPLICATE_DATA:
-	return "Duplicate data in signature";
-    case PGPR_ERROR_UNKNOWN_CRITICAL_PKT:
-	return "Unknown critical packet in signature";
-    case PGPR_ERROR_BAD_PUBKEY_STRUCTURE:
-	return "Bad pubkey structure";
-    case PGPR_ERROR_SELFSIG_VERIFICATION:
-	return "Pubkey self-signature verification failure";
-    case PGPR_ERROR_MISSING_SELFSIG:
-	return "Pubkey misses a self-signature";
     case PGPR_ERROR_UNSUPPORTED_VERSION:
 	return "Unsupported packet version";
     case PGPR_ERROR_UNSUPPORTED_ALGORITHM:
@@ -40,12 +32,24 @@ const char *pgprErrorStr(pgprRC rc)
 	return "Unsupported pubkey curve";
     case PGPR_ERROR_UNSUPPORTED_DIGEST:
 	return "Unsupported digest algorithm";
+    case PGPR_ERROR_NO_CREATION_TIME:
+	return "Signature without creation time";
+    case PGPR_ERROR_DUPLICATE_DATA:
+	return "Duplicate data in signature";
+    case PGPR_ERROR_UNKNOWN_CRITICAL_PKT:
+	return "Unknown critical packet in signature";
+    case PGPR_ERROR_BAD_PUBKEY_STRUCTURE:
+	return "Bad pubkey structure";
+    case PGPR_ERROR_MISSING_SELFSIG:
+	return "Pubkey misses a self-signature";
+    case PGPR_ERROR_SELFSIG_VERIFICATION:
+	return "Pubkey self-signature verification failure";
+    case PGPR_ERROR_BAD_SIGNATURE:
+	return "Bad signature";
     case PGPR_ERROR_REJECTED_PUBKEY:
 	return "Pubkey not accepted by crypto backend";
     case PGPR_ERROR_REJECTED_SIGNATURE:
 	return "Signature not accepted by crypto backend";
-    case PGPR_ERROR_BAD_SIGNATURE:
-	return "Bad signature";
     case PGPR_ERROR_SIGNATURE_FROM_FUTURE:
 	return "Signature was created in the future";
     case PGPR_ERROR_SIGNATURE_EXPIRED:
@@ -62,6 +66,16 @@ const char *pgprErrorStr(pgprRC rc)
 	return "Key is not suitable for signing";
     case PGPR_ERROR_KEY_CREATED_AFTER_SIG:
 	return "Key has been created after the signature";
+    case PGPR_ERROR_ARMOR_NO_BEGIN_PGP:
+	return "Armored data begin mismatch";
+    case PGPR_ERROR_ARMOR_NO_END_PGP:
+	return "Armored data end mismatch";
+    case PGPR_ERROR_ARMOR_CRC_CHECK:
+	return "Armored data CRC mismatch";
+    case PGPR_ERROR_ARMOR_BODY_DECODE:
+	return "Armored data decoding failed";
+    case PGPR_ERROR_ARMOR_CRC_DECODE:
+	return "Armored data CRC decoding failed";
     default:
 	break;
     }
