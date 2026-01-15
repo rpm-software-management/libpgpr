@@ -10,7 +10,7 @@ static pgprRC hashKey(pgprDigCtx ctx, const pgprPkt *pkt, int exptag, int versio
 {
     pgprRC rc = PGPR_ERROR_INTERNAL;
     if (pkt && pkt->tag == exptag) {
-	if (version == 4) {
+	if (version == 3 || version == 4) {
 	    uint8_t head[] = {
 		0x99,
 		(pkt->blen >> 8),
@@ -26,8 +26,7 @@ static pgprRC hashKey(pgprDigCtx ctx, const pgprPkt *pkt, int exptag, int versio
 		(pkt->blen     ),
 	    };
 	    pgprDigestUpdate(ctx, head, 5);
-	} else if (version != 3)
-	    return rc;
+	}
 	pgprDigestUpdate(ctx, pkt->body, pkt->blen);
 	rc = PGPR_OK;
     }
