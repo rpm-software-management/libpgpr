@@ -6,6 +6,13 @@
 
 #include "pgpr_internal.h"
 
+typedef struct pgprPktKeyV3_s {
+    uint8_t version;	/*!< version number (3). */
+    uint8_t time[4];	/*!< time that the key was created. */
+    uint8_t expdays[2]; /*!< time in days when the key expires */
+    uint8_t pubkey_algo;	/*!< public key algorithm. */
+} * pgprPktKeyV3;
+
 typedef struct pgprPktKeyV4_s {
     uint8_t version;	/*!< version number (4). */
     uint8_t time[4];	/*!< time that the key was created. */
@@ -13,7 +20,7 @@ typedef struct pgprPktKeyV4_s {
 } * pgprPktKeyV4;
 
 typedef struct pgprPktKeyV56_s {
-    uint8_t version;	/*!< version number (4). */
+    uint8_t version;	/*!< version number (5, 6). */
     uint8_t time[4];	/*!< time that the key was created. */
     uint8_t pubkey_algo;	/*!< public key algorithm. */
     uint8_t pubkey_len[4];	/*!< public key material length. */
@@ -31,7 +38,7 @@ typedef struct pgprPktSigV3_s {
 } * pgprPktSigV3;
 
 typedef struct pgprPktSigV456_s {
-    uint8_t version;	/*!< version number (4). */
+    uint8_t version;	/*!< version number (4, 5, 6). */
     uint8_t sigtype;	/*!< signature type. */
     uint8_t pubkey_algo;	/*!< public key algorithm. */
     uint8_t hash_algo;	/*!< hash algorithm. */
@@ -458,6 +465,45 @@ pgprRC pgprParseSig(pgprPkt *pkt, pgprItem item)
     return rc;
 }
 
+static pgprRC pgprParseKeyFp_V3(pgprPkt *pkt, pgprItem item)
+{
+    pgprRC rc;
+    pgprDigCtx ctx = NULL;
+    uint8_t *out = NULL;
+    size_t outlen = 0;
+    const uint8_t *p = pkt->body;
+    size_t blen = pkt->blen;
+    int mpil1, mpil2;
+
+    if (blen < sizeof(struct pgprPktKeyV3_s) + 4 + 8)
+	return PGPR_ERROR_CORRUPT_PGP_PACKET;
+    p += sizeof(struct pgprPktKeyV3_s);
+    blen -= sizeof(struct pgprPktKeyV3_s);
+    mpil1 = pgprMpiLen(p);
+    if (mpil1 < 2 + 8 || blen < mpil1 + 2)
+	return PGPR_ERROR_CORRUPT_PGP_PACKET;
+    mpil2 = pgprMpiLen(p + mpil1);
+    if (mpil2 < 2 + 1 || blen !=  mpil1 + mpil2)
+	return PGPR_ERROR_CORRUPT_PGP_PACKET;
+    rc = pgprDigestInit(PGPRHASHALGO_MD5, &ctx);
+    if (rc != PGPR_OK)
+	return rc;
+    pgprDigestUpdate(ctx, p + 2, mpil1 - 2);
+    pgprDigestUpdate(ctx, p + mpil1 + 2, mpil2 - 2);
+    pgprDigestFinal(ctx, (void **)&out, &outlen);
+    if (outlen != 16) {
+	free(out);
+	return PGPR_ERROR_INTERNAL;
+    }
+    memcpy(item->fp, out, outlen);
+    item->fp_len = outlen;
+    item->fp_version = 3;
+    free(out);
+    memcpy(item->keyid, p + mpil1 - 8, 8);
+    item->saved |= PGPRITEM_SAVED_FP | PGPRITEM_SAVED_ID;
+    return PGPR_OK;
+}
+
 pgprRC pgprParseKeyFp(pgprPkt *pkt, pgprItem item)
 {
     pgprRC rc;
@@ -473,6 +519,9 @@ pgprRC pgprParseKeyFp(pgprPkt *pkt, pgprItem item)
     if (blen == 0)
 	return PGPR_ERROR_CORRUPT_PGP_PACKET;
     version = pkt->body[0];
+
+    if (version == 3)
+	return pgprParseKeyFp_V3(pkt, item);
 
     /* We only permit V4/5/6 keys, V3 keys are long long since deprecated */
     if (version != 4 && version != 5 && version != 6)
@@ -523,6 +572,23 @@ pgprRC pgprParseKey(pgprPkt *pkt, pgprItem item)
 
     /* We only permit V4 keys, V3 keys are long long since deprecated */
     switch (item->version) {
+    case 3:
+    {   pgprPktKeyV3 v = (pgprPktKeyV3)pkt->body;
+	uint32_t expdays;
+
+	if (pkt->blen <= sizeof(*v) || v->pubkey_algo != PGPRPUBKEYALGO_RSA)
+	    return PGPR_ERROR_CORRUPT_PGP_PACKET;
+	item->time = pgprGrab4(v->time);
+	item->saved |= PGPRITEM_SAVED_TIME;
+	item->pubkey_algo = v->pubkey_algo;
+	item->mpi_offset = sizeof(*v);
+	expdays = pgprGrab2(v->expdays);
+	if (expdays > 49710)
+	    expdays = 49710;	/* 130 years */
+	item->key_expire = expdays * 86400;
+	item->saved |= PGPRITEM_SAVED_KEY_EXPIRE;
+	rc = PGPR_OK;
+    }	break;
     case 4:
     {   pgprPktKeyV4 v = (pgprPktKeyV4)pkt->body;
 
