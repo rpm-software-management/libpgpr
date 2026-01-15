@@ -429,31 +429,33 @@ digest(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+    pgprRC rc;
+    int st = 1;
     if (argc < 2) {
 	fprintf(stderr, "usage: testpgpr <cmd>...\n");
 	exit(1);
     }
+    if ((rc = pgprInitCrypto()) != PGPR_OK)
+	die("crypto backend init failed", rc);
     if (!strcmp(argv[1], "verifysignature")) {
-        return verifysignature(argc - 1, argv + 1);
+        st = verifysignature(argc - 1, argv + 1);
+    } else if (!strcmp(argv[1], "keyinfo")) {
+        st = keyinfo(argc - 1, argv + 1);
+    } else if (!strcmp(argv[1], "siginfo")) {
+        st = siginfo(argc - 1, argv + 1);
+    } else if (!strcmp(argv[1], "certinfo")) {
+        st = certinfo(argc - 1, argv + 1);
+    } else if (!strcmp(argv[1], "enarmor")) {
+        st = enarmor(argc - 1, argv + 1);
+    } else if (!strcmp(argv[1], "dearmor")) {
+        st = dearmor(argc - 1, argv + 1);
+    } else if (!strcmp(argv[1], "digest")) {
+        st = digest(argc - 1, argv + 1);
+    } else {
+	fprintf(stderr, "unknown command '%s'\n", argv[1]);
+	exit(1);
     }
-    if (!strcmp(argv[1], "keyinfo")) {
-        return keyinfo(argc - 1, argv + 1);
-    }
-    if (!strcmp(argv[1], "siginfo")) {
-        return siginfo(argc - 1, argv + 1);
-    }
-    if (!strcmp(argv[1], "certinfo")) {
-        return certinfo(argc - 1, argv + 1);
-    }
-    if (!strcmp(argv[1], "enarmor")) {
-        return enarmor(argc - 1, argv + 1);
-    }
-    if (!strcmp(argv[1], "dearmor")) {
-        return dearmor(argc - 1, argv + 1);
-    }
-    if (!strcmp(argv[1], "digest")) {
-        return digest(argc - 1, argv + 1);
-    }
-    fprintf(stderr, "unknown command '%s'\n", argv[1]);
-    exit(1);
+    if ((rc = pgprFreeCrypto()) != PGPR_OK)
+	die("crypto backend free failed", rc);
+    return st;
 }
