@@ -179,13 +179,22 @@ int main(int argc, char **argv)
 {
     char *testcase = NULL;
     char *line, *nextline, *p, *cmd;
+    char *testpgpr;
     size_t cmdlen;
-    int failed;
+    int failed = 0;
 
     if (argc != 2) {
 	fprintf(stderr, "Usage: runtest <test.t>\n");
 	exit(1);
     }
+    p = strrchr(argv[0], '/');
+    if (p) {
+	testpgpr = malloc(p - argv[0] + 8 + 2);
+	memcpy(testpgpr, argv[0], p - argv[0] + 1);
+	memcpy(testpgpr + (p - argv[0] + 1), "testpgpr", 8 + 1);
+    } else
+	testpgpr = strdup("testpgpr");
+
     testcase = slurp(argv[1], NULL);
     for (line = testcase; *line; line = nextline) {
 	if ((p = strchr(line, '\n')) != 0) {
@@ -217,8 +226,7 @@ int main(int argc, char **argv)
 	    char *exp = 0;
 	    size_t expl = 0;
 
-	    //args[nargs++] = strdup("testpgpr");
-	    args[nargs++] = strdup("/home/rpmpgp_legacy/_build/test/testpgpr");
+	    args[nargs++] = strdup(testpgpr);
 	    cmd += cmdlen;
 	    while (*cmd == ' ' || *cmd == '\t')
 		cmd++;
@@ -250,7 +258,12 @@ int main(int argc, char **argv)
 	    }
 	    if (do_diff(out, outl, exp, expl))
 		failed++;
+	    free(out);
+	    while (nargs > 0)
+		free(args[--nargs]);
 	}
     }
+    free(testcase);
+    free(testpgpr);
     return failed ? 1 : 0;
 }

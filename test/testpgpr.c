@@ -125,7 +125,7 @@ verifysignature(int argc, char **argv)
     size_t trailerlen;
     const uint8_t *header;
     size_t headerlen;
-    void *hash;
+    void *hash = NULL;
     size_t hashlen;
     int c;
     int subkey = 0;
@@ -382,6 +382,7 @@ enarmor(int argc, char **argv)
 static int
 dearmor(int argc, char **argv)
 {
+    pgprRC rc;
     char *armor = NULL;
     unsigned char *data = NULL;
     size_t datal;
@@ -390,12 +391,39 @@ dearmor(int argc, char **argv)
 	exit(1);
     }
     armor = slurp(argv[2], NULL);
-    pgprRC rc;
     if ((rc = pgprArmorUnwrap(argv[1], armor, &data, &datal)) != PGPR_OK)
 	die("unwrap error", rc);
     printhex(NULL, data, datal);
     free(data);
     free(armor);
+    return 0;
+}
+
+static int
+digest(int argc, char **argv)
+{
+    pgprRC rc;
+    unsigned char *data = NULL;
+    size_t datal;
+    pgprDigCtx ctx = NULL;
+    int algo;
+    void *hash = NULL;
+    size_t hashlen = 0;
+
+    if (argc != 3) {
+	fprintf(stderr, "usage: testpgpr dearmor <algo> <file>\n");
+	exit(1);
+    }
+    data = slurp(argv[2], &datal);
+    algo = atoi(argv[1]);
+    if ((rc = pgprDigestInit(algo, &ctx)) != PGPR_OK)
+	die("digest init error", rc);
+    pgprDigestUpdate(ctx, data, datal);
+    if ((rc = pgprDigestFinal(ctx, &hash, &hashlen)) != PGPR_OK)
+	die("digest final error", rc);
+    printhex(NULL, hash, hashlen);
+    free(hash);
+    free(data);
     return 0;
 }
 
@@ -422,6 +450,9 @@ int main(int argc, char **argv)
     }
     if (!strcmp(argv[1], "dearmor")) {
         return dearmor(argc - 1, argv + 1);
+    }
+    if (!strcmp(argv[1], "digest")) {
+        return digest(argc - 1, argv + 1);
     }
     fprintf(stderr, "unknown command '%s'\n", argv[1]);
     exit(1);
