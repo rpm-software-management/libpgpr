@@ -181,7 +181,7 @@ pgprRC pgprPubkeyCertLen(const uint8_t *pkts, size_t pktslen, size_t *certlen)
     while (p < pend) {
 	if (pgprDecodePkt(p, (pend - p), &pkt))
 	    return PGPR_ERROR_CORRUPT_PGP_PACKET;
-	if (pkt.tag == PGPRTAG_PUBLIC_KEY && pkts != p) {
+	if ((pkt.tag == PGPRTAG_PUBLIC_KEY || pkt.tag == PGPRTAG_SECRET_KEY) && pkts != p) {
 	    pktslen = p - pkts;
 	    break;
 	}
@@ -191,19 +191,23 @@ pgprRC pgprPubkeyCertLen(const uint8_t *pkts, size_t pktslen, size_t *certlen)
     return PGPR_OK;
 }
 
-pgprRC pgprPubkeyKeyID(const uint8_t *pkts, size_t pktslen, pgprKeyID_t keyid)
+static pgprRC parse_key_fp(const uint8_t *pkts, size_t pktslen, pgprItem key)
 {
     pgprPkt pkt;
-    struct pgprItem_s key;
-    pgprRC rc;
 
     if (pgprDecodePkt(pkts, pktslen, &pkt))
 	return PGPR_ERROR_CORRUPT_PGP_PACKET;
     if (pkt.tag != PGPRTAG_PUBLIC_KEY && pkt.tag != PGPRTAG_PUBLIC_SUBKEY)
 	return PGPR_ERROR_UNEXPECTED_PGP_PACKET;
-    memset(&key, 0, sizeof(key));
-    key.tag = pkt.tag;
-    rc = pgprParseKeyFp(&pkt, &key);
+    memset(key, 0, sizeof(*key));
+    key->tag = pkt.tag;
+    return pgprParseKeyFp(&pkt, key);
+}
+
+pgprRC pgprPubkeyKeyID(const uint8_t *pkts, size_t pktslen, pgprKeyID_t keyid)
+{
+    struct pgprItem_s key;
+    pgprRC rc = parse_key_fp(pkts, pktslen, &key);
     if (rc == PGPR_OK && !(key.saved & PGPRITEM_SAVED_ID))
 	rc = PGPR_ERROR_INTERNAL;
     if (rc == PGPR_OK)
@@ -214,17 +218,8 @@ pgprRC pgprPubkeyKeyID(const uint8_t *pkts, size_t pktslen, pgprKeyID_t keyid)
 pgprRC pgprPubkeyFingerprint(const uint8_t *pkts, size_t pktslen,
                          uint8_t **fp, size_t *fp_len, int *fp_version)
 {
-    pgprPkt pkt;
     struct pgprItem_s key;
-    pgprRC rc;
-
-    if (pgprDecodePkt(pkts, pktslen, &pkt))
-	return PGPR_ERROR_CORRUPT_PGP_PACKET;
-    if (pkt.tag != PGPRTAG_PUBLIC_KEY && pkt.tag != PGPRTAG_PUBLIC_SUBKEY)
-	return PGPR_ERROR_UNEXPECTED_PGP_PACKET;
-    memset(&key, 0, sizeof(key));
-    key.tag = pkt.tag;
-    rc = pgprParseKeyFp(&pkt, &key);
+    pgprRC rc = parse_key_fp(pkts, pktslen, &key);
     if (rc == PGPR_OK && !(key.saved & PGPRITEM_SAVED_FP))
         rc = PGPR_ERROR_INTERNAL;
     if (rc == PGPR_OK) {
