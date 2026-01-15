@@ -14,22 +14,22 @@ static const EVP_MD *getEVPMD(int hashalgo)
 
     case PGPRHASHALGO_MD5:
         return EVP_md5();
-
     case PGPRHASHALGO_SHA1:
         return EVP_sha1();
-
     case PGPRHASHALGO_SHA256:
         return EVP_sha256();
-
     case PGPRHASHALGO_SHA384:
         return EVP_sha384();
-
     case PGPRHASHALGO_SHA512:
         return EVP_sha512();
-
     case PGPRHASHALGO_SHA224:
         return EVP_sha224();
-
+#if OPENSSL_VERSION_MAJOR >= 3 || (OPENSSL_VERSION_MAJOR == 1 && OPENSSL_VERSION_MINOR == 1 && OPENSSL_VERSION_PATCH >= 1)
+    case PGPRHASHALGO_SHA3_256:
+	return EVP_sha3_256();
+    case PGPRHASHALGO_SHA3_512:
+	return EVP_sha3_512();
+#endif
     default:
         return EVP_md_null();
     }

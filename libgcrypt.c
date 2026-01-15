@@ -17,6 +17,12 @@ static int hashalgo2gcryalgo(int hashalgo)
 	return GCRY_MD_SHA384;
     case PGPRHASHALGO_SHA512:
 	return GCRY_MD_SHA512;
+#if GCRYPT_VERSION_NUMBER >= 0x010700
+    case PGPRHASHALGO_SHA3_256:
+	return GCRY_MD_SHA3_256;
+    case PGPRHASHALGO_SHA3_512:
+	return GCRY_MD_SHA3_512;
+#endif
     default:
 	return 0;
     }
