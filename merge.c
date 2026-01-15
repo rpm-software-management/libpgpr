@@ -62,6 +62,7 @@ static int pgprMergePktIdentical(pgprMergePkt *mp1, pgprMergePkt *mp2)
 	return 0;
     if (memcmp(mp1->pkt.body, mp2->pkt.body, mp1->hashlen) != 0)
 	return 0;
+    /* the keyid can be unhashed and thus not be part of the memcmp above */
     if (mp1->pkt.tag == PGPRTAG_SIGNATURE && memcmp(mp1->keyid, mp2->keyid, sizeof(pgprKeyID_t)) != 0)
 	return 0;
     return 1;
