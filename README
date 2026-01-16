@@ -1,5 +1,5 @@
 
-This is a small library that can be used to verify gpg signatures.
+This is a small library that can be used to verify pgp signatures.
 It is based on the former internal RPM OpenPGP parser, split out
 of the rpm tree after twenty years of service.
 
@@ -19,7 +19,14 @@ Supported public key algorithms:
   * RSA
   * DSA
   * ECDSA (NIST P-256, NIST P-384, NIST P-521)
-  * EDDSA (Ed25519)
+  * EdDSA (Ed25519, Ed448)
+  * ML-DSA (ML-DSA65+Ed25519, ML-DSA87+Ed448)
+
+Supported public key/signature versions:
+  * v3 (signatures only)
+  * v4 (RFC 4880)
+  * v5 (LibrePGP)
+  * v6 (RFC 9580)
 
 Supported PGP features:
   * subkeys
