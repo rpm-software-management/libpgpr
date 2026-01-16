@@ -52,6 +52,10 @@ static inline const char *r64dec1(const char *p, unsigned int *vp, int *eofp)
 		return 0;	/* expected '=' padding */
 	    x = 0;
 	    *eofp += 1;
+	} else if (x == '-' && i == 0) {
+	    *eofp = 3;
+	    *vp = 0;
+	    return p - 1;
 	} else if (x > 0 && x <= 32) {
 	    continue;	/* ignore control chars */
 	} else {
@@ -119,14 +123,11 @@ static char *r64enc(const unsigned char *data, size_t len)
 pgprRC pgprArmorUnwrap(const char *armortype, const char *armor, uint8_t **pkts, size_t *pktslen)
 {
     const char *enc = NULL;
-    const char *crcenc = NULL;
+    const char *encend = NULL;
     uint8_t * dec;
     size_t declen;
-    unsigned int crcpkt;
-    uint32_t crc;
     const char *t, *te;
     int pstate = 0;
-    int crceof = 0;
     pgprRC rc = PGPR_ERROR_ARMOR_NO_BEGIN_PGP;	/* XXX assume failure */
 
     if (!armortype || !armor || !*armor)
@@ -172,12 +173,14 @@ pgprRC pgprArmorUnwrap(const char *armortype, const char *armor, uint8_t **pkts,
 	    pstate++;
 	    break;
 	case 2:
-	    crcenc = NULL;
-	    if (*t != '=')
+	    encend = NULL;
+	    if (*t != '=' && *t != '-')
 		continue;
-	    crcenc = t;		/* Start of encoded crc */
+	    encend = t;		/* Start of encoded crc */
 	    pstate++;
-	    break;
+	    if (*t == '=')
+		break;
+	    /* FALLTHROUGH */
 	case 3:
 	    pstate = 0;
 	    if (strncmp(t, "-----END PGP ", 13) != 0) {
@@ -200,25 +203,31 @@ pgprRC pgprArmorUnwrap(const char *armortype, const char *armor, uint8_t **pkts,
 		rc = PGPR_ERROR_ARMOR_NO_END_PGP;
 		goto exit;
 	    }
-	    if (r64dec1(crcenc + 1, &crcpkt, &crceof) == 0 || crceof != 0 || (crcenc[5] != '\n' && crcenc[5] != '\r')) {
-		rc = PGPR_ERROR_ARMOR_CRC_DECODE;
-		goto exit;
-	    }
 	    dec = NULL;
 	    declen = 0;
 	    enc = r64dec(enc, &dec, &declen);
-	    if (enc == 0 || enc > crcenc || (*enc == '=' && enc != crcenc)) {
+	    if (enc == 0 || enc > encend || ((*enc == '=' || *enc == '-') && enc != encend)) {
 		rc = PGPR_ERROR_ARMOR_BODY_DECODE;
 		goto exit;
 	    }
-	    crc = r64crc(dec, declen);
-	    if (crcpkt != crc) {
+	    if (*encend == '=') {
+		unsigned int crcpkt;
+		uint32_t crc;
+		int crceof = 0;
+
+		if (r64dec1(encend + 1, &crcpkt, &crceof) == 0 || crceof != 0 || (encend[5] != '\n' && encend[5] != '\r')) {
+		    rc = PGPR_ERROR_ARMOR_CRC_DECODE;
+		    goto exit;
+		}
+		crc = r64crc(dec, declen);
+		if (crcpkt != crc) {
 #if 0
-		printf("=%c%c%c%c\n", bintoasc[(crc >> 18) & 63], bintoasc[(crc >> 12) & 63], bintoasc[(crc >> 6) & 63], bintoasc[crc & 63]);
+		    printf("=%c%c%c%c\n", bintoasc[(crc >> 18) & 63], bintoasc[(crc >> 12) & 63], bintoasc[(crc >> 6) & 63], bintoasc[crc & 63]);
 #endif
-		rc = PGPR_ERROR_ARMOR_CRC_CHECK;
-		free(dec);
-		goto exit;
+		    rc = PGPR_ERROR_ARMOR_CRC_CHECK;
+		    free(dec);
+		    goto exit;
+		}
 	    }
 	    if (pkts)
 		*pkts = dec;
