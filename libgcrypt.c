@@ -433,6 +433,7 @@ static int pgprSupportedCurve(int algo, int curve)
 
 pgprRC pgprAlgInitPubkey(pgprAlg ka, int algo, int curve)
 {
+    ka->algo = algo;
     switch (algo) {
     case PGPRPUBKEYALGO_RSA:
 	ka->setmpi = pgprSetKeyMpiRSA;
@@ -471,6 +472,7 @@ pgprRC pgprAlgInitPubkey(pgprAlg ka, int algo, int curve)
 
 pgprRC pgprAlgInitSignature(pgprAlg sa, int algo)
 {
+    sa->algo = algo;
     switch (algo) {
     case PGPRPUBKEYALGO_RSA:
 	sa->setmpi = pgprSetSigMpiRSA;

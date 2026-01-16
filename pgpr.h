@@ -110,6 +110,8 @@ typedef enum pgprPubkeyAlgo_e {
     PGPRPUBKEYALGO_X448		= 26,	/*!< X448 */
     PGPRPUBKEYALGO_ED25519	= 27,	/*!< Ed25519 */
     PGPRPUBKEYALGO_ED448	= 28,	/*!< Ed448 */
+    PGPRPUBKEYALGO_MLDSA65_ED25519 = 30, /*!< ML-DSA-65+Ed25519 hybrid */
+    PGPRPUBKEYALGO_MLDSA87_ED448   = 31, /*!< ML-DSA-87+Ed448 hybrid */
 } pgprPubkeyAlgo;
 
 typedef enum pgprHashAlgo_e {

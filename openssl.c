@@ -810,9 +810,8 @@ static pgprRC pgprSetSigMpiEDDSA(pgprAlg sa, int num, const uint8_t *p, int mlen
 static void pgprFreeSigEDDSA(pgprAlg sa)
 {
     struct pgprAlgSigEDDSA_s *sig = sa->data;
-    if (sig) {
-	free(sa->data);
-    }
+    if (sig)
+	free(sig);
 }
 
 static pgprRC pgprVerifySigEDDSA(pgprAlg ka, pgprAlg sa,
@@ -850,6 +849,280 @@ done:
 #endif
 
 
+/****************************** ML-DSA ***************************************/
+
+#if defined(EVP_PKEY_ML_DSA_65) || defined(EVP_PKEY_ML_DSA_87)
+
+struct pgprAlgKeyMpiMLDSA_s {
+    EVP_PKEY *evp_pkey; /* Fully constructed key */
+    unsigned char key[2592];
+    int keyl;
+};
+
+static int constructMLDSASigningKey(struct pgprAlgKeyMpiMLDSA_s *key, int algo)
+{
+    if (key->evp_pkey)
+	return 1;	/* We've already constructed it, so just reuse it */
+#ifdef EVP_PKEY_ML_DSA_65
+    if (algo == PGPRPUBKEYALGO_MLDSA65_ED25519)
+	key->evp_pkey = EVP_PKEY_new_raw_public_key(EVP_PKEY_ML_DSA_65, NULL, key->key, key->keyl);
+#endif
+#ifdef EVP_PKEY_ML_DSA_87
+    if (algo == PGPRPUBKEYALGO_MLDSA87_ED448)
+	key->evp_pkey = EVP_PKEY_new_raw_public_key(EVP_PKEY_ML_DSA_87, NULL, key->key, key->keyl);
+#endif
+    return key->evp_pkey ? 1 : 0;
+}
+
+static void pgprFreeKeyMpiMLDSA(pgprAlg ka)
+{
+    struct pgprAlgKeyMpiMLDSA_s *key = ka->data;
+    if (key) {
+	if (key->evp_pkey)
+	    EVP_PKEY_free(key->evp_pkey);
+	free(key);
+    }
+}
+
+static pgprRC pgprSetKeyMpiMLDSA(pgprAlg ka, int num, const uint8_t *p, int mlen)
+{
+    struct pgprAlgKeyMpiMLDSA_s *key = ka->data;
+    pgprRC rc = PGPR_ERROR_REJECTED_PUBKEY;
+    int keyl = 0;
+
+    if (num != -1)
+	return rc;
+    if (!key)
+	key = ka->data = pgprCalloc(1, sizeof(*key));
+    switch (ka->algo) {
+	case PGPRPUBKEYALGO_MLDSA65_ED25519:
+	    keyl = 1952;
+	    break;
+	case PGPRPUBKEYALGO_MLDSA87_ED448:
+	    keyl = 2592;
+	    break;
+	default:
+	    break;
+    }
+    if (keyl && keyl <= sizeof(key->key) && mlen == keyl) {
+	memcpy(key->key, p, keyl);
+	key->keyl = keyl;
+	rc = PGPR_OK;
+    }
+    return rc;
+}
+
+struct pgprAlgSigMpiMLDSA_s {
+    unsigned char sig[4627];
+    int sigl;
+};
+
+static pgprRC pgprSetSigMpiMLDSA(pgprAlg sa, int num, const uint8_t *p, int mlen)
+{
+    struct pgprAlgSigMpiMLDSA_s *sig = sa->data;
+    pgprRC rc = PGPR_ERROR_REJECTED_SIGNATURE;
+    int sigl = 0;
+
+    if (num != -1)
+	return rc;
+    if (!sig)
+	sig = sa->data = pgprCalloc(1, sizeof(*sig));
+    switch (sa->algo) {
+	case PGPRPUBKEYALGO_MLDSA65_ED25519:
+	    sigl = 3309;
+	    break;
+	case PGPRPUBKEYALGO_MLDSA87_ED448:
+	    sigl = 4627;
+	    break;
+	default:
+	    break;
+    }
+    if (sigl && sigl <= sizeof(sig->sig) && mlen == sigl) {
+	memcpy(sig->sig, p, sigl);
+	sig->sigl = sigl;
+	rc = PGPR_OK;
+    }
+    return rc;
+}
+
+static void pgprFreeSigMpiMLDSA(pgprAlg sa)
+{
+    struct pgprAlgSigMpiMLDSA_s *sig = sa->data;
+    if (sig)
+	free(sig);
+}
+
+static pgprRC pgprVerifySigMLDSA(pgprAlg ka, pgprAlg sa,
+                           const uint8_t *hash, size_t hashlen, int hash_algo)
+{
+    EVP_MD_CTX *md_ctx = NULL;
+    struct pgprAlgKeyMpiMLDSA_s *key = ka->data;
+    struct pgprAlgSigMpiMLDSA_s *sig = sa->data;
+    pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;	/* assume failure */
+
+    if (!key || !sig)
+	goto done;
+    if (!constructMLDSASigningKey(key, sa->algo)) {
+	rc = PGPR_ERROR_REJECTED_PUBKEY;
+	goto done;
+    }
+    md_ctx = EVP_MD_CTX_new();
+    if (EVP_DigestVerifyInit(md_ctx, NULL, EVP_md_null(), NULL, key->evp_pkey) != 1)
+	goto done;
+    if (EVP_DigestVerify(md_ctx, sig->sig, sig->sigl, hash, hashlen) == 1)
+	rc = PGPR_OK;		/* Success */
+done:
+    if (md_ctx)
+	EVP_MD_CTX_free(md_ctx);
+    return rc;
+}
+
+#endif
+
+
+/****************************** ML-DSA EdDSA Hybrid ***************************************/
+
+#if defined(EVP_PKEY_ED25519) && (defined(EVP_PKEY_ML_DSA_65) || defined(EVP_PKEY_ML_DSA_87))
+
+struct pgprAlgKeyMpiMLDSAEDDSA_s {
+    pgprAlg mldsa;
+    pgprAlg eddsa;
+};
+
+static pgprRC pgprSetKeyMpiMLDSAEDDSA(pgprAlg ka, int num, const uint8_t *p, int mlen)
+{
+    struct pgprAlgKeyMpiMLDSAEDDSA_s *key = ka->data;
+    pgprRC rc = PGPR_ERROR_REJECTED_PUBKEY;
+    int mldsaalgo = 0, eddsaalgo = 0, mldsasize = 0, eddsasize = 0;
+    if (num != -1)
+	return rc;
+    if (!key)
+	key = ka->data = pgprCalloc(1, sizeof(*key));
+
+    switch (ka->algo) {
+	case PGPRPUBKEYALGO_MLDSA65_ED25519:
+	    eddsasize = 32;
+	    mldsasize = 1952;
+	    eddsaalgo = PGPRPUBKEYALGO_ED25519;
+	    mldsaalgo = PGPRPUBKEYALGO_MLDSA65_ED25519;
+	    break;
+	case PGPRPUBKEYALGO_MLDSA87_ED448:
+	    eddsasize = 57;
+	    mldsasize = 2592;
+	    eddsaalgo = PGPRPUBKEYALGO_ED448;
+	    mldsaalgo = PGPRPUBKEYALGO_MLDSA87_ED448;
+	    break;
+	default:
+	    break;
+    }
+    if (!eddsasize || !mldsasize || mlen != eddsasize + mldsasize || !eddsaalgo || !mldsaalgo)
+	return rc;
+
+    key->eddsa = pgprAlgNew();
+    key->eddsa->algo = eddsaalgo;
+    if ((rc = pgprAlgInitPubkey(key->eddsa, key->eddsa->algo, 0)) != PGPR_OK)
+	return rc;
+    key->mldsa = pgprAlgNew();
+    key->mldsa->algo = mldsaalgo;
+    key->mldsa->setmpi = pgprSetKeyMpiMLDSA;
+    key->mldsa->free = pgprFreeKeyMpiMLDSA;
+    key->mldsa->mpis = 0;
+    if ((rc = key->eddsa->setmpi(key->eddsa, -1, p, eddsasize)) != PGPR_OK)
+	return rc;
+    rc = key->mldsa->setmpi(key->mldsa, -1, p + eddsasize, mldsasize);
+    return rc;
+}
+
+static void pgprFreeKeyMpiMLDSAEDDSA(pgprAlg sa)
+{
+    struct pgprAlgKeyMpiMLDSAEDDSA_s *key = sa->data;
+    if (key) {
+	if (key->mldsa && key->mldsa->free)
+	    key->mldsa->free(key->mldsa);
+	if (key->eddsa && key->eddsa->free)
+	    key->eddsa->free(key->eddsa);
+	free(key);
+    }
+}
+
+struct pgprAlgSigMpiMLDSAEDDSA_s {
+    pgprAlg mldsa;
+    pgprAlg eddsa;
+};
+
+static pgprRC pgprSetSigMpiMLDSAEDDSA(pgprAlg sa, int num, const uint8_t *p, int mlen)
+{
+    struct pgprAlgSigMpiMLDSAEDDSA_s *sig = sa->data;
+    pgprRC rc = PGPR_ERROR_REJECTED_SIGNATURE;
+    int mldsaalgo = 0, eddsaalgo = 0, mldsasize = 0, eddsasize = 0;
+    if (num != -1)
+	return rc;
+    if (!sig)
+	sig = sa->data = pgprCalloc(1, sizeof(*sig));
+
+    switch (sa->algo) {
+	case PGPRPUBKEYALGO_MLDSA65_ED25519:
+	    eddsasize = 64;
+	    mldsasize = 3309;
+	    eddsaalgo = PGPRPUBKEYALGO_ED25519;
+	    mldsaalgo = PGPRPUBKEYALGO_MLDSA65_ED25519;
+	    break;
+	case PGPRPUBKEYALGO_MLDSA87_ED448:
+	    eddsasize = 114;
+	    mldsasize = 4627;
+	    eddsaalgo = PGPRPUBKEYALGO_ED448;
+	    mldsaalgo = PGPRPUBKEYALGO_MLDSA87_ED448;
+	    break;
+	default:
+	    break;
+    }
+    if (!eddsasize || !mldsasize || mlen != eddsasize + mldsasize || !eddsaalgo || !mldsaalgo)
+	return rc;
+
+    sig->eddsa = pgprAlgNew();
+    sig->eddsa->algo = eddsaalgo;
+    if ((rc = pgprAlgInitSignature(sig->eddsa, sig->eddsa->algo)) != PGPR_OK)
+	return rc;
+    sig->mldsa = pgprAlgNew();
+    sig->mldsa->algo = mldsaalgo;
+    sig->mldsa->setmpi = pgprSetSigMpiMLDSA;
+    sig->mldsa->free = pgprFreeSigMpiMLDSA;
+    sig->mldsa->verify = pgprVerifySigMLDSA;
+    sig->mldsa->mpis = 0;
+    if ((rc = sig->eddsa->setmpi(sig->eddsa, -1, p, eddsasize)) != PGPR_OK)
+	return rc;
+    rc = sig->mldsa->setmpi(sig->mldsa, -1, p + eddsasize, mldsasize);
+    return rc;
+}
+
+static void pgprFreeSigMpiMLDSAEDDSA(pgprAlg sa)
+{
+    struct pgprAlgSigMpiMLDSAEDDSA_s *sig = sa->data;
+    if (sig) {
+	if (sig->mldsa && sig->mldsa->free)
+	    sig->mldsa->free(sig->mldsa);
+	if (sig->eddsa && sig->eddsa->free)
+	    sig->eddsa->free(sig->eddsa);
+	free(sig);
+    }
+}
+
+static pgprRC pgprVerifySigMLDSAEDDSA(pgprAlg ka, pgprAlg sa,
+                           const uint8_t *hash, size_t hashlen, int hash_algo)
+{
+    struct pgprAlgSigMpiMLDSAEDDSA_s *sig = sa->data;
+    struct pgprAlgKeyMpiMLDSAEDDSA_s *key = ka->data;
+    pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;	/* assume failure */
+
+    if (sig && sig->mldsa && sig->eddsa && key && key->mldsa && key->eddsa) {
+	rc = sig->eddsa->verify(key->eddsa, sig->eddsa, hash, hashlen, hash_algo);
+	if (rc == PGPR_OK)
+	    rc = sig->mldsa->verify(key->mldsa, sig->mldsa, hash, hashlen, hash_algo);
+    }
+    return rc;
+}
+
+#endif
 
 /****************************** PGP **************************************/
 
@@ -874,6 +1147,7 @@ static int pgprSupportedCurve(int algo, int curve)
 
 pgprRC pgprAlgInitPubkey(pgprAlg ka, int algo, int curve)
 {
+    ka->algo = algo;
     switch (algo) {
     case PGPRPUBKEYALGO_RSA:
         ka->setmpi = pgprSetKeyMpiRSA;
@@ -914,6 +1188,17 @@ pgprRC pgprAlgInitPubkey(pgprAlg ka, int algo, int curve)
         ka->mpis = 0;
         return PGPR_OK;
 #endif
+#if defined(EVP_PKEY_ED25519) && (defined(EVP_PKEY_ML_DSA_65) || defined(EVP_PKEY_ML_DSA_87))
+    case PGPRPUBKEYALGO_MLDSA65_ED25519:
+    case PGPRPUBKEYALGO_MLDSA87_ED448:
+	ka->curve = (algo == PGPRPUBKEYALGO_MLDSA65_ED25519) ? PGPRCURVE_ED25519 : PGPRCURVE_ED448;
+	if (!pgprSupportedCurve(PGPRPUBKEYALGO_EDDSA, ka->curve))
+	    return PGPR_ERROR_UNSUPPORTED_CURVE;
+	ka->setmpi = pgprSetKeyMpiMLDSAEDDSA;
+	ka->free = pgprFreeKeyMpiMLDSAEDDSA;
+	ka->mpis = 0;
+	return PGPR_OK;
+#endif
     default:
         break;
     }
@@ -922,6 +1207,7 @@ pgprRC pgprAlgInitPubkey(pgprAlg ka, int algo, int curve)
 
 pgprRC pgprAlgInitSignature(pgprAlg sa, int algo)
 {
+    sa->algo = algo;
     switch (algo) {
     case PGPRPUBKEYALGO_RSA:
         sa->setmpi = pgprSetSigMpiRSA;
@@ -956,6 +1242,16 @@ pgprRC pgprAlgInitSignature(pgprAlg sa, int algo)
         sa->verify = pgprVerifySigEDDSA;
         sa->mpis = 0;
         return PGPR_OK;
+#endif
+#if defined(EVP_PKEY_ED25519) && (defined(EVP_PKEY_ML_DSA_65) || defined(EVP_PKEY_ML_DSA_87))
+    case PGPRPUBKEYALGO_MLDSA65_ED25519:
+    case PGPRPUBKEYALGO_MLDSA87_ED448:
+	sa->curve = (algo == PGPRPUBKEYALGO_MLDSA65_ED25519) ? PGPRCURVE_ED25519 : PGPRCURVE_ED448;
+	sa->setmpi = pgprSetSigMpiMLDSAEDDSA;
+	sa->free = pgprFreeSigMpiMLDSAEDDSA;
+	sa->verify = pgprVerifySigMLDSAEDDSA;
+	sa->mpis = 0;
+	return PGPR_OK;
 #endif
     default:
         break;

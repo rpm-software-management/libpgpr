@@ -34,6 +34,7 @@ struct pgprAlg_s {
     setmpifunc setmpi;
     verifyfunc verify;
     freefunc free;
+    int algo;
     int curve;
     int info;
     int mpis;
