@@ -28,6 +28,40 @@ static int hashalgo2gcryalgo(int hashalgo)
     }
 }
 
+static int check_gcrypt_supported(const char *sexpstr)
+{
+    gcry_sexp_t sexp = NULL;
+    unsigned int nbits;
+    gcry_sexp_build(&sexp, NULL, sexpstr);
+    nbits = gcry_pk_get_nbits(sexp);
+    gcry_sexp_release(sexp);
+    return nbits > 0 ? 1 : -1;
+}
+
+static int pgprSupportedCurve(int algo, int curve)
+{
+    if (algo == PGPRPUBKEYALGO_EDDSA && curve == PGPRCURVE_ED25519) {
+	static int supported_ed25519;
+	if (!supported_ed25519)
+	    supported_ed25519 = check_gcrypt_supported("(public-key (ecc (curve \"Ed25519\")))");
+	return supported_ed25519 > 0;
+    }
+    if (algo == PGPRPUBKEYALGO_EDDSA && curve == PGPRCURVE_ED448) {
+	static int supported_ed448;
+	if (!supported_ed448)
+	    supported_ed448 = check_gcrypt_supported("(public-key (ecc (curve \"Ed448\")))");
+	return supported_ed448 > 0;
+    }
+    if (algo == PGPRPUBKEYALGO_ECDSA && curve == PGPRCURVE_NIST_P_256)
+	return 1;
+    if (algo == PGPRPUBKEYALGO_ECDSA && curve == PGPRCURVE_NIST_P_384)
+	return 1;
+    if (algo == PGPRPUBKEYALGO_ECDSA && curve == PGPRCURVE_NIST_P_521)
+	return 1;
+    return 0;
+}
+
+
 /****************************** RSA **************************************/
 
 struct pgprAlgSigRSA_s {
@@ -120,6 +154,23 @@ static void pgprFreeKeyRSA(pgprAlg ka)
 	free(key);
 	ka->data = NULL;
     }
+}
+
+static pgprRC pgprInitSigRSA(pgprAlg sa)
+{
+    sa->setmpi = pgprSetSigMpiRSA;
+    sa->free = pgprFreeSigRSA;
+    sa->verify = pgprVerifySigRSA;
+    sa->mpis = 1;
+    return PGPR_OK;
+}
+
+static pgprRC pgprInitKeyRSA(pgprAlg ka)
+{
+    ka->setmpi = pgprSetKeyMpiRSA;
+    ka->free = pgprFreeKeyRSA;
+    ka->mpis = 2;
+    return PGPR_OK;
 }
 
 
@@ -240,6 +291,23 @@ static void pgprFreeKeyDSA(pgprAlg ka)
     }
 }
 
+static pgprRC pgprInitSigDSA(pgprAlg sa)
+{   
+    sa->setmpi = pgprSetSigMpiDSA;
+    sa->free = pgprFreeSigDSA;
+    sa->verify = pgprVerifySigDSA;
+    sa->mpis = 2;
+    return PGPR_OK;
+}
+
+static pgprRC pgprInitKeyDSA(pgprAlg ka)
+{
+    ka->setmpi = pgprSetKeyMpiDSA;
+    ka->free = pgprFreeKeyDSA;
+    ka->mpis = 4;
+    return PGPR_OK;
+}
+
 
 /****************************** ECC **************************************/
 
@@ -261,9 +329,9 @@ static pgprRC pgprSetSigMpiECC(pgprAlg sa, int num, const uint8_t *p, int mlen)
 	sig = sa->data = pgprCalloc(1, sizeof(*sig));
 
     if (num == -1) {
-	if (sa->curve == PGPRCURVE_ED25519 && mlen == 2 * 32 && !gcry_mpi_scan(&sig->r, GCRYMPI_FMT_USG, p, 32, NULL) && !gcry_mpi_scan(&sig->s, GCRYMPI_FMT_USG, p + 32, 32, NULL))
+	if (sa->algo == PGPRPUBKEYALGO_ED25519 && mlen == 2 * 32 && !gcry_mpi_scan(&sig->r, GCRYMPI_FMT_USG, p, 32, NULL) && !gcry_mpi_scan(&sig->s, GCRYMPI_FMT_USG, p + 32, 32, NULL))
 	    rc = PGPR_OK;
-	else if (sa->curve == PGPRCURVE_ED448 && mlen == 2 * 57 && !gcry_mpi_scan(&sig->r, GCRYMPI_FMT_USG, p, 57, NULL) && !gcry_mpi_scan(&sig->s, GCRYMPI_FMT_USG, p + 57, 57, NULL))
+	else if (sa->algo == PGPRPUBKEYALGO_ED448 && mlen == 2 * 57 && !gcry_mpi_scan(&sig->r, GCRYMPI_FMT_USG, p, 57, NULL) && !gcry_mpi_scan(&sig->s, GCRYMPI_FMT_USG, p + 57, 57, NULL))
 	    rc = PGPR_OK;
 	return rc;
     }
@@ -397,71 +465,44 @@ static void pgprFreeKeyECC(pgprAlg ka)
     }
 }
 
-
-static int check_gcrypt_supported(const char *sexpstr)
-{
-    gcry_sexp_t sexp = NULL;
-    unsigned int nbits;
-    gcry_sexp_build(&sexp, NULL, sexpstr);
-    nbits = gcry_pk_get_nbits(sexp);
-    gcry_sexp_release(sexp);
-    return nbits > 0 ? 1 : -1;
+static pgprRC pgprInitSigECC(pgprAlg sa)
+{   
+    sa->setmpi = pgprSetSigMpiECC;
+    sa->free = pgprFreeSigECC;
+    sa->verify = pgprVerifySigECC;
+    sa->mpis = sa->algo == PGPRPUBKEYALGO_ECDSA || sa->algo == PGPRPUBKEYALGO_EDDSA ? 2 : 0;
+    return PGPR_OK;
 }
 
-static int pgprSupportedCurve(int algo, int curve)
+static pgprRC pgprInitKeyECC(pgprAlg ka)
 {
-    if (algo == PGPRPUBKEYALGO_EDDSA && curve == PGPRCURVE_ED25519) {
-	static int supported_ed25519;
-	if (!supported_ed25519)
-	    supported_ed25519 = check_gcrypt_supported("(public-key (ecc (curve \"Ed25519\")))");
-	return supported_ed25519 > 0;
-    }
-    if (algo == PGPRPUBKEYALGO_EDDSA && curve == PGPRCURVE_ED448) {
-	static int supported_ed448;
-	if (!supported_ed448)
-	    supported_ed448 = check_gcrypt_supported("(public-key (ecc (curve \"Ed448\")))");
-	return supported_ed448 > 0;
-    }
-    if (algo == PGPRPUBKEYALGO_ECDSA && curve == PGPRCURVE_NIST_P_256)
-	return 1;
-    if (algo == PGPRPUBKEYALGO_ECDSA && curve == PGPRCURVE_NIST_P_384)
-	return 1;
-    if (algo == PGPRPUBKEYALGO_ECDSA && curve == PGPRCURVE_NIST_P_521)
-	return 1;
-    return 0;
+    if (ka->algo == PGPRPUBKEYALGO_ED25519)
+	ka->curve = PGPRCURVE_ED25519;
+    if (ka->algo == PGPRPUBKEYALGO_ED448)
+	ka->curve = PGPRCURVE_ED448;
+    if (!pgprSupportedCurve(ka->algo == PGPRPUBKEYALGO_ECDSA ? ka->algo : PGPRPUBKEYALGO_EDDSA, ka->curve))
+	return PGPR_ERROR_UNSUPPORTED_CURVE;
+    ka->setmpi = pgprSetKeyMpiECC;
+    ka->free = pgprFreeKeyECC;
+    ka->mpis = ka->algo == PGPRPUBKEYALGO_ECDSA || ka->algo == PGPRPUBKEYALGO_EDDSA ? 1 : 0;
+    ka->info = ka->algo == PGPRPUBKEYALGO_ECDSA || ka->algo == PGPRPUBKEYALGO_EDDSA ? ka->curve : 0;
+    return PGPR_OK;
 }
+
+
 
 pgprRC pgprAlgInitPubkey(pgprAlg ka)
 {
     switch (ka->algo) {
     case PGPRPUBKEYALGO_RSA:
-	ka->setmpi = pgprSetKeyMpiRSA;
-	ka->free = pgprFreeKeyRSA;
-	ka->mpis = 2;
-	return PGPR_OK;
+	return pgprInitKeyRSA(ka);
     case PGPRPUBKEYALGO_DSA:
-	ka->setmpi = pgprSetKeyMpiDSA;
-	ka->free = pgprFreeKeyDSA;
-	ka->mpis = 4;
-	return PGPR_OK;
+	return pgprInitKeyDSA(ka);
     case PGPRPUBKEYALGO_ECDSA:
     case PGPRPUBKEYALGO_EDDSA:
-	if (!pgprSupportedCurve(ka->algo, ka->curve))
-	    return PGPR_ERROR_UNSUPPORTED_CURVE;
-	ka->setmpi = pgprSetKeyMpiECC;
-	ka->free = pgprFreeKeyECC;
-	ka->mpis = 1;
-	ka->info = ka->curve;
-	return PGPR_OK;
     case PGPRPUBKEYALGO_ED25519:
     case PGPRPUBKEYALGO_ED448:
-	ka->curve = (ka->algo == PGPRPUBKEYALGO_ED25519) ? PGPRCURVE_ED25519 : PGPRCURVE_ED448;
-	if (!pgprSupportedCurve(PGPRPUBKEYALGO_EDDSA, ka->curve))
-	    return PGPR_ERROR_UNSUPPORTED_CURVE;
-	ka->setmpi = pgprSetKeyMpiECC;
-	ka->free = pgprFreeKeyECC;
-	ka->mpis = 0;
-	return PGPR_OK;
+	return pgprInitKeyECC(ka);
     default:
 	break;
     }
@@ -472,32 +513,14 @@ pgprRC pgprAlgInitSignature(pgprAlg sa)
 {
     switch (sa->algo) {
     case PGPRPUBKEYALGO_RSA:
-	sa->setmpi = pgprSetSigMpiRSA;
-	sa->free = pgprFreeSigRSA;
-	sa->verify = pgprVerifySigRSA;
-	sa->mpis = 1;
-	return PGPR_OK;
+	return pgprInitSigRSA(sa);
     case PGPRPUBKEYALGO_DSA:
-	sa->setmpi = pgprSetSigMpiDSA;
-	sa->free = pgprFreeSigDSA;
-	sa->verify = pgprVerifySigDSA;
-	sa->mpis = 2;
-	return PGPR_OK;
+	return pgprInitSigDSA(sa);
     case PGPRPUBKEYALGO_ECDSA:
     case PGPRPUBKEYALGO_EDDSA:
-	sa->setmpi = pgprSetSigMpiECC;
-	sa->free = pgprFreeSigECC;
-	sa->verify = pgprVerifySigECC;
-	sa->mpis = 2;
-	return PGPR_OK;
     case PGPRPUBKEYALGO_ED25519:
     case PGPRPUBKEYALGO_ED448:
-	sa->curve = (sa->algo == PGPRPUBKEYALGO_ED25519) ? PGPRCURVE_ED25519 : PGPRCURVE_ED448;
-	sa->setmpi = pgprSetSigMpiECC;
-	sa->free = pgprFreeSigECC;
-	sa->verify = pgprVerifySigECC;
-	sa->mpis = 0;
-	return PGPR_OK;
+	return pgprInitSigECC(sa);
     default:
 	break;
     }

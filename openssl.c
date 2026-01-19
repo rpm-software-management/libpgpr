@@ -36,6 +36,25 @@ static const EVP_MD *getEVPMD(int hashalgo)
 }
 
 
+static int pgprSupportedCurve(int algo, int curve)
+{
+#ifdef EVP_PKEY_ED25519
+    if (algo == PGPRPUBKEYALGO_EDDSA && curve == PGPRCURVE_ED25519)
+	return 1;
+#endif
+#ifdef EVP_PKEY_ED448
+    if (algo == PGPRPUBKEYALGO_EDDSA && curve == PGPRCURVE_ED448)
+	return 1;
+#endif
+    if (algo == PGPRPUBKEYALGO_ECDSA && curve == PGPRCURVE_NIST_P_256)
+	return 1;
+    if (algo == PGPRPUBKEYALGO_ECDSA && curve == PGPRCURVE_NIST_P_384)
+	return 1;
+    if (algo == PGPRPUBKEYALGO_ECDSA && curve == PGPRCURVE_NIST_P_521)
+	return 1;
+    return 0;
+}
+
 /*********************** pkey construction *******************************/
 
 #if OPENSSL_VERSION_MAJOR >= 3
@@ -272,6 +291,24 @@ done:
     free(padded_sig);
     return rc;
 }
+
+static pgprRC pgprInitSigRSA(pgprAlg sa)
+{
+    sa->setmpi = pgprSetSigMpiRSA;
+    sa->free = pgprFreeSigRSA;
+    sa->verify = pgprVerifySigRSA;
+    sa->mpis = 1;
+    return PGPR_OK;
+}
+
+static pgprRC pgprInitKeyRSA(pgprAlg ka)
+{
+    ka->setmpi = pgprSetKeyMpiRSA;
+    ka->free = pgprFreeKeyRSA;
+    ka->mpis = 2;
+    return PGPR_OK;
+}
+
 
 /****************************** DSA ***************************************/
 /* Key */
@@ -524,6 +561,23 @@ done:
     return rc;
 }
 
+static pgprRC pgprInitSigDSA(pgprAlg sa)
+{
+    sa->setmpi = pgprSetSigMpiDSA;
+    sa->free = pgprFreeSigDSA;
+    sa->verify = pgprVerifySigDSA;
+    sa->mpis = 2;
+    return PGPR_OK;
+}
+
+static pgprRC pgprInitKeyDSA(pgprAlg ka)
+{
+    ka->setmpi = pgprSetKeyMpiDSA;
+    ka->free = pgprFreeKeyDSA;
+    ka->mpis = 4;
+    return PGPR_OK;
+}
+
 /****************************** ECDSA ***************************************/
 
 struct pgprAlgKeyECDSA_s {
@@ -702,6 +756,26 @@ done:
     return rc;
 }
 
+static pgprRC pgprInitSigECDSA(pgprAlg sa)
+{
+    sa->setmpi = pgprSetSigMpiECDSA;
+    sa->free = pgprFreeSigECDSA;
+    sa->verify = pgprVerifySigECDSA;
+    sa->mpis = 2;
+    return PGPR_OK;
+}
+
+static pgprRC pgprInitKeyECDSA(pgprAlg ka)
+{
+    if (!pgprSupportedCurve(ka->algo, ka->curve))
+	return PGPR_ERROR_UNSUPPORTED_CURVE;
+    ka->setmpi = pgprSetKeyMpiECDSA;
+    ka->free = pgprFreeKeyECDSA;
+    ka->mpis = 1;
+    ka->info = ka->curve;
+    return PGPR_OK;
+}
+
 /****************************** EDDSA ***************************************/
 
 #ifdef EVP_PKEY_ED25519
@@ -785,11 +859,11 @@ static pgprRC pgprSetSigMpiEDDSA(pgprAlg sa, int num, const uint8_t *p, int mlen
     if (!sig)
 	sig = sa->data = pgprCalloc(1, sizeof(*sig));
     if (num == -1) {
-	if (sa->curve == PGPRCURVE_ED25519 && mlen == 2 * 32) {
+	if (sa->algo == PGPRPUBKEYALGO_ED25519 && mlen == 2 * 32) {
 	    memcpy(sig->sig + (57 - 32), p, 32);
 	    memcpy(sig->sig + (2 * 57 - 32), p + 32, 32);
 	    rc = PGPR_OK;
-	} else if (sa->curve == PGPRCURVE_ED448 && mlen == 2 * 57) {
+	} else if (sa->algo == PGPRPUBKEYALGO_ED448 && mlen == 2 * 57) {
 	    memcpy(sig->sig, p, 2 * 57);
 	    rc = PGPR_OK;
 	}
@@ -840,6 +914,31 @@ done:
     if (md_ctx)
 	EVP_MD_CTX_free(md_ctx);
     return rc;
+}
+
+static pgprRC pgprInitSigEDDSA(pgprAlg sa)
+{
+    sa->setmpi = pgprSetSigMpiEDDSA;
+    sa->free = pgprFreeSigEDDSA;
+    sa->verify = pgprVerifySigEDDSA;
+    sa->mpis = sa->algo == PGPRPUBKEYALGO_EDDSA ? 2 : 0;
+    return PGPR_OK;
+}
+
+static pgprRC pgprInitKeyEDDSA(pgprAlg ka)
+{
+    /* fixup the curve */
+    if (ka->algo == PGPRPUBKEYALGO_ED25519)
+	ka->curve = PGPRCURVE_ED25519;
+    if (ka->algo == PGPRPUBKEYALGO_ED448)
+	ka->curve = PGPRCURVE_ED448;
+    if (!pgprSupportedCurve(PGPRPUBKEYALGO_EDDSA, ka->curve))
+	return PGPR_ERROR_UNSUPPORTED_CURVE;
+    ka->setmpi = pgprSetKeyMpiEDDSA;
+    ka->free = pgprFreeKeyEDDSA;
+    ka->mpis = ka->algo == PGPRPUBKEYALGO_EDDSA ? 1 : 0;
+    ka->info = ka->algo == PGPRPUBKEYALGO_EDDSA ? ka->curve : 0;
+    return PGPR_OK;
 }
 
 #endif
@@ -972,77 +1071,47 @@ done:
     return rc;
 }
 
+static pgprRC pgprInitSigMLDSA(pgprAlg sa)
+{
+    sa->setmpi = pgprSetSigMpiMLDSA;
+    sa->free = pgprFreeSigMLDSA;
+    sa->verify = pgprVerifySigMLDSA;
+    sa->mpis = 0;
+    return PGPR_OK;
+}
+
+static pgprRC pgprInitKeyMLDSA(pgprAlg ka)
+{
+    ka->setmpi = pgprSetKeyMpiMLDSA;
+    ka->free = pgprFreeKeyMLDSA;
+    ka->mpis = 0;
+    return PGPR_OK;
+}
+
 #endif
 
 
 /****************************** PGP **************************************/
 
-static int pgprSupportedCurve(int algo, int curve)
-{
-#ifdef EVP_PKEY_ED25519
-    if (algo == PGPRPUBKEYALGO_EDDSA && curve == PGPRCURVE_ED25519)
-	return 1;
-#endif
-#ifdef EVP_PKEY_ED448
-    if (algo == PGPRPUBKEYALGO_EDDSA && curve == PGPRCURVE_ED448)
-	return 1;
-#endif
-    if (algo == PGPRPUBKEYALGO_ECDSA && curve == PGPRCURVE_NIST_P_256)
-	return 1;
-    if (algo == PGPRPUBKEYALGO_ECDSA && curve == PGPRCURVE_NIST_P_384)
-	return 1;
-    if (algo == PGPRPUBKEYALGO_ECDSA && curve == PGPRCURVE_NIST_P_521)
-	return 1;
-    return 0;
-}
-
 pgprRC pgprAlgInitPubkey(pgprAlg ka)
 {
     switch (ka->algo) {
     case PGPRPUBKEYALGO_RSA:
-        ka->setmpi = pgprSetKeyMpiRSA;
-        ka->free = pgprFreeKeyRSA;
-        ka->mpis = 2;
-        return PGPR_OK;
+	return pgprInitKeyRSA(ka);
     case PGPRPUBKEYALGO_DSA:
-        ka->setmpi = pgprSetKeyMpiDSA;
-        ka->free = pgprFreeKeyDSA;
-        ka->mpis = 4;
-        return PGPR_OK;
+	return pgprInitKeyDSA(ka);
     case PGPRPUBKEYALGO_ECDSA:
-	if (!pgprSupportedCurve(ka->algo, ka->curve))
-	    return PGPR_ERROR_UNSUPPORTED_CURVE;
-        ka->setmpi = pgprSetKeyMpiECDSA;
-        ka->free = pgprFreeKeyECDSA;
-        ka->mpis = 1;
-        ka->info = ka->curve;
-        return PGPR_OK;
+	return pgprInitKeyECDSA(ka);
 #ifdef EVP_PKEY_ED25519
     case PGPRPUBKEYALGO_EDDSA:
-	if (!pgprSupportedCurve(ka->algo, ka->curve))
-	    return PGPR_ERROR_UNSUPPORTED_CURVE;
-        ka->setmpi = pgprSetKeyMpiEDDSA;
-        ka->free = pgprFreeKeyEDDSA;
-        ka->mpis = 1;
-        ka->info = ka->curve;
-        return PGPR_OK;
     case PGPRPUBKEYALGO_ED25519:
     case PGPRPUBKEYALGO_ED448:
-	ka->curve = (ka->algo == PGPRPUBKEYALGO_ED25519) ? PGPRCURVE_ED25519 : PGPRCURVE_ED448;
-	if (!pgprSupportedCurve(PGPRPUBKEYALGO_EDDSA, ka->curve))
-	    return PGPR_ERROR_UNSUPPORTED_CURVE;
-        ka->setmpi = pgprSetKeyMpiEDDSA;
-        ka->free = pgprFreeKeyEDDSA;
-        ka->mpis = 0;
-        return PGPR_OK;
+	return pgprInitKeyEDDSA(ka);
 #endif
 #if defined(EVP_PKEY_ML_DSA_65) || defined(EVP_PKEY_ML_DSA_87)
     case PGPRPUBKEYALGO_INTERNAL_MLDSA65:
     case PGPRPUBKEYALGO_INTERNAL_MLDSA87:
-        ka->setmpi = pgprSetKeyMpiMLDSA;
-        ka->free = pgprFreeKeyMLDSA;
-        ka->mpis = 0;
-        return PGPR_OK;
+	return pgprInitKeyMLDSA(ka);
 #endif
     default:
         break;
@@ -1054,47 +1123,21 @@ pgprRC pgprAlgInitSignature(pgprAlg sa)
 {
     switch (sa->algo) {
     case PGPRPUBKEYALGO_RSA:
-        sa->setmpi = pgprSetSigMpiRSA;
-        sa->free = pgprFreeSigRSA;
-        sa->verify = pgprVerifySigRSA;
-        sa->mpis = 1;
-        return PGPR_OK;
+	return pgprInitSigRSA(sa);
     case PGPRPUBKEYALGO_DSA:
-        sa->setmpi = pgprSetSigMpiDSA;
-        sa->free = pgprFreeSigDSA;
-        sa->verify = pgprVerifySigDSA;
-        sa->mpis = 2;
-        return PGPR_OK;
+	return pgprInitSigDSA(sa);
     case PGPRPUBKEYALGO_ECDSA:
-        sa->setmpi = pgprSetSigMpiECDSA;
-        sa->free = pgprFreeSigECDSA;
-        sa->verify = pgprVerifySigECDSA;
-        sa->mpis = 2;
-        return PGPR_OK;
+	return pgprInitSigECDSA(sa);
 #ifdef EVP_PKEY_ED25519
     case PGPRPUBKEYALGO_EDDSA:
-        sa->setmpi = pgprSetSigMpiEDDSA;
-        sa->free = pgprFreeSigEDDSA;
-        sa->verify = pgprVerifySigEDDSA;
-        sa->mpis = 2;
-        return PGPR_OK;
     case PGPRPUBKEYALGO_ED25519:
     case PGPRPUBKEYALGO_ED448:
-	sa->curve = (sa->algo == PGPRPUBKEYALGO_ED25519) ? PGPRCURVE_ED25519 : PGPRCURVE_ED448;
-        sa->setmpi = pgprSetSigMpiEDDSA;
-        sa->free = pgprFreeSigEDDSA;
-        sa->verify = pgprVerifySigEDDSA;
-        sa->mpis = 0;
-        return PGPR_OK;
+	return pgprInitSigEDDSA(sa);
 #endif
 #if defined(EVP_PKEY_ML_DSA_65) || defined(EVP_PKEY_ML_DSA_87)
     case PGPRPUBKEYALGO_INTERNAL_MLDSA65:
     case PGPRPUBKEYALGO_INTERNAL_MLDSA87:
-        sa->setmpi = pgprSetSigMpiMLDSA;
-        sa->free = pgprFreeSigMLDSA;
-        sa->verify = pgprVerifySigMLDSA;
-        sa->mpis = 0;
-        return PGPR_OK;
+	return pgprInitSigMLDSA(sa);
 #endif
     default:
         break;
@@ -1145,7 +1188,7 @@ pgprRC pgprDigestFinal(pgprDigCtx ctx, void ** datap, size_t *lenp)
     digestlen = EVP_MD_CTX_size(ctx);
     if (digestlen > 0) {
 	digest = (uint8_t *)pgprCalloc(digestlen, sizeof(*digest));
-	if (!EVP_DigestFinal_ex(ctx, digest, &digestlen)) {
+	if (!EVP_DigestFinal_ex(ctx, digest, (unsigned int *)&digestlen)) {
 	    digestlen = 0;
 	} else {
 	    if (datap) {

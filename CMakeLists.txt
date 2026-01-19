@@ -23,6 +23,7 @@ else()
     SET (libpgpr_SRCS ${libpgpr_SRCS} libgcrypt.c)
 endif()
 
+set (CMAKE_C_FLAGS                "${CMAKE_C_FLAGS} -Wall")
 
 ADD_LIBRARY (libpgpr SHARED ${libpgpr_SRCS})
 
