@@ -23,24 +23,6 @@ pgprItem pgprItemFree(pgprItem item)
     return NULL;
 }
 
-pgprAlg pgprAlgNew(void)
-{
-    pgprAlg alg;
-    alg = pgprCalloc(1, sizeof(*alg));
-    alg->mpis = -1;
-    return alg;
-}
-
-pgprAlg pgprAlgFree(pgprAlg alg)
-{
-    if (alg) {
-        if (alg->free)
-            alg->free(alg);
-        free(alg);
-    }
-    return NULL;
-}
-
 /* compare data of two signatures or keys */
 int pgprItemCmp(pgprItem p1, pgprItem p2)
 {

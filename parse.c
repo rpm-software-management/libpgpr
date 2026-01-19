@@ -85,34 +85,6 @@ static int pgprCurveByOid(const uint8_t *p, int l)
  * Key/Signature algorithm parameter handling
  */
 
-static inline int pgprMpiLen(const uint8_t *p)
-{
-    int mpi_bits = (p[0] << 8) | p[1];
-    return 2 + ((mpi_bits + 7) >> 3);
-}
-
-static pgprRC pgprAlgProcessMpis(pgprAlg alg, const int mpis,
-		       const uint8_t *p, const uint8_t *const pend)
-{
-    int i = 0;
-    if (mpis == 0) {
-	return alg->setmpi ? alg->setmpi(alg, -1, p, pend - p) : PGPR_ERROR_UNSUPPORTED_ALGORITHM;
-    }
-    for (; i < mpis && pend - p >= 2; i++) {
-	int mpil = pgprMpiLen(p);
-        pgprRC rc;
-	if (mpil < 2 || pend - p < mpil)
-	    return PGPR_ERROR_CORRUPT_PGP_PACKET;
-	rc = alg->setmpi ? alg->setmpi(alg, i, p, mpil) : PGPR_ERROR_UNSUPPORTED_ALGORITHM;
-	if (rc != PGPR_OK)
-	    return rc;
-	p += mpil;
-    }
-
-    /* Does the size and number of MPI's match our expectations? */
-    return p == pend && i == mpis ? PGPR_OK : PGPR_ERROR_CORRUPT_PGP_PACKET;
-}
-
 static pgprRC pgprParseKeyParams(pgprPkt *pkt, pgprItem item)
 {
     pgprRC rc;
@@ -463,6 +435,12 @@ pgprRC pgprParseSig(pgprPkt *pkt, pgprItem item)
     if (rc == PGPR_OK)
 	rc = pgprParseSigParams(pkt, item);
     return rc;
+}
+
+static inline int pgprMpiLen(const uint8_t *p)
+{
+    int mpi_bits = (p[0] << 8) | p[1];
+    return 2 + ((mpi_bits + 7) >> 3);
 }
 
 static pgprRC pgprParseKeyFp_V3(pgprPkt *pkt, pgprItem item)

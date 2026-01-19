@@ -78,7 +78,7 @@ static pgprRC pgprSetKeyMpiRSA(pgprAlg ka, int num, const uint8_t *p, int mlen)
     return rc;
 }
 
-static pgprRC pgprVerifySigRSA(pgprAlg ka, pgprAlg sa, const uint8_t *hash, size_t hashlen, int hash_algo)
+static pgprRC pgprVerifySigRSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size_t hashlen, int hash_algo)
 {
     struct pgprAlgKeyRSA_s *key = ka->data;
     struct pgprAlgSigRSA_s *sig = sa->data;
@@ -188,7 +188,7 @@ static pgprRC pgprSetKeyMpiDSA(pgprAlg ka, int num, const uint8_t *p, int mlen)
     return rc;
 }
 
-static pgprRC pgprVerifySigDSA(pgprAlg ka, pgprAlg sa, const uint8_t *hash, size_t hashlen, int hash_algo)
+static pgprRC pgprVerifySigDSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size_t hashlen, int hash_algo)
 {
     struct pgprAlgKeyDSA_s *key = ka->data;
     struct pgprAlgSigDSA_s *sig = sa->data;
@@ -317,7 +317,7 @@ static int eddsa_zero_extend(gcry_mpi_t x, unsigned char *buf, int bufl)
     return 0;
 }
 
-static pgprRC pgprVerifySigECC(pgprAlg ka, pgprAlg sa, const uint8_t *hash, size_t hashlen, int hash_algo)
+static pgprRC pgprVerifySigECC(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size_t hashlen, int hash_algo)
 {
     struct pgprAlgKeyECC_s *key = ka->data;
     struct pgprAlgSigECC_s *sig = sa->data;

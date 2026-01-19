@@ -19,9 +19,7 @@ pgprRC pgprVerifySignatureRaw(pgprItem key, pgprItem sig, const uint8_t *hash, s
     /* Compare leading 16 bits of digest for a quick check. */
     if (memcmp(hash, sig->signhash16, 2) != 0)
 	return PGPR_ERROR_BAD_SIGNATURE;
-    if (!key->alg || !sig->alg || !sig->alg->verify)
-	return PGPR_ERROR_INTERNAL;
-    return sig->alg->verify(key->alg, sig->alg, hash, hashlen, sig->hash_algo);
+    return pgprAlgVerify(sig->alg, key->alg, hash, hashlen, sig->hash_algo);
 }
 
 pgprRC pgprVerifySignature(pgprItem key, pgprItem sig, const uint8_t *hash, size_t hashlen, char **lints)

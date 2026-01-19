@@ -132,7 +132,7 @@ typedef enum pgprSubType_e {
 PGPR_GNUC_INTERNAL
 pgprRC pgprDecodePkt(const uint8_t *p, size_t plen, pgprPkt *pkt);
 
-/* allocation */
+/* crypto handling */
 PGPR_GNUC_INTERNAL
 pgprAlg pgprAlgNew(void);
 
@@ -144,6 +144,12 @@ pgprRC pgprAlgInitPubkey(pgprAlg alg, int algo, int curve);
 
 PGPR_GNUC_INTERNAL
 pgprRC pgprAlgInitSignature(pgprAlg alg, int algo);
+
+PGPR_GNUC_INTERNAL
+pgprRC pgprAlgProcessMpis(pgprAlg alg, const int mpis, const uint8_t *p, const uint8_t *const pend);
+
+PGPR_GNUC_INTERNAL
+pgprRC pgprAlgVerify(pgprAlg sigalg, pgprAlg keyalg, const uint8_t *hash, size_t hashlen, int hash_algo);
 
 /* pgp packet data extraction */
 PGPR_GNUC_INTERNAL
