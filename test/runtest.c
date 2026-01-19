@@ -151,23 +151,23 @@ do_diff(char *out, size_t outl, char *exp, size_t expl)
 	nol = linelen(out + ol, outl - ol);
 	nel = linelen(exp + el, expl - el);
 	if (el == nol && memcmp(exp, out + ol, el) == 0) {
-	    printf("+%.*s", ol, out);
+	    printf("+%.*s", (int)ol, out);
 	    out += ol;
 	    outl -= ol;
 	    continue;
 	}
 	if (ol == nel && memcmp(out, exp + el, ol) == 0) {
-	    printf("-%.*s", el, exp);
+	    printf("-%.*s", (int)el, exp);
 	    exp += el;
 	    expl -= el;
 	    continue;
 	}
 	if (el) {
-	    printf("-%.*s", el, exp);
+	    printf("-%.*s", (int)el, exp);
 	    exp += el;
 	    expl -= el;
 	} else {
-	    printf("+%.*s", ol, out);
+	    printf("+%.*s", (int)ol, out);
 	    out += ol;
 	    outl -= ol;
 	}

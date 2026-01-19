@@ -46,32 +46,6 @@ static char *slurp(const char *fn, size_t *lenp)
     return buf;
 }
 
-static unsigned char *dehex(char *buf, size_t *lenp)
-{
-    size_t i, len = strlen(buf);
-    char *obuf = malloc((len / 2) + 1);
-    if (!strcmp(buf, "<empty>"))	/* hack */
-	len = 0;
-    int x = 0;
-    for (i = 0; i < len; i++) {
-	if (buf[i] >= '0' && buf[i] <= '9')
-	    x = (x << 4) + buf[i] - '0';
-	else if (buf[i] >= 'a' && buf[i] <= 'f')
-	    x = (x << 4) + buf[i] - ('a' - 10);
-	else if (buf[i] >= 'A' && buf[i] <= 'F')
-	    x = (x << 4) + buf[i] - ('A' - 10);
-	else
-	    die("dehex: bad character '%c', buf[i]", PGPR_OK);
-	if ((i & 1) != 0)
-	    obuf[i / 2] = x;
-    }
-    if ((i & 1) != 0)
-	die("dehex: odd length", PGPR_OK);
-    if (lenp)
-	*lenp = len / 2;
-    return obuf;
-}
-
 static void
 printhex(const char *what, const uint8_t *d, size_t l)
 {
@@ -145,7 +119,7 @@ verifysignature(int argc, char **argv)
     }
     pubkey_a = slurp(argv[optind], NULL);
     signature_a = slurp(argv[optind + 1], NULL);
-    data = slurp(argv[optind + 2], &datalen);
+    data = (unsigned char *)slurp(argv[optind + 2], &datalen);
 
     if ((rc = pgprArmorUnwrap("PUBLIC KEY BLOCK", pubkey_a, &pubkey, &pubkeyl)) != PGPR_OK)
 	die("pubkey unwrap error", rc);
@@ -221,7 +195,7 @@ keyinfo(int argc, char **argv)
     const unsigned char *keyid;
     const unsigned char *keyfp;
     size_t keyfp_len = 0;
-    int c, i;
+    int c;
     int subkey = 0;
 
     while ((c = getopt(argc, argv, "s:")) >= 0) {
@@ -279,8 +253,6 @@ certinfo(int argc, char **argv)
     size_t fplen = 0;
     size_t certlen = 0;
     
-    int i;
-
     if (argc - 1 != 1) {
 	fprintf(stderr, "usage: testpgpr certinfo <pubkey>\n");
 	exit(1);
@@ -316,7 +288,6 @@ siginfo(int argc, char **argv)
     const unsigned char *keyid;
     const unsigned char *keyfp;
     size_t keyfp_len = 0;
-    int i;
 
     if (argc != 2) {
 	fprintf(stderr, "usage: testpgpr siginfo <signature>\n");
@@ -371,7 +342,7 @@ enarmor(int argc, char **argv)
 	fprintf(stderr, "usage: testpgpr enarmor [-k keyline] <type> <file>\n");
 	exit(1);
     }
-    data = slurp(argv[optind + 1], &datal);
+    data = (unsigned char *)slurp(argv[optind + 1], &datal);
     armor = pgprArmorWrap(argv[optind], keys, data, datal);
     printf("%s", armor);
     free(armor);
@@ -414,7 +385,7 @@ digest(int argc, char **argv)
 	fprintf(stderr, "usage: testpgpr dearmor <algo> <file>\n");
 	exit(1);
     }
-    data = slurp(argv[2], &datal);
+    data = (unsigned char *)slurp(argv[2], &datal);
     algo = atoi(argv[1]);
     if ((rc = pgprDigestInit(algo, &ctx)) != PGPR_OK)
 	die("digest init error", rc);
