@@ -127,6 +127,11 @@ typedef enum pgprSubType_e {
     PGPRSUBTYPE_CRITICAL	= 128  /*!< critical subpacket marker */
 } pgprSubType;
 
+/* internal pubkey algorithms. They cannot conflict with the official definitions
+   ss pgp uses just one byte for the algo */
+#define PGPRPUBKEYALGO_INTERNAL_MLDSA65	(256 + 0)
+#define PGPRPUBKEYALGO_INTERNAL_MLDSA87	(256 + 1)
+
 
 /* pgpr packet decoding */
 PGPR_GNUC_INTERNAL
