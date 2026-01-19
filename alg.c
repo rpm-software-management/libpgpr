@@ -24,62 +24,12 @@ pgprAlg pgprAlgFree(pgprAlg alg)
 
 /****************************** Hybrid **************************************/
 
-struct pgprAlgKeyHybrid_s {
+struct pgprAlgSigHybrid_s {
     pgprAlg mldsa;
     pgprAlg eddsa;
 };
 
-static pgprRC pgprSetKeyMpiHybrid(pgprAlg ka, int num, const uint8_t *p, int mlen)
-{
-    struct pgprAlgKeyHybrid_s *key = ka->data;
-    pgprRC rc = PGPR_ERROR_REJECTED_PUBKEY;
-    int mldsaalgo = 0, eddsaalgo = 0, mldsasize = 0, eddsasize = 0;
-    if (num != -1)
-	return rc;
-    if (!key)
-	key = ka->data = pgprCalloc(1, sizeof(*key));
-
-    switch (ka->algo) {
-	case PGPRPUBKEYALGO_MLDSA65_ED25519:
-	    eddsasize = 32;
-	    mldsasize = 1952;
-	    eddsaalgo = PGPRPUBKEYALGO_ED25519;
-	    mldsaalgo = PGPRPUBKEYALGO_INTERNAL_MLDSA65;
-	    break;
-	case PGPRPUBKEYALGO_MLDSA87_ED448:
-	    eddsasize = 57;
-	    mldsasize = 2592;
-	    eddsaalgo = PGPRPUBKEYALGO_ED448;
-	    mldsaalgo = PGPRPUBKEYALGO_INTERNAL_MLDSA87;
-	    break;
-	default:
-	    break;
-    }
-    if (!eddsasize || !mldsasize || mlen != eddsasize + mldsasize || !eddsaalgo || !mldsaalgo)
-	return rc;
-
-    key->eddsa = pgprAlgNew();
-    if ((rc = pgprAlgSetupPubkey(key->eddsa, eddsaalgo, 0, p, p + eddsasize)) != PGPR_OK)
-	return rc;
-    key->mldsa = pgprAlgNew();
-    if ((rc = pgprAlgSetupPubkey(key->mldsa, mldsaalgo, 0, p + eddsasize, p + eddsasize + mldsasize)) != PGPR_OK)
-	return rc;
-    return PGPR_OK;
-}
-
-static void pgprFreeKeyHybrid(pgprAlg sa)
-{
-    struct pgprAlgKeyHybrid_s *key = sa->data;
-    if (key) {
-	if (key->mldsa && key->mldsa->free)
-	    key->mldsa->free(key->mldsa);
-	if (key->eddsa && key->eddsa->free)
-	    key->eddsa->free(key->eddsa);
-	free(key);
-    }
-}
-
-struct pgprAlgSigHybrid_s {
+struct pgprAlgKeyHybrid_s {
     pgprAlg mldsa;
     pgprAlg eddsa;
 };
@@ -122,6 +72,44 @@ static pgprRC pgprSetSigMpiHybrid(pgprAlg sa, int num, const uint8_t *p, int mle
     return PGPR_OK;
 }
 
+static pgprRC pgprSetKeyMpiHybrid(pgprAlg ka, int num, const uint8_t *p, int mlen)
+{
+    struct pgprAlgKeyHybrid_s *key = ka->data;
+    pgprRC rc = PGPR_ERROR_REJECTED_PUBKEY;
+    int mldsaalgo = 0, eddsaalgo = 0, mldsasize = 0, eddsasize = 0;
+    if (num != -1)
+	return rc;
+    if (!key)
+	key = ka->data = pgprCalloc(1, sizeof(*key));
+
+    switch (ka->algo) {
+	case PGPRPUBKEYALGO_MLDSA65_ED25519:
+	    eddsasize = 32;
+	    mldsasize = 1952;
+	    eddsaalgo = PGPRPUBKEYALGO_ED25519;
+	    mldsaalgo = PGPRPUBKEYALGO_INTERNAL_MLDSA65;
+	    break;
+	case PGPRPUBKEYALGO_MLDSA87_ED448:
+	    eddsasize = 57;
+	    mldsasize = 2592;
+	    eddsaalgo = PGPRPUBKEYALGO_ED448;
+	    mldsaalgo = PGPRPUBKEYALGO_INTERNAL_MLDSA87;
+	    break;
+	default:
+	    break;
+    }
+    if (!eddsasize || !mldsasize || mlen != eddsasize + mldsasize || !eddsaalgo || !mldsaalgo)
+	return rc;
+
+    key->eddsa = pgprAlgNew();
+    if ((rc = pgprAlgSetupPubkey(key->eddsa, eddsaalgo, 0, p, p + eddsasize)) != PGPR_OK)
+	return rc;
+    key->mldsa = pgprAlgNew();
+    if ((rc = pgprAlgSetupPubkey(key->mldsa, mldsaalgo, 0, p + eddsasize, p + eddsasize + mldsasize)) != PGPR_OK)
+	return rc;
+    return PGPR_OK;
+}
+
 static void pgprFreeSigHybrid(pgprAlg sa)
 {
     struct pgprAlgSigHybrid_s *sig = sa->data;
@@ -131,6 +119,18 @@ static void pgprFreeSigHybrid(pgprAlg sa)
 	if (sig->eddsa && sig->eddsa->free)
 	    sig->eddsa->free(sig->eddsa);
 	free(sig);
+    }
+}
+
+static void pgprFreeKeyHybrid(pgprAlg sa)
+{
+    struct pgprAlgKeyHybrid_s *key = sa->data;
+    if (key) {
+	if (key->mldsa && key->mldsa->free)
+	    key->mldsa->free(key->mldsa);
+	if (key->eddsa && key->eddsa->free)
+	    key->eddsa->free(key->eddsa);
+	free(key);
     }
 }
 
@@ -148,7 +148,7 @@ static pgprRC pgprVerifySigHybrid(pgprAlg sa, pgprAlg ka, const uint8_t *hash, s
     return rc;
 }
 
-static pgprRC pgprAlgInitSigHybrid(pgprAlg sa)
+static pgprRC pgprInitSigHybrid(pgprAlg sa)
 {
     sa->setmpi = pgprSetSigMpiHybrid;
     sa->free = pgprFreeSigHybrid;
@@ -157,11 +157,11 @@ static pgprRC pgprAlgInitSigHybrid(pgprAlg sa)
     return PGPR_OK;
 }
 
-static pgprRC pgprAlgInitKeyHybrid(pgprAlg sa)
+static pgprRC pgprInitKeyHybrid(pgprAlg ka)
 {
-    sa->setmpi = pgprSetKeyMpiHybrid;
-    sa->free = pgprFreeKeyHybrid;
-    sa->mpis = 0;
+    ka->setmpi = pgprSetKeyMpiHybrid;
+    ka->free = pgprFreeKeyHybrid;
+    ka->mpis = 0;
     return PGPR_OK;
 }
 
@@ -207,7 +207,7 @@ pgprRC pgprAlgSetupPubkey(pgprAlg alg, int algo, int curve, const uint8_t *p, co
     alg->algo = algo;
     alg->curve = curve;
     if (is_hybrid_algo(algo))
-	rc = pgprAlgInitKeyHybrid(alg);
+	rc = pgprInitKeyHybrid(alg);
     else
 	rc = pgprAlgInitPubkey(alg);
     if (rc != PGPR_OK)
@@ -221,7 +221,7 @@ pgprRC pgprAlgSetupSignature(pgprAlg alg, int algo, const uint8_t *p, const uint
 
     alg->algo = algo;
     if (is_hybrid_algo(algo))
-	rc = pgprAlgInitSigHybrid(alg);
+	rc = pgprInitSigHybrid(alg);
     else
 	rc = pgprAlgInitSignature(alg);
     if (rc != PGPR_OK)
