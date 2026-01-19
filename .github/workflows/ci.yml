@@ -1,0 +1,29 @@
+---
+name: CI
+
+on:
+  push:
+    branches:
+      - main 
+  pull_request:
+    branches:
+      - main 
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup
+        run:  |
+          sudo apt-get install cmake openssl-dev
+      - name: Build
+        run:  |
+          mkdir build
+          cd build
+          cmake -DWITH_OPENSSL=TRUE -DCMAKE_VERBOSE_MAKEFILE=TRUE ..
+          make
+      - name: Test
+        run:  |
+          cd build
+          make test
