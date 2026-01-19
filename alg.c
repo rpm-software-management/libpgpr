@@ -27,8 +27,7 @@ static inline int pgprMpiLen(const uint8_t *p)
     return 2 + ((mpi_bits + 7) >> 3);
 }
 
-pgprRC pgprAlgProcessMpis(pgprAlg alg, const int mpis,
-		       const uint8_t *p, const uint8_t *const pend)
+static pgprRC pgprAlgProcessMpis(pgprAlg alg, const int mpis, const uint8_t *p, const uint8_t *const pend)
 {
     int i = 0;
     if (mpis == 0) {
@@ -48,6 +47,30 @@ pgprRC pgprAlgProcessMpis(pgprAlg alg, const int mpis,
     /* Does the size and number of MPI's match our expectations? */
     return p == pend && i == mpis ? PGPR_OK : PGPR_ERROR_CORRUPT_PGP_PACKET;
 }
+
+pgprRC pgprAlgSetupPubkey(pgprAlg alg, int algo, int curve, const uint8_t *p, const uint8_t *const pend)
+{
+    pgprRC rc;
+
+    alg->algo = algo;
+    alg->curve = curve;
+    rc = pgprAlgInitPubkey(alg);
+    if (rc != PGPR_OK)
+	return rc;
+    return pgprAlgProcessMpis(alg, alg->mpis, p, pend);
+}
+
+pgprRC pgprAlgSetupSignature(pgprAlg alg, int algo, const uint8_t *p, const uint8_t *const pend)
+{
+    pgprRC rc;
+
+    alg->algo = algo;
+    rc = pgprAlgInitSignature(alg);
+    if (rc != PGPR_OK)
+	return rc;
+    return pgprAlgProcessMpis(alg, alg->mpis, p, pend);
+}
+
 
 pgprRC pgprAlgVerify(pgprAlg sigalg, pgprAlg keyalg, const uint8_t *hash, size_t hashlen, int hash_algo)
 {

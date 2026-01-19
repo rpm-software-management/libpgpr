@@ -145,16 +145,20 @@ PGPR_GNUC_INTERNAL
 pgprAlg pgprAlgFree(pgprAlg alg);
 
 PGPR_GNUC_INTERNAL
-pgprRC pgprAlgInitPubkey(pgprAlg alg, int algo, int curve);
+pgprRC pgprAlgSetupPubkey(pgprAlg alg, int algo, int curve, const uint8_t *p, const uint8_t *const pend);
 
 PGPR_GNUC_INTERNAL
-pgprRC pgprAlgInitSignature(pgprAlg alg, int algo);
-
-PGPR_GNUC_INTERNAL
-pgprRC pgprAlgProcessMpis(pgprAlg alg, const int mpis, const uint8_t *p, const uint8_t *const pend);
+pgprRC pgprAlgSetupSignature(pgprAlg alg, int algo, const uint8_t *p, const uint8_t *const pend);
 
 PGPR_GNUC_INTERNAL
 pgprRC pgprAlgVerify(pgprAlg sigalg, pgprAlg keyalg, const uint8_t *hash, size_t hashlen, int hash_algo);
+
+/* crypto internal, provided by the crypto backend glue */
+PGPR_GNUC_INTERNAL
+pgprRC pgprAlgInitPubkey(pgprAlg alg);
+
+PGPR_GNUC_INTERNAL
+pgprRC pgprAlgInitSignature(pgprAlg alg);
 
 /* pgp packet data extraction */
 PGPR_GNUC_INTERNAL

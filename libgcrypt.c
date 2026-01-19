@@ -431,10 +431,9 @@ static int pgprSupportedCurve(int algo, int curve)
     return 0;
 }
 
-pgprRC pgprAlgInitPubkey(pgprAlg ka, int algo, int curve)
+pgprRC pgprAlgInitPubkey(pgprAlg ka)
 {
-    ka->algo = algo;
-    switch (algo) {
+    switch (ka->algo) {
     case PGPRPUBKEYALGO_RSA:
 	ka->setmpi = pgprSetKeyMpiRSA;
 	ka->free = pgprFreeKeyRSA;
@@ -447,17 +446,16 @@ pgprRC pgprAlgInitPubkey(pgprAlg ka, int algo, int curve)
 	return PGPR_OK;
     case PGPRPUBKEYALGO_ECDSA:
     case PGPRPUBKEYALGO_EDDSA:
-	ka->curve = curve;
-	if (!pgprSupportedCurve(algo, curve))
+	if (!pgprSupportedCurve(ka->algo, ka->curve))
 	    return PGPR_ERROR_UNSUPPORTED_CURVE;
 	ka->setmpi = pgprSetKeyMpiECC;
 	ka->free = pgprFreeKeyECC;
 	ka->mpis = 1;
-	ka->info = curve;
+	ka->info = ka->curve;
 	return PGPR_OK;
     case PGPRPUBKEYALGO_ED25519:
     case PGPRPUBKEYALGO_ED448:
-	ka->curve = (algo == PGPRPUBKEYALGO_ED25519) ? PGPRCURVE_ED25519 : PGPRCURVE_ED448;
+	ka->curve = (ka->algo == PGPRPUBKEYALGO_ED25519) ? PGPRCURVE_ED25519 : PGPRCURVE_ED448;
 	if (!pgprSupportedCurve(PGPRPUBKEYALGO_EDDSA, ka->curve))
 	    return PGPR_ERROR_UNSUPPORTED_CURVE;
 	ka->setmpi = pgprSetKeyMpiECC;
@@ -470,10 +468,9 @@ pgprRC pgprAlgInitPubkey(pgprAlg ka, int algo, int curve)
     return PGPR_ERROR_UNSUPPORTED_ALGORITHM;
 }
 
-pgprRC pgprAlgInitSignature(pgprAlg sa, int algo)
+pgprRC pgprAlgInitSignature(pgprAlg sa)
 {
-    sa->algo = algo;
-    switch (algo) {
+    switch (sa->algo) {
     case PGPRPUBKEYALGO_RSA:
 	sa->setmpi = pgprSetSigMpiRSA;
 	sa->free = pgprFreeSigRSA;
@@ -495,7 +492,7 @@ pgprRC pgprAlgInitSignature(pgprAlg sa, int algo)
 	return PGPR_OK;
     case PGPRPUBKEYALGO_ED25519:
     case PGPRPUBKEYALGO_ED448:
-	sa->curve = (algo == PGPRPUBKEYALGO_ED25519) ? PGPRCURVE_ED25519 : PGPRCURVE_ED448;
+	sa->curve = (sa->algo == PGPRPUBKEYALGO_ED25519) ? PGPRCURVE_ED25519 : PGPRCURVE_ED448;
 	sa->setmpi = pgprSetSigMpiECC;
 	sa->free = pgprFreeSigECC;
 	sa->verify = pgprVerifySigECC;

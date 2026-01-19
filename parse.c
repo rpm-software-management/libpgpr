@@ -108,9 +108,7 @@ static pgprRC pgprParseKeyParams(pgprPkt *pkt, pgprItem item)
 	p += len + 1;
     }
     item->alg = pgprAlgNew();
-    rc = pgprAlgInitPubkey(item->alg, item->pubkey_algo, curve);
-    if (rc == PGPR_OK)
-	rc = pgprAlgProcessMpis(item->alg, item->alg->mpis, p, pkt->body + pkt->blen);
+    rc = pgprAlgSetupPubkey(item->alg, item->pubkey_algo, curve, p, pkt->body + pkt->blen);
     return rc;
 }
 
@@ -123,9 +121,7 @@ pgprRC pgprParseSigParams(pgprPkt *pkt, pgprItem item)
     if (item->alg || !item->mpi_offset || item->mpi_offset > pkt->blen)
 	return PGPR_ERROR_INTERNAL;
     item->alg = pgprAlgNew();
-    rc = pgprAlgInitSignature(item->alg, item->pubkey_algo);
-    if (rc == PGPR_OK)
-	rc = pgprAlgProcessMpis(item->alg, item->alg->mpis, pkt->body + item->mpi_offset, pkt->body + pkt->blen);
+    rc = pgprAlgSetupSignature(item->alg, item->pubkey_algo, pkt->body + item->mpi_offset, pkt->body + pkt->blen);
     if (rc != PGPR_OK)
 	item->alg = pgprAlgFree(item->alg);
     return rc;
