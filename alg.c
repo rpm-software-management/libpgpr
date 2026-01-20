@@ -8,6 +8,7 @@ pgprAlg pgprAlgNew(void)
     pgprAlg alg;
     alg = pgprCalloc(1, sizeof(*alg));
     alg->mpis = -1;
+    alg->setup_rc = PGPR_ERROR_INTERNAL;
     return alg;
 }
 
@@ -148,7 +149,7 @@ static pgprRC pgprVerifySigHybrid(pgprAlg sa, pgprAlg ka, const uint8_t *hash, s
     return rc;
 }
 
-static pgprRC pgprInitSigHybrid(pgprAlg sa)
+pgprRC pgprInitSigHybrid(pgprAlg sa)
 {
     sa->setmpi = pgprSetSigMpiHybrid;
     sa->free = pgprFreeSigHybrid;
@@ -157,7 +158,7 @@ static pgprRC pgprInitSigHybrid(pgprAlg sa)
     return PGPR_OK;
 }
 
-static pgprRC pgprInitKeyHybrid(pgprAlg ka)
+pgprRC pgprInitKeyHybrid(pgprAlg ka)
 {
     ka->setmpi = pgprSetKeyMpiHybrid;
     ka->free = pgprFreeKeyHybrid;
@@ -195,44 +196,39 @@ static pgprRC pgprAlgProcessMpis(pgprAlg alg, const int mpis, const uint8_t *p, 
     return p == pend && i == mpis ? PGPR_OK : PGPR_ERROR_CORRUPT_PGP_PACKET;
 }
 
-static inline int is_hybrid_algo(int algo)
-{
-    return algo == PGPRPUBKEYALGO_MLDSA65_ED25519 || algo == PGPRPUBKEYALGO_MLDSA87_ED448 ? 1 : 0;
-}
-
 pgprRC pgprAlgSetupPubkey(pgprAlg alg, int algo, int curve, const uint8_t *p, const uint8_t *const pend)
 {
     pgprRC rc;
-
     alg->algo = algo;
     alg->curve = curve;
-    if (is_hybrid_algo(algo))
-	rc = pgprInitKeyHybrid(alg);
-    else
-	rc = pgprAlgInitPubkey(alg);
-    if (rc != PGPR_OK)
-	return rc;
-    return pgprAlgProcessMpis(alg, alg->mpis, p, pend);
+    rc = pgprAlgInitPubkey(alg);
+    if (rc == PGPR_OK)
+	rc = pgprAlgProcessMpis(alg, alg->mpis, p, pend);
+    alg->setup_rc = rc;
+    return rc;
 }
 
 pgprRC pgprAlgSetupSignature(pgprAlg alg, int algo, const uint8_t *p, const uint8_t *const pend)
 {
     pgprRC rc;
-
     alg->algo = algo;
-    if (is_hybrid_algo(algo))
-	rc = pgprInitSigHybrid(alg);
-    else
-	rc = pgprAlgInitSignature(alg);
-    if (rc != PGPR_OK)
-	return rc;
-    return pgprAlgProcessMpis(alg, alg->mpis, p, pend);
+    rc = pgprAlgInitSignature(alg);
+    if (rc == PGPR_OK)
+	rc = pgprAlgProcessMpis(alg, alg->mpis, p, pend);
+    alg->setup_rc = rc;
+    return rc;
 }
 
 
 pgprRC pgprAlgVerify(pgprAlg sigalg, pgprAlg keyalg, const uint8_t *hash, size_t hashlen, int hash_algo)
 {
-    if (!sigalg || !sigalg || !sigalg->verify || !hashlen)
+    if (!sigalg || !keyalg || !hashlen)
+	return PGPR_ERROR_INTERNAL;
+    if (sigalg->setup_rc != PGPR_OK)
+	return sigalg->setup_rc;
+    if (keyalg->setup_rc != PGPR_OK)
+	return keyalg->setup_rc;
+    if (!sigalg->verify)
 	return PGPR_ERROR_INTERNAL;
     return sigalg->verify(sigalg, keyalg, hash, hashlen, hash_algo);
 }

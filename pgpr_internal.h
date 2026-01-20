@@ -34,6 +34,7 @@ struct pgprAlg_s {
     setmpifunc setmpi;
     verifyfunc verify;
     freefunc free;
+    pgprRC setup_rc;
     int algo;
     int curve;
     int info;
@@ -152,6 +153,12 @@ pgprRC pgprAlgSetupSignature(pgprAlg alg, int algo, const uint8_t *p, const uint
 
 PGPR_GNUC_INTERNAL
 pgprRC pgprAlgVerify(pgprAlg sigalg, pgprAlg keyalg, const uint8_t *hash, size_t hashlen, int hash_algo);
+
+PGPR_GNUC_INTERNAL
+pgprRC pgprInitSigHybrid(pgprAlg sa);
+
+PGPR_GNUC_INTERNAL
+pgprRC pgprInitKeyHybrid(pgprAlg ka);
 
 /* crypto internal, provided by the crypto backend glue */
 PGPR_GNUC_INTERNAL

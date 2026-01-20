@@ -1113,6 +1113,9 @@ pgprRC pgprAlgInitPubkey(pgprAlg ka)
     case PGPRPUBKEYALGO_INTERNAL_MLDSA87:
 	return pgprInitKeyMLDSA(ka);
 #endif
+    case PGPRPUBKEYALGO_MLDSA65_ED25519:
+    case PGPRPUBKEYALGO_MLDSA87_ED448:
+	return pgprInitKeyHybrid(ka);
     default:
         break;
     }
@@ -1139,6 +1142,9 @@ pgprRC pgprAlgInitSignature(pgprAlg sa)
     case PGPRPUBKEYALGO_INTERNAL_MLDSA87:
 	return pgprInitSigMLDSA(sa);
 #endif
+    case PGPRPUBKEYALGO_MLDSA65_ED25519:
+    case PGPRPUBKEYALGO_MLDSA87_ED448:
+	return pgprInitSigHybrid(sa);
     default:
         break;
     }
