@@ -259,10 +259,10 @@ static pgprRC pgprVerifySigRSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size
     EVP_PKEY_CTX *pkey_ctx = NULL;
     void *padded_sig = NULL;
 
-    if (!constructRSASigningKey(key)) {
-        rc = PGPR_ERROR_REJECTED_PUBKEY;
-        goto done;
-    }
+    if (!key || !sig)
+	return PGPR_ERROR_INTERNAL;
+    if (!constructRSASigningKey(key))
+        return PGPR_ERROR_REJECTED_PUBKEY;
 
     pkey_ctx = EVP_PKEY_CTX_new(key->evp_pkey, NULL);
     if (!pkey_ctx)
@@ -535,10 +535,10 @@ static pgprRC pgprVerifySigDSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size
     size_t xsig_len = 0;
     EVP_PKEY_CTX *pkey_ctx = NULL;
 
-    if (!constructDSASigningKey(key)) {
-        rc = PGPR_ERROR_REJECTED_PUBKEY;
-        goto done;
-    }
+    if (!key || !sig)
+	return PGPR_ERROR_INTERNAL;
+    if (!constructDSASigningKey(key))
+        return PGPR_ERROR_REJECTED_PUBKEY;
 
     xsig = constructDSASignature(sig->r, sig->rlen, sig->s, sig->slen, &xsig_len);
     if (!xsig)
@@ -730,10 +730,10 @@ static pgprRC pgprVerifySigECDSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, si
     size_t xsig_len = 0;
     EVP_PKEY_CTX *pkey_ctx = NULL;
 
-    if (!constructECDSASigningKey(key, ka->curve)) {
-	rc = PGPR_ERROR_REJECTED_PUBKEY;
-        goto done;
-    }
+    if (!key || !sig)
+	return PGPR_ERROR_INTERNAL;
+    if (!constructECDSASigningKey(key, ka->curve))
+	return PGPR_ERROR_REJECTED_PUBKEY;
 
     xsig = constructDSASignature(sig->r, sig->rlen, sig->s, sig->slen, &xsig_len);
     if (!xsig)
@@ -892,10 +892,11 @@ static pgprRC pgprVerifySigEDDSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, si
     struct pgprAlgKeyEDDSA_s *key = ka->data;
     EVP_MD_CTX *md_ctx = NULL;
 
-    if (!constructEDDSASigningKey(key, ka->curve)) {
-	rc = PGPR_ERROR_REJECTED_PUBKEY;
-	goto done;
-    }
+    if (!key || !sig)
+	return PGPR_ERROR_INTERNAL;
+    if (!constructEDDSASigningKey(key, ka->curve))
+	return PGPR_ERROR_REJECTED_PUBKEY;
+
     md_ctx = EVP_MD_CTX_new();
     if (EVP_DigestVerifyInit(md_ctx, NULL, EVP_md_null(), NULL, key->evp_pkey) != 1)
 	goto done;
@@ -1055,11 +1056,9 @@ static pgprRC pgprVerifySigMLDSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, si
     pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;	/* assume failure */
 
     if (!key || !sig)
-	goto done;
-    if (!constructMLDSASigningKey(key, sa->algo)) {
-	rc = PGPR_ERROR_REJECTED_PUBKEY;
-	goto done;
-    }
+	return PGPR_ERROR_INTERNAL;
+    if (!constructMLDSASigningKey(key, sa->algo))
+	return PGPR_ERROR_REJECTED_PUBKEY;
     md_ctx = EVP_MD_CTX_new();
     if (EVP_DigestVerifyInit(md_ctx, NULL, EVP_md_null(), NULL, key->evp_pkey) != 1)
 	goto done;
