@@ -19,6 +19,10 @@ pgprRC pgprVerifySignatureRaw(pgprItem key, pgprItem sig, const uint8_t *hash, s
     /* Compare leading 16 bits of digest for a quick check. */
     if (memcmp(hash, sig->signhash16, 2) != 0)
 	return PGPR_ERROR_BAD_SIGNATURE;
+    if (sig->pubkey_algo == PGPRPUBKEYALGO_MLDSA65_ED25519 || sig->pubkey_algo == PGPRPUBKEYALGO_MLDSA87_ED448) {
+	if (sig->version < 6 || hashlen < 32)
+	    return PGPR_ERROR_REJECTED_SIGNATURE;
+    }
     return pgprAlgVerify(sig->alg, key->alg, hash, hashlen, sig->hash_algo);
 }
 
