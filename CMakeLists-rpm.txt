@@ -8,7 +8,7 @@ ADD_DEFINITIONS (-DPGPR_RPM_INTREE)
 
 target_sources(rpmpgp_legacy PRIVATE
 	pgpr.h pkt.c item.c alg.c verify.c parse.c armor.c rpmglue.c
-	error.c pubkey.c merge.c util.c
+	error.c cert.c merge.c util.c
 )
 if (WITH_OPENSSL)
 	find_package(OpenSSL 1.0.2 REQUIRED)

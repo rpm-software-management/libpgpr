@@ -190,12 +190,12 @@ pgprRC pgprParseKeyFp(pgprPkt *pkt,  pgprItem item);
 PGPR_GNUC_INTERNAL
 void pgprAddLint(pgprItem item, char **lints, pgprRC error);
 
-/* transferable pubkey parsing */
+/* certificate parsing */
 PGPR_GNUC_INTERNAL
-pgprRC pgprParseTransferablePubkey(const uint8_t * pkts, size_t pktslen, pgprItem item);
+pgprRC pgprParseCertificate(const uint8_t * pkts, size_t pktslen, pgprItem item);
 
 PGPR_GNUC_INTERNAL
-pgprRC pgprParseTransferablePubkeySubkeys(const uint8_t * pkts, size_t pktslen, pgprItem mainkey,
+pgprRC pgprParseCertificateSubkeys(const uint8_t * pkts, size_t pktslen, pgprItem mainkey,
 				   pgprItem **subkeys, int *subkeysCount);
 
 /* signature verification */

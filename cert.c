@@ -1,5 +1,5 @@
 /*
- * Parse a transferable public key
+ * Parse a certificate
  */
 
 #include <string.h>
@@ -134,9 +134,9 @@ static int is_same_keyid(pgprItem item1, pgprItem item2)
 	memcmp(item1->keyid, item2->keyid, sizeof(item1->keyid)) == 0;
 }
 
-/* Parse a complete pubkey with all associated packets */
+/* Parse a complete pubkey with all associated packets (also called "transferable pubkey") */
 /* This is similar to gnupg's merge_selfsigs_main() function */
-pgprRC pgprParseTransferablePubkey(const uint8_t * pkts, size_t pktslen, pgprItem item)
+pgprRC pgprParseCertificate(const uint8_t * pkts, size_t pktslen, pgprItem item)
 {
     const uint8_t *p = pkts;
     const uint8_t *pend = pkts + pktslen;
@@ -323,7 +323,7 @@ pgprRC pgprParseTransferablePubkey(const uint8_t * pkts, size_t pktslen, pgprIte
 /* Return the subkeys for a pubkey. Note that the code in pgprParseParamsPubkey() already
  * made sure that the signatures are self-signatures and verified ok. */
 /* This is similar to gnupg's merge_selfsigs_subkey() function */
-pgprRC pgprParseTransferablePubkeySubkeys(const uint8_t *pkts, size_t pktslen,
+pgprRC pgprParseCertificateSubkeys(const uint8_t *pkts, size_t pktslen,
 			pgprItem mainkey, pgprItem **subkeys,
 			int *subkeysCount)
 {
@@ -429,7 +429,7 @@ pgprRC pgprParseTransferablePubkeySubkeys(const uint8_t *pkts, size_t pktslen,
 		if (!(key_flags & 0x02) || verifyPrimaryBindingSig(&mainpkt, &subkeypkt, subitem, sigitem) == PGPR_OK)
 		    needsig = 1;
 	    }
-	    /* the code in pgprParseTransferablePubkey always checks that SUBKEY_BINDING
+	    /* the code in pgprParseCertificate always checks that SUBKEY_BINDING
              * and SUBKEY_REVOKE are self-signatures and verify ok */
 
 	    /* check if this signature is expired */

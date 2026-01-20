@@ -151,9 +151,9 @@ pgprRC pgprPubkeyParse(const uint8_t * pkts, size_t pktslen, pgprItem * ret, cha
 	goto exit;
     }
 
-    /* use specialized transferable pubkey implementation */
+    /* use specialized certificate parsing implementation */
     key = pgprItemNew(pkt.tag);
-    rc = pgprParseTransferablePubkey(pkts, pktslen, key);
+    rc = pgprParseCertificate(pkts, pktslen, key);
 exit:
     if (ret && rc == PGPR_OK)
 	*ret = key;
@@ -169,7 +169,7 @@ pgprRC pgprPubkeyParseSubkeys(const uint8_t *pkts, size_t pktslen,
 			pgprItem key, pgprItem **subkeys,
 			int *subkeysCount)
 {
-    return pgprParseTransferablePubkeySubkeys(pkts, pktslen, key, subkeys, subkeysCount);
+    return pgprParseCertificateSubkeys(pkts, pktslen, key, subkeys, subkeysCount);
 }
 
 pgprRC pgprPubkeyCertLen(const uint8_t *pkts, size_t pktslen, size_t *certlen)
