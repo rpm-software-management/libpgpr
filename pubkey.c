@@ -400,6 +400,11 @@ pgprRC pgprParseTransferablePubkeySubkeys(const uint8_t *pkts, size_t pktslen,
 	    if (pgprParseKey(&pkt, subitem)) {
 		subitem = pgprItemFree(subitem);
 	    } else {
+		if (mainkey->version == 6 && subitem->version != 6) {
+		    /* version 6 keys can only have version 6 subkeys */
+		    subitem = pgprItemFree(subitem);
+		    continue;
+		}
 		if (count == alloced) {
 		    alloced <<= 1;
 		    items = pgprRealloc(items, alloced * sizeof(*items));
