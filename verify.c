@@ -14,11 +14,11 @@ pgprRC pgprVerifySignatureRaw(pgprItem key, pgprItem sig, const uint8_t *hash, s
 	return PGPR_ERROR_INTERNAL;
     if (sig->pubkey_algo != key->pubkey_algo)
 	return PGPR_ERROR_BAD_SIGNATURE;
-    if (key->version < 4)
-	return PGPR_ERROR_UNSUPPORTED_VERSION;
     /* Compare leading 16 bits of digest for a quick check. */
     if (memcmp(hash, sig->signhash16, 2) != 0)
 	return PGPR_ERROR_BAD_SIGNATURE;
+    if (key->version < 4)
+	return PGPR_ERROR_UNSUPPORTED_VERSION;
     if (key->version == 6 && sig->version != 6)
 	return PGPR_ERROR_BAD_SIGNATURE;
     if (sig->pubkey_algo == PGPRPUBKEYALGO_MLDSA65_ED25519 || sig->pubkey_algo == PGPRPUBKEYALGO_MLDSA87_ED448) {
