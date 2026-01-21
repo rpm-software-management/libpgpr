@@ -58,6 +58,12 @@ static int pgprSupportedCurve(int algo, int curve)
 	return 1;
     if (algo == PGPRPUBKEYALGO_ECDSA && curve == PGPRCURVE_NIST_P_521)
 	return 1;
+    if (algo == PGPRPUBKEYALGO_INTERNAL_MLDSA65 || algo == PGPRPUBKEYALGO_INTERNAL_MLDSA87) {
+	static int supported_mldsa;
+	if (!supported_mldsa)
+	    supported_mldsa = check_gcrypt_supported("(public-key (dilithium3))");
+	return supported_mldsa > 0;
+    }
     return 0;
 }
 
@@ -292,7 +298,7 @@ static void pgprFreeKeyDSA(pgprAlg ka)
 }
 
 static pgprRC pgprInitSigDSA(pgprAlg sa)
-{   
+{
     sa->setmpi = pgprSetSigMpiDSA;
     sa->free = pgprFreeSigDSA;
     sa->verify = pgprVerifySigDSA;
@@ -466,7 +472,7 @@ static void pgprFreeKeyECC(pgprAlg ka)
 }
 
 static pgprRC pgprInitSigECC(pgprAlg sa)
-{   
+{
     sa->setmpi = pgprSetSigMpiECC;
     sa->free = pgprFreeSigECC;
     sa->verify = pgprVerifySigECC;
@@ -490,6 +496,135 @@ static pgprRC pgprInitKeyECC(pgprAlg ka)
 }
 
 
+/****************************** ML-DSA **************************************/
+
+struct pgprAlgSigMLDSA_s {
+    gcry_mpi_t s;
+};
+
+struct pgprAlgKeyMLDSA_s {
+    gcry_mpi_t p;
+};
+
+static pgprRC pgprSetSigMpiMLDSA(pgprAlg sa, int num, const uint8_t *p, int mlen)
+{
+    struct pgprAlgSigMLDSA_s *sig = sa->data;
+    pgprRC rc = PGPR_ERROR_REJECTED_SIGNATURE;
+    int sigl = 0;
+
+    if (num != -1)
+	return rc;
+    if (!sig)
+	sig = sa->data = pgprCalloc(1, sizeof(*sig));
+    switch (sa->algo) {
+	case PGPRPUBKEYALGO_INTERNAL_MLDSA65:
+	    sigl = 3309;
+	    break;
+	case PGPRPUBKEYALGO_INTERNAL_MLDSA87:
+	    sigl = 4627;
+	    break;
+	default:
+	    break;
+    }
+    if (sigl && mlen == sigl) {
+	if (!gcry_mpi_scan(&sig->s, GCRYMPI_FMT_USG, p, sigl, NULL))
+	    rc = PGPR_OK;
+    }
+    return rc;
+}
+
+static pgprRC pgprSetKeyMpiMLDSA(pgprAlg ka, int num, const uint8_t *p, int mlen)
+{
+    struct pgprAlgKeyMLDSA_s *key = ka->data;
+    pgprRC rc = PGPR_ERROR_REJECTED_PUBKEY;
+    int keyl = 0;
+
+    if (num != -1)
+	return rc;
+    if (!key)
+	key = ka->data = pgprCalloc(1, sizeof(*key));
+    switch (ka->algo) {
+	case PGPRPUBKEYALGO_INTERNAL_MLDSA65:
+	    keyl = 1952;
+	    break;
+	case PGPRPUBKEYALGO_INTERNAL_MLDSA87:
+	    keyl = 2592;
+	    break;
+	default:
+	    break;
+    }
+    if (keyl && mlen == keyl) {
+	if (!gcry_mpi_scan(&key->p, GCRYMPI_FMT_USG, p, keyl, NULL))
+	    rc = PGPR_OK;
+    }
+    return rc;
+}
+
+static pgprRC pgprVerifySigMLDSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size_t hashlen, int hash_algo)
+{
+    pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;
+    struct pgprAlgKeyMLDSA_s *key = ka->data;
+    struct pgprAlgSigMLDSA_s *sig = sa->data;
+    gcry_sexp_t sexp_sig = NULL, sexp_data = NULL, sexp_pkey = NULL;
+
+    if (!sig || !key || !sig->s || !key->p)
+	return rc;
+    gcry_sexp_build(&sexp_data, NULL, "(data (raw) (value %b))", (int)hashlen, (const char *)hash);
+    if (ka->algo == PGPRPUBKEYALGO_INTERNAL_MLDSA65) {
+	gcry_sexp_build(&sexp_sig, NULL, "(sig-val (dilithium3 (s %M)))", sig->s);
+	gcry_sexp_build(&sexp_pkey, NULL, "(public-key (dilithium3 (p %M)))", key->p);
+    } else if (ka->algo == PGPRPUBKEYALGO_INTERNAL_MLDSA87) {
+	gcry_sexp_build(&sexp_sig, NULL, "(sig-val (dilithium5 (s %M)))", sig->s);
+	gcry_sexp_build(&sexp_pkey, NULL, "(public-key (dilithium5 (p %M)))", key->p);
+    }
+    if (sexp_sig && sexp_data && sexp_pkey)
+	if (gcry_pk_verify(sexp_sig, sexp_data, sexp_pkey) == 0)
+		rc = PGPR_OK;
+    gcry_sexp_release(sexp_sig);
+    gcry_sexp_release(sexp_data);
+    gcry_sexp_release(sexp_pkey);
+    return rc;
+}
+
+static void pgprFreeSigMLDSA(pgprAlg sa)
+{
+    struct pgprAlgSigMLDSA_s *sig = sa->data;
+    if (sig) {
+	gcry_mpi_release(sig->s);
+	free(sig);
+	sa->data = NULL;
+    }
+}
+
+static void pgprFreeKeyMLDSA(pgprAlg ka)
+{
+    struct pgprAlgKeyMLDSA_s *key = ka->data;
+    if (key) {
+	gcry_mpi_release(key->p);
+	free(key);
+	ka->data = NULL;
+    }
+}
+
+static pgprRC pgprInitSigMLDSA(pgprAlg sa)
+{
+    sa->setmpi = pgprSetSigMpiMLDSA;
+    sa->free = pgprFreeSigMLDSA;
+    sa->verify = pgprVerifySigMLDSA;
+    sa->mpis = 0;
+    return PGPR_OK;
+}
+
+static pgprRC pgprInitKeyMLDSA(pgprAlg ka)
+{
+    if (!pgprSupportedCurve(ka->algo, 0))
+	return PGPR_ERROR_UNSUPPORTED_ALGORITHM;
+    ka->setmpi = pgprSetKeyMpiMLDSA;
+    ka->free = pgprFreeKeyMLDSA;
+    ka->mpis = 0;
+    return PGPR_OK;
+}
+
 
 pgprRC pgprAlgInitPubkey(pgprAlg ka)
 {
@@ -503,6 +638,12 @@ pgprRC pgprAlgInitPubkey(pgprAlg ka)
     case PGPRPUBKEYALGO_ED25519:
     case PGPRPUBKEYALGO_ED448:
 	return pgprInitKeyECC(ka);
+    case PGPRPUBKEYALGO_INTERNAL_MLDSA65:
+    case PGPRPUBKEYALGO_INTERNAL_MLDSA87:
+        return pgprInitKeyMLDSA(ka);
+    case PGPRPUBKEYALGO_MLDSA65_ED25519:
+    case PGPRPUBKEYALGO_MLDSA87_ED448:
+        return pgprInitKeyHybrid(ka);
     default:
 	break;
     }
@@ -521,6 +662,12 @@ pgprRC pgprAlgInitSignature(pgprAlg sa)
     case PGPRPUBKEYALGO_ED25519:
     case PGPRPUBKEYALGO_ED448:
 	return pgprInitSigECC(sa);
+    case PGPRPUBKEYALGO_INTERNAL_MLDSA65:
+    case PGPRPUBKEYALGO_INTERNAL_MLDSA87:
+        return pgprInitSigMLDSA(sa);
+    case PGPRPUBKEYALGO_MLDSA65_ED25519:
+    case PGPRPUBKEYALGO_MLDSA87_ED448:
+        return pgprInitSigHybrid(sa);
     default:
 	break;
     }
@@ -567,7 +714,7 @@ pgprRC pgprDigestFinal(pgprDigCtx ctx, void ** datap, size_t *lenp)
     unsigned char *digest;
     unsigned int digestlen;
     gcry_md_hd_t h = ctx;
-    
+
     if (!h || (gcryalgo = gcry_md_get_algo(h)) == 0)
 	return PGPR_ERROR_INTERNAL;
     digestlen = gcry_md_get_algo_dlen(gcryalgo);
