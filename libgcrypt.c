@@ -126,7 +126,7 @@ static pgprRC pgprVerifySigRSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size
     int gcry_hash_algo = hashalgo2gcryalgo(hash_algo);
     pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;
 
-    if (!sig || !key || !gcry_hash_algo)
+    if (!sig || !key || !sig->s || !key->n || !key->e || !gcry_hash_algo)
 	return rc;
 
     gcry_sexp_build(&sexp_sig, NULL, "(sig-val (rsa (s %M)))", sig->s);
@@ -253,7 +253,7 @@ static pgprRC pgprVerifySigDSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size
     pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;
     size_t qlen;
 
-    if (!sig || !key)
+    if (!sig || !key || !sig->r || !sig->s || !key->p || !key->q || !key->g || !key->y)
 	return rc;
 
     qlen = (mpi_get_nbits(key->q) + 7) / 8;
@@ -398,7 +398,7 @@ static pgprRC pgprVerifySigECC(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size
     gcry_sexp_t sexp_sig = NULL, sexp_data = NULL, sexp_pkey = NULL;
     pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;
 
-    if (!sig || !key)
+    if (!sig || !key || !sig->r || !sig->s || !key->q)
 	return rc;
     if (ka->curve == PGPRCURVE_ED25519) {
 	unsigned char buf_r[32], buf_s[32];
