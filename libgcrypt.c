@@ -407,30 +407,14 @@ static pgprRC pgprVerifySigECC(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size
 	gcry_sexp_build(&sexp_sig, NULL, "(sig-val (eddsa (r %b) (s %b)))", 32, (const char *)buf_r, 32, (const char *)buf_s);
 	gcry_sexp_build(&sexp_data, NULL, "(data (flags eddsa) (hash-algo sha512) (value %b))", (int)hashlen, (const char *)hash);
 	gcry_sexp_build(&sexp_pkey, NULL, "(public-key (ecc (curve \"Ed25519\") (flags eddsa) (q %M)))", key->q);
-	if (sexp_sig && sexp_data && sexp_pkey)
-	    if (gcry_pk_verify(sexp_sig, sexp_data, sexp_pkey) == 0)
-		rc = PGPR_OK;
-	gcry_sexp_release(sexp_sig);
-	gcry_sexp_release(sexp_data);
-	gcry_sexp_release(sexp_pkey);
-	return rc;
-    }
-    if (ka->curve == PGPRCURVE_ED448) {
+    } else if (ka->curve == PGPRCURVE_ED448) {
 	unsigned char buf_r[57], buf_s[57];
 	if (eddsa_zero_extend(sig->r, buf_r, 57) || eddsa_zero_extend(sig->s, buf_s, 57))
 	    return rc;
 	gcry_sexp_build(&sexp_sig, NULL, "(sig-val (eddsa (r %b) (s %b)))", 57, (const char *)buf_r, 57, (const char *)buf_s);
 	gcry_sexp_build(&sexp_data, NULL, "(data (flags eddsa) (value %b))", (int)hashlen, (const char *)hash);
 	gcry_sexp_build(&sexp_pkey, NULL, "(public-key (ecc (curve \"Ed448\") (flags eddsa) (q %M)))", key->q);
-	if (sexp_sig && sexp_data && sexp_pkey)
-	    if (gcry_pk_verify(sexp_sig, sexp_data, sexp_pkey) == 0)
-		rc = PGPR_OK;
-	gcry_sexp_release(sexp_sig);
-	gcry_sexp_release(sexp_data);
-	gcry_sexp_release(sexp_pkey);
-	return rc;
-    }
-    if (ka->curve == PGPRCURVE_NIST_P_256 || ka->curve == PGPRCURVE_NIST_P_384 || ka->curve == PGPRCURVE_NIST_P_521) {
+    } else if (ka->curve == PGPRCURVE_NIST_P_256 || ka->curve == PGPRCURVE_NIST_P_384 || ka->curve == PGPRCURVE_NIST_P_521) {
 	gcry_sexp_build(&sexp_sig, NULL, "(sig-val (ecdsa (r %M) (s %M)))", sig->r, sig->s);
 	gcry_sexp_build(&sexp_data, NULL, "(data (value %b))", (int)hashlen, (const char *)hash);
 	if (ka->curve == PGPRCURVE_NIST_P_256)
@@ -439,14 +423,13 @@ static pgprRC pgprVerifySigECC(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size
 	    gcry_sexp_build(&sexp_pkey, NULL, "(public-key (ecc (curve \"NIST P-384\") (q %M)))", key->q);
 	else if (ka->curve == PGPRCURVE_NIST_P_521)
 	    gcry_sexp_build(&sexp_pkey, NULL, "(public-key (ecc (curve \"NIST P-521\") (q %M)))", key->q);
-	if (sexp_sig && sexp_data && sexp_pkey)
-	    if (gcry_pk_verify(sexp_sig, sexp_data, sexp_pkey) == 0)
-		rc = PGPR_OK;
-	gcry_sexp_release(sexp_sig);
-	gcry_sexp_release(sexp_data);
-	gcry_sexp_release(sexp_pkey);
-	return rc;
     }
+    if (sexp_sig && sexp_data && sexp_pkey)
+	if (gcry_pk_verify(sexp_sig, sexp_data, sexp_pkey) == 0)
+	    rc = PGPR_OK;
+    gcry_sexp_release(sexp_sig);
+    gcry_sexp_release(sexp_data);
+    gcry_sexp_release(sexp_pkey);
     return rc;
 }
 
