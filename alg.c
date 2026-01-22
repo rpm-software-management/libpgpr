@@ -17,9 +17,9 @@ pgprAlg pgprAlgNew(void)
 pgprAlg pgprAlgFree(pgprAlg alg)
 {
     if (alg) {
-        if (alg->free)
-            alg->free(alg);
-        free(alg);
+	if (alg->free)
+	    alg->free(alg);
+	free(alg);
     }
     return NULL;
 }
@@ -129,8 +129,8 @@ static void pgprFreeSigHybrid(pgprAlg sa)
 {
     struct pgprAlgSigHybrid_s *sig = sa->data;
     if (sig) {
-        pgprAlgFree(sig->mldsa);
-        pgprAlgFree(sig->eddsa);
+	pgprAlgFree(sig->mldsa);
+	pgprAlgFree(sig->eddsa);
 	free(sig);
     }
 }
@@ -139,8 +139,8 @@ static void pgprFreeKeyHybrid(pgprAlg sa)
 {
     struct pgprAlgKeyHybrid_s *key = sa->data;
     if (key) {
-        pgprAlgFree(key->mldsa);
-        pgprAlgFree(key->eddsa);
+	pgprAlgFree(key->mldsa);
+	pgprAlgFree(key->eddsa);
 	free(key);
     }
 }
@@ -185,15 +185,17 @@ static inline int pgprMpiLen(const uint8_t *p)
     return 2 + ((mpi_bits + 7) >> 3);
 }
 
-static pgprRC pgprAlgProcessMpis(pgprAlg alg, const int mpis, const uint8_t *p, const uint8_t *const pend)
+static pgprRC pgprAlgProcessMpis(pgprAlg alg, const uint8_t *p, const uint8_t *const pend)
 {
-    int i = 0;
+    int i = 0, mpis = alg->mpis;
+    if (mpis < 0)
+	return PGPR_ERROR_INTERNAL;
     if (mpis == 0) {
 	return alg->setmpi ? alg->setmpi(alg, -1, p, pend - p) : PGPR_ERROR_UNSUPPORTED_ALGORITHM;
     }
     for (; i < mpis && pend - p >= 2; i++) {
+	pgprRC rc;
 	int mpil = pgprMpiLen(p);
-        pgprRC rc;
 	if (mpil < 2 || pend - p < mpil)
 	    return PGPR_ERROR_CORRUPT_PGP_PACKET;
 	rc = alg->setmpi ? alg->setmpi(alg, i, p, mpil) : PGPR_ERROR_UNSUPPORTED_ALGORITHM;
@@ -213,7 +215,7 @@ pgprRC pgprAlgSetupPubkey(pgprAlg alg, int algo, int curve, const uint8_t *p, co
     alg->curve = curve;
     rc = pgprAlgInitPubkey(alg);
     if (rc == PGPR_OK)
-	rc = pgprAlgProcessMpis(alg, alg->mpis, p, pend);
+	rc = pgprAlgProcessMpis(alg, p, pend);
     alg->setup_rc = rc;
     return rc;
 }
@@ -224,7 +226,7 @@ pgprRC pgprAlgSetupSignature(pgprAlg alg, int algo, const uint8_t *p, const uint
     alg->algo = algo;
     rc = pgprAlgInitSignature(alg);
     if (rc == PGPR_OK)
-	rc = pgprAlgProcessMpis(alg, alg->mpis, p, pend);
+	rc = pgprAlgProcessMpis(alg, p, pend);
     alg->setup_rc = rc;
     return rc;
 }
