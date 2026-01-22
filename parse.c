@@ -108,6 +108,8 @@ static pgprRC pgprParseKeyParams(pgprPkt *pkt, pgprItem item)
 	p += len + 1;
     }
     item->alg = pgprAlgNew();
+    if (!item->alg)
+	return PGPR_ERROR_NO_MEMORY;
     rc = pgprAlgSetupPubkey(item->alg, item->pubkey_algo, curve, p, pkt->body + pkt->blen);
     return rc;
 }
@@ -121,6 +123,8 @@ pgprRC pgprParseSigParams(pgprPkt *pkt, pgprItem item)
     if (item->alg || !item->mpi_offset || item->mpi_offset > pkt->blen)
 	return PGPR_ERROR_INTERNAL;
     item->alg = pgprAlgNew();
+    if (!item->alg)
+	return PGPR_ERROR_NO_MEMORY;
     rc = pgprAlgSetupSignature(item->alg, item->pubkey_algo, pkt->body + item->mpi_offset, pkt->body + pkt->blen);
     if (rc != PGPR_OK)
 	item->alg = pgprAlgFree(item->alg);
@@ -260,6 +264,8 @@ static pgprRC pgprParseSigSubPkts(const uint8_t *h, size_t hlen, pgprItem item, 
 	    impl = 1;
 	    item->embedded_sig_len = plen - 1;
 	    item->embedded_sig = pgprMemdup(p + 1, plen - 1);
+	    if (!item->embedded_sig)
+		return PGPR_ERROR_NO_MEMORY;
 	    break;
 
 	case PGPRSUBTYPE_PRIMARY_USERID:
@@ -298,6 +304,8 @@ static pgprRC create_sig_trailer(pgprItem item, const uint8_t *p, size_t plen)
     else
 	return PGPR_ERROR_UNSUPPORTED_VERSION;
     item->hash = pgprCalloc(1, item->hashlen);
+    if (!item->hash)
+	return PGPR_ERROR_NO_MEMORY;
     memcpy(item->hash, p, plen);
     if (item->version == 4 || item->version == 6) {
 	uint8_t *trailer = item->hash + item->hashlen - 6;
@@ -316,6 +324,17 @@ static pgprRC create_sig_trailer(pgprItem item, const uint8_t *p, size_t plen)
 	trailer[8] = plen >> 8;
 	trailer[9] = plen;
     }
+    return PGPR_OK;
+}
+
+static pgprRC create_sig_salt(pgprItem item, const uint8_t *salt, size_t saltlen)
+{
+    uint8_t *newhash = pgprRealloc(item->hash, item->hashlen + saltlen);
+    if (!newhash)
+	return PGPR_ERROR_NO_MEMORY;
+    item->hash = newhash;
+    memcpy(item->hash + item->hashlen, salt, saltlen);
+    item->saltlen = saltlen;
     return PGPR_OK;
 }
 
@@ -341,6 +360,8 @@ pgprRC pgprParseSigNoParams(pgprPkt *pkt, pgprItem item)
 	item->hashlen = v->hashlen;
 	item->sigtype = v->sigtype;
 	item->hash = pgprMemdup(&v->sigtype, v->hashlen);
+	if (!item->hash)
+	    return PGPR_ERROR_NO_MEMORY;
 	item->time = pgprGrab4(v->time);
 	memcpy(item->keyid, v->keyid, sizeof(item->keyid));
 	item->saved = PGPRITEM_SAVED_TIME | PGPRITEM_SAVED_ID;
@@ -406,9 +427,9 @@ pgprRC pgprParseSigNoParams(pgprPkt *pkt, pgprItem item)
 	    if (saltlen) {
 		if (hend - p < 1 + saltlen)
 		    return PGPR_ERROR_CORRUPT_PGP_PACKET;
-		item->hash = pgprRealloc(item->hash, item->hashlen + saltlen);
-		memcpy(item->hash + item->hashlen, p + 1, saltlen);
-		item->saltlen = saltlen;
+		rc = create_sig_salt(item, p + 1, saltlen);
+		if (rc != PGPR_OK)
+		    return rc;
 	    }
 	    p += 1 + saltlen;
 	}
@@ -609,7 +630,10 @@ pgprRC pgprParseUserID(pgprPkt *pkt, pgprItem item)
     if (item->tag != PGPRTAG_PUBLIC_KEY || pkt->tag != PGPRTAG_USER_ID)
 	return PGPR_ERROR_INTERNAL;
     free(item->userid);
-    item->userid = memcpy(pgprMalloc(pkt->blen + 1), pkt->body, pkt->blen);
+    item->userid = pgprMalloc(pkt->blen + 1);
+    if (!item->userid)
+	return PGPR_ERROR_NO_MEMORY;
+    memcpy(item->userid, pkt->body, pkt->blen);
     item->userid[pkt->blen] = 0;
     return PGPR_OK;
 }

@@ -81,6 +81,10 @@ static OSSL_PARAM create_bn_param(char *key, BIGNUM *bn)
     if (sz == 0)
 	sz = 1;
     buf = pgprMalloc(sz);
+    if (!buf) {
+	OSSL_PARAM param = OSSL_PARAM_END;
+	return param;
+    }
     BN_bn2nativepad(bn, buf, sz);
     OSSL_PARAM param = OSSL_PARAM_BN(key, buf, sz);
     return param;
@@ -161,6 +165,8 @@ static pgprRC pgprSetKeyMpiRSA(pgprAlg ka, int num, const uint8_t *p, int mlen)
 
     if (!key)
         key = ka->data = pgprCalloc(1, sizeof(*key));
+    if (!key)
+	return PGPR_ERROR_NO_MEMORY;
 
     if (key->evp_pkey)
 	return rc;
@@ -221,6 +227,8 @@ static pgprRC pgprSetSigMpiRSA(pgprAlg sa, int num, const uint8_t *p, int mlen)
 
     if (!sig)
         sig = sa->data = pgprCalloc(1, sizeof(*sig));
+    if (!sig)
+	return PGPR_ERROR_NO_MEMORY;
 
     switch (num) {
     case 0:
@@ -258,6 +266,7 @@ static pgprRC pgprVerifySigRSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size
     struct pgprAlgKeyRSA_s *key = ka->data;
     EVP_PKEY_CTX *pkey_ctx = NULL;
     void *padded_sig = NULL;
+    int pkey_len;
 
     if (!key || !sig)
 	return PGPR_ERROR_INTERNAL;
@@ -277,8 +286,12 @@ static pgprRC pgprVerifySigRSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size
     if (EVP_PKEY_CTX_set_signature_md(pkey_ctx, getEVPMD(hash_algo)) <= 0)
         goto done;
 
-    int pkey_len = EVP_PKEY_size(key->evp_pkey);
+    pkey_len = EVP_PKEY_size(key->evp_pkey);
     padded_sig = pgprCalloc(1, pkey_len);
+    if (!padded_sig) {
+	rc = PGPR_ERROR_NO_MEMORY;
+	goto done;
+    }
     if (BN_bn2binpad(sig->bn, padded_sig, pkey_len) <= 0)
         goto done;
 
@@ -388,6 +401,8 @@ static pgprRC pgprSetKeyMpiDSA(pgprAlg ka, int num, const uint8_t *p, int mlen)
 
     if (!key)
         key = ka->data = pgprCalloc(1, sizeof(*key));
+    if (!key)
+	return PGPR_ERROR_NO_MEMORY;
 
     switch (num) {
     case 0:
@@ -477,6 +492,8 @@ static unsigned char *constructDSASignature(unsigned char *r, int rlen, unsigned
     if (rlen < 0 || rlen >= 65534 || slen < 0 || slen >= 65534 || len3 > 65535)
 	return 0;	/* should never happen as pgpr's MPIs have a length < 8192 */
     buf = pgprMalloc(hlen3 + len3);
+    if (!buf)
+	return 0;
     add_asn1_tag(buf, 0x30, len3);
     add_asn1_tag(buf + hlen3, 0x02, len1);
     buf[hlen3 + hlen1] = 0;		/* zero first byte of the integer */
@@ -495,20 +512,26 @@ static pgprRC pgprSetSigMpiDSA(pgprAlg sa, int num, const uint8_t *p, int mlen)
 
     if (!sig)
         sig = sa->data = pgprCalloc(1, sizeof(*sig));
+    if (!sig)
+	return PGPR_ERROR_NO_MEMORY;
 
     switch (num) {
     case 0:
         if (sig->r)
             return rc;	/* This should only ever happen once per signature */
-        sig->rlen = mlen - 2;
 	sig->r = pgprMemdup(p + 2, mlen - 2);
+	if (!sig->r)
+	    return PGPR_ERROR_NO_MEMORY;
+        sig->rlen = mlen - 2;
         rc = PGPR_OK;
         break;
     case 1:
         if (sig->s)
             return rc;	/* This should only ever happen once per signature */
-        sig->slen = mlen - 2;
 	sig->s = pgprMemdup(p + 2, mlen - 2);
+	if (!sig->s)
+	    return PGPR_ERROR_NO_MEMORY;
+        sig->slen = mlen - 2;
         rc = PGPR_OK;
         break;
     }
@@ -656,9 +679,14 @@ static pgprRC pgprSetKeyMpiECDSA(pgprAlg ka, int num, const uint8_t *p, int mlen
 
     if (!key)
 	key = ka->data = pgprCalloc(1, sizeof(*key));
+    if (!key)
+	return PGPR_ERROR_NO_MEMORY;
+
     if (num == 0 && !key->q && mlen > 3 && p[2] == 0x04) {
-	key->qlen = mlen - 2;
 	key->q = pgprMemdup(p + 2, mlen - 2);
+	if (!key->q)
+	    return PGPR_ERROR_NO_MEMORY;
+	key->qlen = mlen - 2;
 	rc = PGPR_OK;
     }
     return rc;
@@ -690,20 +718,26 @@ static pgprRC pgprSetSigMpiECDSA(pgprAlg sa, int num, const uint8_t *p, int mlen
 
     if (!sig)
         sig = sa->data = pgprCalloc(1, sizeof(*sig));
+    if (!sig)
+	return PGPR_ERROR_NO_MEMORY;
 
     switch (num) {
     case 0:
         if (sig->r)
             return rc;	/* This should only ever happen once per signature */
-	sig->rlen = mlen - 2;
 	sig->r = pgprMemdup(p + 2, mlen - 2);
+	if (!sig->r)
+	    return PGPR_ERROR_NO_MEMORY;
+	sig->rlen = mlen - 2;
         rc = PGPR_OK;
         break;
     case 1:
         if (sig->s)
             return 1;	/* This should only ever happen once per signature */
-	sig->slen = mlen - 2;
 	sig->s = pgprMemdup(p + 2, mlen - 2);
+	if (!sig->s)
+	    return PGPR_ERROR_NO_MEMORY;
+	sig->slen = mlen - 2;
         rc = PGPR_OK;
         break;
     }
@@ -808,26 +842,37 @@ static pgprRC pgprSetKeyMpiEDDSA(pgprAlg ka, int num, const uint8_t *p, int mlen
 
     if (!key)
 	key = ka->data = pgprCalloc(1, sizeof(*key));
+    if (!key)
+	return PGPR_ERROR_NO_MEMORY;
+
     if (num == -1) {
 	if (ka->curve == PGPRCURVE_ED25519 && mlen == 32) {
-	    key->qlen = 32;
 	    key->q = pgprMemdup(p, 32);
+	    if (!key->q)
+		return PGPR_ERROR_NO_MEMORY;
+	    key->qlen = 32;
 	    rc = PGPR_OK;
 	} else if (ka->curve == PGPRCURVE_ED448 && mlen == 57) {
-	    key->qlen = 57;
 	    key->q = pgprMemdup(p, 57);
+	    if (!key->q)
+		return PGPR_ERROR_NO_MEMORY;
+	    key->qlen = 57;
 	    rc = PGPR_OK;
 	}
 	return rc;
     }
     if (ka->curve == PGPRCURVE_ED25519 && num == 0 && !key->q && mlen > 3 && p[2] == 0x40) {
-	key->qlen = mlen - 3;
-	key->q = pgprMemdup(p + 3, mlen - 3);	/* we do not copy the leading 0x40 */
 	rc = PGPR_OK;
+	key->q = pgprMemdup(p + 3, mlen - 3);	/* we do not copy the leading 0x40 */
+	if (!key->q)
+	    return PGPR_ERROR_NO_MEMORY;
+	key->qlen = mlen - 3;
     }
     if (ka->curve == PGPRCURVE_ED448 && num == 0 && !key->q && mlen > 3 && mlen <= 59) {
-	key->qlen = 57;
 	key->q = pgprCalloc(1, 57);
+	if (!key->q)
+	    return PGPR_ERROR_NO_MEMORY;
+	key->qlen = 57;
 	memcpy(key->q + 57 - (mlen - 2), p + 2, mlen - 2);
 	rc = PGPR_OK;
     }
@@ -858,6 +903,9 @@ static pgprRC pgprSetSigMpiEDDSA(pgprAlg sa, int num, const uint8_t *p, int mlen
 
     if (!sig)
 	sig = sa->data = pgprCalloc(1, sizeof(*sig));
+    if (!sig)
+	return PGPR_ERROR_NO_MEMORY;
+
     if (num == -1) {
 	if (sa->algo == PGPRPUBKEYALGO_ED25519 && mlen == 2 * 32) {
 	    memcpy(sig->sig + (57 - 32), p, 32);
@@ -990,6 +1038,8 @@ static pgprRC pgprSetKeyMpiMLDSA(pgprAlg ka, int num, const uint8_t *p, int mlen
 	return rc;
     if (!key)
 	key = ka->data = pgprCalloc(1, sizeof(*key));
+    if (!key)
+	return PGPR_ERROR_NO_MEMORY;
     switch (ka->algo) {
 	case PGPRPUBKEYALGO_INTERNAL_MLDSA65:
 	    keyl = 1952;
@@ -1023,6 +1073,9 @@ static pgprRC pgprSetSigMpiMLDSA(pgprAlg sa, int num, const uint8_t *p, int mlen
 	return rc;
     if (!sig)
 	sig = sa->data = pgprCalloc(1, sizeof(*sig));
+    if (!sig)
+	return PGPR_ERROR_NO_MEMORY;
+
     switch (sa->algo) {
 	case PGPRPUBKEYALGO_INTERNAL_MLDSA65:
 	    sigl = 3309;
@@ -1193,6 +1246,10 @@ pgprRC pgprDigestFinal(pgprDigCtx ctx, void ** datap, size_t *lenp)
     digestlen = EVP_MD_CTX_size(ctx);
     if (digestlen > 0) {
 	digest = (uint8_t *)pgprCalloc(digestlen, sizeof(*digest));
+	if (!digest) {
+	    EVP_MD_CTX_free(ctx);
+	    return PGPR_ERROR_NO_MEMORY;
+	}
 	if (!EVP_DigestFinal_ex(ctx, digest, (unsigned int *)&digestlen)) {
 	    digestlen = 0;
 	} else {

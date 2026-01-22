@@ -121,9 +121,12 @@ static pgprRC verifyPrimaryBindingSig(pgprPkt *mainpkt, pgprPkt *subkeypkt, pgpr
     sigpkt.body = bindsig->embedded_sig;
     sigpkt.blen = bindsig->embedded_sig_len;
     emb = pgprItemNew(sigpkt.tag);
-    if (pgprParseSig(&sigpkt, emb) == PGPR_OK)
+    if (!emb)
+	return PGPR_ERROR_NO_MEMORY;
+    if (pgprParseSig(&sigpkt, emb) == PGPR_OK) {
 	if (emb->sigtype == PGPRSIGTYPE_PRIMARY_BINDING)
 	    rc = pgprVerifySelfSig(subkey, emb, mainpkt, subkeypkt);
+    }
     emb = pgprItemFree(emb);
     return rc;
 }
@@ -228,6 +231,10 @@ pgprRC pgprParseCertificate(const uint8_t * pkts, size_t pktslen, pgprItem item)
 	if (pkt.tag == PGPRTAG_SIGNATURE) {
 	    int isselfsig, needsig = 0;
 	    sigitem = pgprItemNew(pkt.tag);
+	    if (!sigitem) {
+		rc = PGPR_ERROR_NO_MEMORY;
+		break;
+	    }
 	    /* use the NoParams variant because we want to ignore non self-sigs */
 	    if ((rc = pgprParseSigNoParams(&pkt, sigitem)) != PGPR_OK)
 		break;
@@ -353,6 +360,9 @@ pgprRC pgprParseCertificateSubkeys(const uint8_t *pkts, size_t pktslen,
     memset(&subkeypkt, 0, sizeof(subkeypkt));
 
     items = pgprMalloc(alloced * sizeof(*items));
+    if (!items)
+	return PGPR_ERROR_NO_MEMORY;
+
     rc = PGPR_OK;
     while (rc == PGPR_OK) {
 	if (p < pend) {
@@ -391,10 +401,19 @@ pgprRC pgprParseCertificateSubkeys(const uint8_t *pkts, size_t pktslen,
 
 	if (pkt.tag == PGPRTAG_PUBLIC_SUBKEY) {
 	    subitem = pgprItemNew(PGPRTAG_PUBLIC_SUBKEY);
+	    if (!subitem) {
+		rc = PGPR_ERROR_NO_MEMORY;
+		break;
+	    }
 	    /* Copy keyid of main key for error messages */
 	    memcpy(subitem->mainid, mainkey->keyid, sizeof(mainkey->keyid));
 	    /* Copy UID from main key to subkey */
-	    subitem->userid = mainkey->userid ? pgprStrdup(mainkey->userid) : NULL;
+	    if (mainkey->userid) {
+		if ((subitem->userid = pgprStrdup(mainkey->userid)) == NULL) {
+		    rc = PGPR_ERROR_NO_MEMORY;
+		    break;
+		}
+	    }
 	    /* if the main key is revoked, all the subkeys are also revoked */
 	    subitem->revoked = mainkey->revoked ? 2 : 0;
 	    if (pgprParseKey(&pkt, subitem)) {
@@ -406,8 +425,14 @@ pgprRC pgprParseCertificateSubkeys(const uint8_t *pkts, size_t pktslen,
 		    continue;
 		}
 		if (count == alloced) {
+		    pgprItem *newitems;
 		    alloced <<= 1;
-		    items = pgprRealloc(items, alloced * sizeof(*items));
+		    newitems = pgprRealloc(items, alloced * sizeof(*items));
+		    if (!newitems) {
+			rc = PGPR_ERROR_NO_MEMORY;
+			break;
+		    }
+		    items = newitems;
 		}
 		items[count++] = subitem;
 		subkeypkt = pkt;
@@ -415,6 +440,10 @@ pgprRC pgprParseCertificateSubkeys(const uint8_t *pkts, size_t pktslen,
 	} else if (pkt.tag == PGPRTAG_SIGNATURE && subitem != NULL) {
 	    int needsig = 0;
 	    sigitem = pgprItemNew(pkt.tag);
+	    if (!sigitem) {
+		rc = PGPR_ERROR_NO_MEMORY;
+		break;
+	    }
 	    /* we use the NoParams variant because we do not verify */
 	    if (pgprParseSigNoParams(&pkt, sigitem) != PGPR_OK) {
 		sigitem = pgprItemFree(sigitem);
@@ -463,7 +492,15 @@ pgprRC pgprParseCertificateSubkeys(const uint8_t *pkts, size_t pktslen,
     newest_item = pgprItemFree(newest_item);
 
     if (rc == PGPR_OK) {
-	*subkeys = pgprRealloc(items, count * sizeof(*items));
+	pgprItem *newitems = pgprRealloc(items, count * sizeof(*items));
+	if (!newitems) {
+	    rc = PGPR_ERROR_NO_MEMORY;
+	} else {
+	    items = newitems;
+	}
+    }
+    if (rc == PGPR_OK) {
+	*subkeys = items;
 	*subkeysCount = count;
     } else {
 	for (i = 0; i < count; i++)

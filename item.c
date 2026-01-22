@@ -6,7 +6,8 @@
 pgprItem pgprItemNew(uint8_t tag)
 {
     pgprItem item = pgprCalloc(1, sizeof(*item));
-    item->tag = tag;
+    if (item)
+	item->tag = tag;
     return item;
 }
 

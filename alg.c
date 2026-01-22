@@ -7,8 +7,10 @@ pgprAlg pgprAlgNew(void)
 {
     pgprAlg alg;
     alg = pgprCalloc(1, sizeof(*alg));
-    alg->mpis = -1;
-    alg->setup_rc = PGPR_ERROR_INTERNAL;
+    if (alg) {
+	alg->mpis = -1;
+	alg->setup_rc = PGPR_ERROR_INTERNAL;
+    }
     return alg;
 }
 
@@ -44,6 +46,8 @@ static pgprRC pgprSetSigMpiHybrid(pgprAlg sa, int num, const uint8_t *p, int mle
 	return rc;
     if (!sig)
 	sig = sa->data = pgprCalloc(1, sizeof(*sig));
+    if (!sig)
+	return PGPR_ERROR_NO_MEMORY;
 
     switch (sa->algo) {
 	case PGPRPUBKEYALGO_MLDSA65_ED25519:
@@ -65,9 +69,13 @@ static pgprRC pgprSetSigMpiHybrid(pgprAlg sa, int num, const uint8_t *p, int mle
 	return rc;
 
     sig->eddsa = pgprAlgNew();
+    if (!sig->eddsa)
+	return PGPR_ERROR_NO_MEMORY;
     if ((rc = pgprAlgSetupSignature(sig->eddsa, eddsaalgo, p, p + eddsasize)) != PGPR_OK)
 	return rc;
     sig->mldsa = pgprAlgNew();
+    if (!sig->mldsa)
+	return PGPR_ERROR_NO_MEMORY;
     if ((rc = pgprAlgSetupSignature(sig->mldsa, mldsaalgo, p + eddsasize, p + eddsasize + mldsasize)) != PGPR_OK)
 	return rc;
     return PGPR_OK;
@@ -82,6 +90,8 @@ static pgprRC pgprSetKeyMpiHybrid(pgprAlg ka, int num, const uint8_t *p, int mle
 	return rc;
     if (!key)
 	key = ka->data = pgprCalloc(1, sizeof(*key));
+    if (!key)
+	return PGPR_ERROR_NO_MEMORY;
 
     switch (ka->algo) {
 	case PGPRPUBKEYALGO_MLDSA65_ED25519:
@@ -103,9 +113,13 @@ static pgprRC pgprSetKeyMpiHybrid(pgprAlg ka, int num, const uint8_t *p, int mle
 	return rc;
 
     key->eddsa = pgprAlgNew();
+    if (!key->eddsa)
+	return PGPR_ERROR_NO_MEMORY;
     if ((rc = pgprAlgSetupPubkey(key->eddsa, eddsaalgo, 0, p, p + eddsasize)) != PGPR_OK)
 	return rc;
     key->mldsa = pgprAlgNew();
+    if (!key->mldsa)
+	return PGPR_ERROR_NO_MEMORY;
     if ((rc = pgprAlgSetupPubkey(key->mldsa, mldsaalgo, 0, p + eddsasize, p + eddsasize + mldsasize)) != PGPR_OK)
 	return rc;
     return PGPR_OK;

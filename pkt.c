@@ -120,6 +120,10 @@ pgprRC pgprSignatureParse(const uint8_t * pkts, size_t pktslen, pgprItem * ret, 
     }
 
     item = pgprItemNew(pkt.tag);
+    if (!item) {
+	rc = PGPR_ERROR_NO_MEMORY;
+	goto exit;
+    }
     rc = pgprParseSig(&pkt, item);
     /* treat trailing data as error */
     if (rc == PGPR_OK && (pkt.body - pkt.head) + pkt.blen != pktslen)
@@ -151,8 +155,12 @@ pgprRC pgprPubkeyParse(const uint8_t * pkts, size_t pktslen, pgprItem * ret, cha
 	goto exit;
     }
 
-    /* use specialized certificate parsing implementation */
     key = pgprItemNew(pkt.tag);
+    if (!key) {
+	rc = PGPR_ERROR_NO_MEMORY;
+	goto exit;
+    }
+    /* use specialized certificate parsing implementation */
     rc = pgprParseCertificate(pkts, pktslen, key);
 exit:
     if (ret && rc == PGPR_OK)
@@ -223,8 +231,11 @@ pgprRC pgprPubkeyFingerprint(const uint8_t *pkts, size_t pktslen,
     if (rc == PGPR_OK && !(key.saved & PGPRITEM_SAVED_FP))
         rc = PGPR_ERROR_INTERNAL;
     if (rc == PGPR_OK) {
+	uint8_t *fp_dup = pgprMemdup(key.fp, key.fp_len);
+	if (!fp_dup)
+	    return PGPR_ERROR_NO_MEMORY;
+	*fp = fp_dup;
 	*fp_len = key.fp_len;
-	*fp = pgprMemdup(key.fp, key.fp_len);
 	if (fp_version)
 	    *fp_version = key.fp_version;
     }

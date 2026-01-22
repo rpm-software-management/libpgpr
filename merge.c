@@ -72,12 +72,17 @@ static pgprRC pgprMergePktNew(pgprPkt *pkt, int source, pgprKeyID_t primaryid, p
     pgprRC rc = PGPR_OK;
     pgprMergePkt *mp = pgprCalloc(1, sizeof(pgprMergePkt));
 
+    if (!mp)
+	return PGPR_ERROR_NO_MEMORY;
     mp->pkt = *pkt;
     mp->source = source;
     mp->hashlen = pkt->blen;
     if (pkt->tag == PGPRTAG_SIGNATURE) {
         pgprItem sigitem = pgprItemNew(pkt->tag);
-	rc = pgprParseSigNoParams(pkt, sigitem);
+	if (!sigitem)
+	    rc = PGPR_ERROR_NO_MEMORY;
+	else
+	    rc = pgprParseSigNoParams(pkt, sigitem);
 	if (rc == PGPR_OK) {
 	    mp->time = sigitem->time;
 	    memcpy(mp->keyid, sigitem->keyid, sizeof(pgprKeyID_t));
@@ -292,6 +297,8 @@ static pgprRC pgprMergeKeyConcat(pgprMergeKey *mk, uint8_t **pktsm, size_t *pktl
 	}
     }
     p = pkts = pgprMalloc(len);
+    if (!pkts)
+	return PGPR_ERROR_NO_MEMORY;
     for (i = 0; i < PGP_NUMSECTIONS; i++) {
 	for (mp = mk->sections[i]; mp; mp = mp->next) {
 	    memcpy(p, mp->pkt.head, (mp->pkt.body - mp->pkt.head) + mp->pkt.blen);
@@ -311,14 +318,21 @@ pgprRC pgprPubkeyMerge(const uint8_t *pkts1, size_t pktlen1, const uint8_t *pkts
     pgprRC rc;
     pgprMergeKey *mk = pgprMergeKeyNew();
 
+    if (!mk)
+	return PGPR_ERROR_NO_MEMORY;
     if (pkts1 != NULL && (rc = pgprMergeKeyAddPubkey(mk, 0, pkts1, pktlen1)) != PGPR_OK)
 	goto exit;
     if ((rc = pgprMergeKeyAddPubkey(mk, 1, pkts2, pktlen2)) != PGPR_OK)
 	goto exit;
     if (pgprMergeKeyMaxSource(mk) == 0) {
 	/* no new key material, return old key */
-	*pktsm = pgprMemdup(pkts1, pktlen1);
-	*pktlenm = pktlen1;
+	uint8_t *newpkts = pgprMemdup(pkts1, pktlen1);
+	if (newpkts) {
+	    *pktsm = newpkts;
+	    *pktlenm = pktlen1;
+	} else {
+	    rc = PGPR_ERROR_NO_MEMORY;
+	}
     } else {
 	rc = pgprMergeKeyConcat(mk, pktsm, pktlenm);
     }

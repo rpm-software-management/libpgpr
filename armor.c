@@ -74,6 +74,11 @@ static const char *r64dec(const char *in, uint8_t **out, size_t *outlen)
     unsigned char *obuf = pgprMalloc(inlen * 3 / 4 + 4);	/* can overshoot 3 bytes */
     unsigned char *optr = obuf;
     int eof = 0;
+    if (!obuf) {
+	*out = NULL;
+	*outlen = 0;
+	return in;
+    }
     while (!eof) {
         unsigned int v;
 	in = r64dec1(in, &v, &eof);
@@ -102,6 +107,8 @@ static char *r64enc(const unsigned char *data, size_t len)
     olen = ((len + 2) / 3) * 4;
     olen += olen / linelen;
     optr = out = pgprMalloc(olen + 2);
+    if (!out)
+	return NULL;
     while (len) {
 	if (linelen-- == 0) {
 	    linelen = 64 / 4 - 1;
@@ -206,6 +213,10 @@ pgprRC pgprArmorUnwrap(const char *armortype, const char *armor, uint8_t **pkts,
 	    dec = NULL;
 	    declen = 0;
 	    enc = r64dec(enc, &dec, &declen);
+	    if (enc && !dec) {
+		rc = PGPR_ERROR_NO_MEMORY;
+		goto exit;
+	    }
 	    if (enc == 0 || enc > encend || ((*enc == '=' || *enc == '-') && enc != encend)) {
 		rc = PGPR_ERROR_ARMOR_BODY_DECODE;
 		goto exit;
@@ -253,10 +264,13 @@ char *pgprArmorWrap(const char *armortype, const char *keys, const unsigned char
     if (keys && *keys && keys[strlen(keys) - 1] != '\n')
 	keysnl = "\n";
     enc = r64enc(s, ns);
+    if (!enc)
+	return NULL;
     crc = r64crc(s, ns);
-    if (enc != NULL)
-	pgprAsprintf(&buf, "%s%s=%c%c%c%c", enc, (*enc ? "\n" : ""), bintoasc[(crc >> 18) & 63], bintoasc[(crc >> 12) & 63], bintoasc[(crc >> 6) & 63], bintoasc[crc & 63]);
+    pgprAsprintf(&buf, "%s%s=%c%c%c%c", enc, (*enc ? "\n" : ""), bintoasc[(crc >> 18) & 63], bintoasc[(crc >> 12) & 63], bintoasc[(crc >> 6) & 63], bintoasc[crc & 63]);
     free(enc);
+    if (!buf)
+	return NULL;
     pgprAsprintf(&val, "-----BEGIN PGP %s-----\n%s%s\n"
 		    "%s\n-----END PGP %s-----\n",
 		    armortype, keys != NULL ? keys : "", keysnl, buf != NULL ? buf : "", armortype);

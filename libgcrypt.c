@@ -86,6 +86,8 @@ static pgprRC pgprSetSigMpiRSA(pgprAlg sa, int num, const uint8_t *p, int mlen)
 
     if (!sig)
 	sig = sa->data = pgprCalloc(1, sizeof(*sig));
+    if (!sig)
+	return PGPR_ERROR_NO_MEMORY;
 
     switch (num) {
     case 0:
@@ -103,6 +105,8 @@ static pgprRC pgprSetKeyMpiRSA(pgprAlg ka, int num, const uint8_t *p, int mlen)
 
     if (!key)
 	key = ka->data = pgprCalloc(1, sizeof(*key));
+    if (!key)
+	return PGPR_ERROR_NO_MEMORY;
 
     switch (num) {
     case 0:
@@ -201,6 +205,8 @@ static pgprRC pgprSetSigMpiDSA(pgprAlg sa, int num, const uint8_t *p, int mlen)
 
     if (!sig)
 	sig = sa->data = pgprCalloc(1, sizeof(*sig));
+    if (!sig)
+	return PGPR_ERROR_NO_MEMORY;
 
     switch (num) {
     case 0:
@@ -222,6 +228,8 @@ static pgprRC pgprSetKeyMpiDSA(pgprAlg ka, int num, const uint8_t *p, int mlen)
 
     if (!key)
 	key = ka->data = pgprCalloc(1, sizeof(*key));
+    if (!key)
+	return PGPR_ERROR_NO_MEMORY;
 
     switch (num) {
     case 0:
@@ -333,6 +341,8 @@ static pgprRC pgprSetSigMpiECC(pgprAlg sa, int num, const uint8_t *p, int mlen)
 
     if (!sig)
 	sig = sa->data = pgprCalloc(1, sizeof(*sig));
+    if (!sig)
+	return PGPR_ERROR_NO_MEMORY;
 
     if (num == -1) {
 	if (sa->algo == PGPRPUBKEYALGO_ED25519 && mlen == 2 * 32 && !gcry_mpi_scan(&sig->r, GCRYMPI_FMT_USG, p, 32, NULL) && !gcry_mpi_scan(&sig->s, GCRYMPI_FMT_USG, p + 32, 32, NULL))
@@ -361,6 +371,8 @@ static pgprRC pgprSetKeyMpiECC(pgprAlg ka, int num, const uint8_t *p, int mlen)
 
     if (!key)
 	key = ka->data = pgprCalloc(1, sizeof(*key));
+    if (!key)
+	return PGPR_ERROR_NO_MEMORY;
 
     if (num == -1) {
 	if (ka->curve == PGPRCURVE_ED25519 && mlen == 32 && !gcry_mpi_scan(&key->q, GCRYMPI_FMT_USG, p, 32, NULL))
@@ -499,6 +511,9 @@ static pgprRC pgprSetSigMpiMLDSA(pgprAlg sa, int num, const uint8_t *p, int mlen
 	return rc;
     if (!sig)
 	sig = sa->data = pgprCalloc(1, sizeof(*sig));
+    if (!sig)
+	return PGPR_ERROR_NO_MEMORY;
+
     switch (sa->algo) {
 	case PGPRPUBKEYALGO_INTERNAL_MLDSA65:
 	    sigl = 3309;
@@ -526,6 +541,9 @@ static pgprRC pgprSetKeyMpiMLDSA(pgprAlg ka, int num, const uint8_t *p, int mlen
 	return rc;
     if (!key)
 	key = ka->data = pgprCalloc(1, sizeof(*key));
+    if (!key)
+	return PGPR_ERROR_NO_MEMORY;
+
     switch (ka->algo) {
 	case PGPRPUBKEYALGO_INTERNAL_MLDSA65:
 	    keyl = 1952;
@@ -703,10 +721,16 @@ pgprRC pgprDigestFinal(pgprDigCtx ctx, void ** datap, size_t *lenp)
     digestlen = gcry_md_get_algo_dlen(gcryalgo);
     if (digestlen == 0 || (digest = gcry_md_read(h, 0)) == NULL)
 	return PGPR_ERROR_INTERNAL;
+    if (datap) {
+	void *digest_dup = pgprMemdup(digest, digestlen);
+	if (!digest_dup) {
+	    gcry_md_close(h);
+	    return PGPR_ERROR_NO_MEMORY;
+	}
+	*datap = digest_dup;
+    }
     if (lenp)
 	*lenp = digestlen;
-    if (datap)
-	*datap = pgprMemdup(digest, digestlen);
     gcry_md_close(h);
     return PGPR_OK;
 }

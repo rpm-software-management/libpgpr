@@ -87,6 +87,8 @@ static char *format_keyid(pgprKeyID_t keyid, char *userid)
     static const char hex[] = "0123456789abcdef";
     char *keyidstr = pgprMalloc(sizeof(pgprKeyID_t) * 2 + 1);
     int i;
+    if (!keyidstr)
+	return NULL;
     for (i = 0; i < sizeof(pgprKeyID_t); i++) {
 	keyidstr[2 * i] = hex[keyid[i] >> 4 & 15];
 	keyidstr[2 * i + 1] = hex[keyid[i] & 15];
@@ -121,6 +123,8 @@ static void pgprAddKeyLint(pgprItem key, char **lints, const char *msg)
 {
     char *keyid = format_keyid(key->keyid, key->tag == PGPRTAG_PUBLIC_SUBKEY ? NULL : key->userid);
     char *main_keyid = key->tag == PGPRTAG_PUBLIC_SUBKEY ? format_keyid(key->mainid, key->userid) : NULL;
+    if (!msg || !keyid || (key->tag == PGPRTAG_PUBLIC_SUBKEY && !main_keyid))
+	goto done;
     if (key->tag == PGPRTAG_PUBLIC_SUBKEY) {
 	/* special case the message about subkeys with a revoked primary key */
 	if (key->revoked == 2)
@@ -130,13 +134,15 @@ static void pgprAddKeyLint(pgprItem key, char **lints, const char *msg)
     } else {
 	pgprAsprintf(lints, "Key %s %s", keyid, msg);
     }
+done:
     free(keyid);
     free(main_keyid);
 }
 
 static void pgprAddSigLint(pgprItem sig, char **lints, const char *msg)
 {
-    pgprAsprintf(lints, "Signature %s", msg);
+    if (msg)
+	pgprAsprintf(lints, "Signature %s", msg);
 }
 
 static char *format_expired(uint32_t created, uint32_t expire)
@@ -144,6 +150,8 @@ static char *format_expired(uint32_t created, uint32_t expire)
     time_t exptime = (time_t)created + expire;
     char *expdate = format_time(&exptime);
     char *msg = NULL;
+    if (!expdate)
+	return NULL;
     pgprAsprintf(&msg, "expired on %s", expdate);
     free(expdate);
     return msg;
