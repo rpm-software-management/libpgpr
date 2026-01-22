@@ -129,10 +129,8 @@ static void pgprFreeSigHybrid(pgprAlg sa)
 {
     struct pgprAlgSigHybrid_s *sig = sa->data;
     if (sig) {
-	if (sig->mldsa && sig->mldsa->free)
-	    sig->mldsa->free(sig->mldsa);
-	if (sig->eddsa && sig->eddsa->free)
-	    sig->eddsa->free(sig->eddsa);
+        pgprAlgFree(sig->mldsa);
+        pgprAlgFree(sig->eddsa);
 	free(sig);
     }
 }
@@ -141,10 +139,8 @@ static void pgprFreeKeyHybrid(pgprAlg sa)
 {
     struct pgprAlgKeyHybrid_s *key = sa->data;
     if (key) {
-	if (key->mldsa && key->mldsa->free)
-	    key->mldsa->free(key->mldsa);
-	if (key->eddsa && key->eddsa->free)
-	    key->eddsa->free(key->eddsa);
+        pgprAlgFree(key->mldsa);
+        pgprAlgFree(key->eddsa);
 	free(key);
     }
 }
