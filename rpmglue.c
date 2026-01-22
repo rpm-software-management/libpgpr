@@ -241,12 +241,16 @@ rpmRC pgpPubkeyMerge(const uint8_t *pkts1, size_t pkts1len, const uint8_t *pkts2
 char *pgpArmorWrap(int atype, const unsigned char * s, size_t ns)
 {
     static const char *keys = "Version: rpm-" VERSION"\n";
+    pgprRC rc = PGPR_OK;
+    char *armor = NULL;
 
     if (atype == PGPARMOR_PUBKEY)
-	return pgprArmorWrap("PUBLIC KEY BLOCK", keys, s, ns);
+	rc = pgprArmorWrap("PUBLIC KEY BLOCK", keys, s, ns, &armor);
     else if (atype == PGPARMOR_SIGNATURE)
-	return pgprArmorWrap("SIGNATURE", keys, s, ns);
-    return NULL;	/* only public key & signature supported */
+	rc = pgprArmorWrap("SIGNATURE", keys, s, ns, &armor);
+    else
+	return NULL;	/* only public key & signature supported */
+    return rc == PGPR_OK ? armor : NULL;
 }
 
 pgpArmor pgpParsePkts(const char *armor, uint8_t ** pkt, size_t * pktlen)
