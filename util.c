@@ -50,7 +50,7 @@ int pgprAsprintf(char **strp, const char *fmt, ...)
 
 #ifndef PGPR_RPM_INTREE
 
-static void xoom(size_t num, size_t len)
+static void pgprOOM(size_t num, size_t len)
 {
     if (num)
 	fprintf(stderr, "Out of memory allocating %zu*%zu bytes!\n", num, len);
@@ -65,7 +65,7 @@ void *pgprMalloc(size_t len)
 {
     void *r = malloc(len ? len : 1);
     if (!r)
-	xoom(0, len ? len : 1);
+	pgprOOM(0, len ? len : 1);
     return r;
 }
 
@@ -76,7 +76,7 @@ void *pgprRealloc(void *old, size_t len)
     else
 	old = realloc(old, len ? len : 1);
     if (!old)
-	xoom(0, len ? len : 1);
+	pgprOOM(0, len ? len : 1);
     return old;
 }
 
@@ -88,7 +88,7 @@ void *pgprCalloc(size_t num, size_t len)
     else
 	r = calloc(num, len);
     if (!r)
-	xoom(num, len ? len : 1);
+	pgprOOM(num, len ? len : 1);
     return r;
 }
 

@@ -255,7 +255,7 @@ exit:
     return rc;
 }
 
-char *pgprArmorWrap(const char *armortype, const char *keys, const unsigned char *s, size_t ns)
+pgprRC pgprArmorWrap(const char *armortype, const char *keys, const unsigned char *s, size_t ns, char **armorp)
 {
     char *buf = NULL, *val = NULL, *enc;
     unsigned int crc;
@@ -265,15 +265,18 @@ char *pgprArmorWrap(const char *armortype, const char *keys, const unsigned char
 	keysnl = "\n";
     enc = r64enc(s, ns);
     if (!enc)
-	return NULL;
+	return PGPR_ERROR_NO_MEMORY;
     crc = r64crc(s, ns);
     pgprAsprintf(&buf, "%s%s=%c%c%c%c", enc, (*enc ? "\n" : ""), bintoasc[(crc >> 18) & 63], bintoasc[(crc >> 12) & 63], bintoasc[(crc >> 6) & 63], bintoasc[crc & 63]);
     free(enc);
     if (!buf)
-	return NULL;
+	return PGPR_ERROR_NO_MEMORY;
     pgprAsprintf(&val, "-----BEGIN PGP %s-----\n%s%s\n"
 		    "%s\n-----END PGP %s-----\n",
 		    armortype, keys != NULL ? keys : "", keysnl, buf != NULL ? buf : "", armortype);
     free(buf);
-    return val;
+    if (!val)
+	return PGPR_ERROR_NO_MEMORY;
+    *armorp = val;
+    return PGPR_OK;
 }

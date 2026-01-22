@@ -29,6 +29,8 @@ static char *slurp(const char *fn, size_t *lenp)
     }
     while (1) {
 	buf = realloc(buf, len + 65536);
+	if (!buf)
+	    die("Out of memory", PGPR_OK);
 	l = fread(buf + len, 1, 65536, fp);
 	if (l < 0) {
 	    perror("fread");
@@ -40,6 +42,8 @@ static char *slurp(const char *fn, size_t *lenp)
     }
     fclose(fp);
     buf = realloc(buf, len + 1);
+    if (!buf)
+	die("Out of memory", PGPR_OK);
     buf[len] = 0;
     if (lenp)
 	*lenp = len;
@@ -323,6 +327,7 @@ siginfo(int argc, char **argv)
 static int
 enarmor(int argc, char **argv)
 {
+    pgprRC rc;
     int c;
     char *keys = NULL;
     unsigned char *data = NULL;
@@ -343,7 +348,8 @@ enarmor(int argc, char **argv)
 	exit(1);
     }
     data = (unsigned char *)slurp(argv[optind + 1], &datal);
-    armor = pgprArmorWrap(argv[optind], keys, data, datal);
+    if ((rc = pgprArmorWrap(argv[optind], keys, data, datal, &armor)) != PGPR_OK)
+	die("wrap error", rc);
     printf("%s", armor);
     free(armor);
     free(data);
