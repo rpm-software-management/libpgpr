@@ -10,7 +10,7 @@ on:
       - main 
 
 jobs:
-  build:
+  build-openssl:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,6 +22,23 @@ jobs:
           mkdir build
           cd build
           cmake -DWITH_OPENSSL=TRUE -DCMAKE_VERBOSE_MAKEFILE=TRUE ..
+          make
+      - name: Test
+        run:  |
+          cd build
+          make test
+  build-gcrypt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup
+        run:  |
+          sudo apt-get install cmake libgcrypt20-dev
+      - name: Build
+        run:  |
+          mkdir build
+          cd build
+          cmake -DWITH_OPENSSL=FALSE -DCMAKE_VERBOSE_MAKEFILE=TRUE ..
           make
       - name: Test
         run:  |
