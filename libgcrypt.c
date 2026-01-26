@@ -32,7 +32,10 @@ static int check_gcrypt_supported(const char *sexpstr)
 {
     gcry_sexp_t sexp = NULL;
     unsigned int nbits;
-    gcry_sexp_build(&sexp, NULL, sexpstr);
+    if (gcry_sexp_build(&sexp, NULL, sexpstr) == GPG_ERR_ENOMEM) {
+	pgprOOM(0, 0);
+	return -1;
+    }
     nbits = gcry_pk_get_nbits(sexp);
     gcry_sexp_release(sexp);
     return nbits > 0 ? 1 : -1;
@@ -67,6 +70,14 @@ static int pgprSupportedCurve(int algo, int curve)
     return 0;
 }
 
+static pgprRC check_out_of_mem(pgprRC rc, gcry_error_t gerr)
+{
+    if (rc != PGPR_OK && rc != PGPR_ERROR_NO_MEMORY && gerr == GPG_ERR_ENOMEM) {
+	pgprOOM(0, 0);
+	return PGPR_ERROR_NO_MEMORY;
+    }
+    return rc;
+}
 
 /****************************** RSA **************************************/
 
@@ -82,6 +93,7 @@ struct pgprAlgKeyRSA_s {
 static pgprRC pgprSetSigMpiRSA(pgprAlg sa, int num, const uint8_t *p, int mlen)
 {
     struct pgprAlgSigRSA_s *sig = sa->data;
+    gcry_error_t gerr = 0;
     pgprRC rc = PGPR_ERROR_REJECTED_SIGNATURE;
 
     if (!sig)
@@ -91,16 +103,17 @@ static pgprRC pgprSetSigMpiRSA(pgprAlg sa, int num, const uint8_t *p, int mlen)
 
     switch (num) {
     case 0:
-	if (!gcry_mpi_scan(&sig->s, GCRYMPI_FMT_PGP, p, mlen, NULL))
+	if (!(gerr = gcry_mpi_scan(&sig->s, GCRYMPI_FMT_PGP, p, mlen, NULL)))
 	    rc = PGPR_OK;
 	break;
     }
-    return rc;
+    return check_out_of_mem(rc, gerr);
 }
 
 static pgprRC pgprSetKeyMpiRSA(pgprAlg ka, int num, const uint8_t *p, int mlen)
 {
     struct pgprAlgKeyRSA_s *key = ka->data;
+    gcry_error_t gerr = 0;
     pgprRC rc = PGPR_ERROR_REJECTED_PUBKEY;
 
     if (!key)
@@ -111,15 +124,15 @@ static pgprRC pgprSetKeyMpiRSA(pgprAlg ka, int num, const uint8_t *p, int mlen)
     switch (num) {
     case 0:
 	ka->info = 8 * (((mlen - 2) + 7) & ~7);
-	if (!gcry_mpi_scan(&key->n, GCRYMPI_FMT_PGP, p, mlen, NULL))
+	if (!(gerr = gcry_mpi_scan(&key->n, GCRYMPI_FMT_PGP, p, mlen, NULL)))
 	    rc = PGPR_OK;
 	break;
     case 1:
-	if (!gcry_mpi_scan(&key->e, GCRYMPI_FMT_PGP, p, mlen, NULL))
+	if (!(gerr = gcry_mpi_scan(&key->e, GCRYMPI_FMT_PGP, p, mlen, NULL)))
 	    rc = PGPR_OK;
 	break;
     }
-    return rc;
+    return check_out_of_mem(rc, gerr);
 }
 
 static pgprRC pgprVerifySigRSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size_t hashlen, int hash_algo)
@@ -128,21 +141,24 @@ static pgprRC pgprVerifySigRSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size
     struct pgprAlgSigRSA_s *sig = sa->data;
     gcry_sexp_t sexp_sig = NULL, sexp_data = NULL, sexp_pkey = NULL;
     int gcry_hash_algo = hashalgo2gcryalgo(hash_algo);
+    gcry_error_t gerr = 0;
     pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;
 
     if (!sig || !key || !sig->s || !key->n || !key->e || !gcry_hash_algo)
 	return rc;
 
-    gcry_sexp_build(&sexp_sig, NULL, "(sig-val (rsa (s %M)))", sig->s);
-    gcry_sexp_build(&sexp_data, NULL, "(data (flags pkcs1) (hash %s %b))", gcry_md_algo_name(gcry_hash_algo), (int)hashlen, (const char *)hash);
-    gcry_sexp_build(&sexp_pkey, NULL, "(public-key (rsa (n %M) (e %M)))", key->n, key->e);
-    if (sexp_sig && sexp_data && sexp_pkey)
-	if (gcry_pk_verify(sexp_sig, sexp_data, sexp_pkey) == 0)
+    gerr = gcry_sexp_build(&sexp_sig, NULL, "(sig-val (rsa (s %M)))", sig->s);
+    if (!gerr)
+	gcry_sexp_build(&sexp_data, NULL, "(data (flags pkcs1) (hash %s %b))", gcry_md_algo_name(gcry_hash_algo), (int)hashlen, (const char *)hash);
+    if (!gerr)
+	gcry_sexp_build(&sexp_pkey, NULL, "(public-key (rsa (n %M) (e %M)))", key->n, key->e);
+    if (!gerr && sexp_sig && sexp_data && sexp_pkey)
+	if ((gerr = gcry_pk_verify(sexp_sig, sexp_data, sexp_pkey)) == 0)
 	    rc = PGPR_OK;
     gcry_sexp_release(sexp_sig);
     gcry_sexp_release(sexp_data);
     gcry_sexp_release(sexp_pkey);
-    return rc;
+    return check_out_of_mem(rc, gerr);
 }
 
 static void pgprFreeSigRSA(pgprAlg sa)
@@ -201,6 +217,7 @@ struct pgprAlgKeyDSA_s {
 static pgprRC pgprSetSigMpiDSA(pgprAlg sa, int num, const uint8_t *p, int mlen)
 {
     struct pgprAlgSigDSA_s *sig = sa->data;
+    gcry_error_t gerr = 0;
     pgprRC rc = PGPR_ERROR_REJECTED_SIGNATURE;
 
     if (!sig)
@@ -210,20 +227,21 @@ static pgprRC pgprSetSigMpiDSA(pgprAlg sa, int num, const uint8_t *p, int mlen)
 
     switch (num) {
     case 0:
-	if (!gcry_mpi_scan(&sig->r, GCRYMPI_FMT_PGP, p, mlen, NULL))
+	if (!(gerr = gcry_mpi_scan(&sig->r, GCRYMPI_FMT_PGP, p, mlen, NULL)))
 	    rc = PGPR_OK;
 	break;
     case 1:
-	if (!gcry_mpi_scan(&sig->s, GCRYMPI_FMT_PGP, p, mlen, NULL))
+	if (!(gerr = gcry_mpi_scan(&sig->s, GCRYMPI_FMT_PGP, p, mlen, NULL)))
 	    rc = PGPR_OK;
 	break;
     }
-    return rc;
+    return check_out_of_mem(rc, gerr);
 }
 
 static pgprRC pgprSetKeyMpiDSA(pgprAlg ka, int num, const uint8_t *p, int mlen)
 {
     struct pgprAlgKeyDSA_s *key = ka->data;
+    gcry_error_t gerr = 0;
     pgprRC rc = PGPR_ERROR_REJECTED_PUBKEY;
 
     if (!key)
@@ -234,23 +252,23 @@ static pgprRC pgprSetKeyMpiDSA(pgprAlg ka, int num, const uint8_t *p, int mlen)
     switch (num) {
     case 0:
 	ka->info = 8 * (((mlen - 2) + 7) & ~7);
-	if (!gcry_mpi_scan(&key->p, GCRYMPI_FMT_PGP, p, mlen, NULL))
+	if (!(gerr = gcry_mpi_scan(&key->p, GCRYMPI_FMT_PGP, p, mlen, NULL)))
 	    rc = PGPR_OK;
 	break;
     case 1:
-	if (!gcry_mpi_scan(&key->q, GCRYMPI_FMT_PGP, p, mlen, NULL))
+	if (!(gerr = gcry_mpi_scan(&key->q, GCRYMPI_FMT_PGP, p, mlen, NULL)))
 	    rc = PGPR_OK;
 	break;
     case 2:
-	if (!gcry_mpi_scan(&key->g, GCRYMPI_FMT_PGP, p, mlen, NULL))
+	if (!(gerr = gcry_mpi_scan(&key->g, GCRYMPI_FMT_PGP, p, mlen, NULL)))
 	    rc = PGPR_OK;
 	break;
     case 3:
-	if (!gcry_mpi_scan(&key->y, GCRYMPI_FMT_PGP, p, mlen, NULL))
+	if (!(gerr = gcry_mpi_scan(&key->y, GCRYMPI_FMT_PGP, p, mlen, NULL)))
 	    rc = PGPR_OK;
 	break;
     }
-    return rc;
+    return check_out_of_mem(rc, gerr);
 }
 
 static pgprRC pgprVerifySigDSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size_t hashlen, int hash_algo)
@@ -258,6 +276,7 @@ static pgprRC pgprVerifySigDSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size
     struct pgprAlgKeyDSA_s *key = ka->data;
     struct pgprAlgSigDSA_s *sig = sa->data;
     gcry_sexp_t sexp_sig = NULL, sexp_data = NULL, sexp_pkey = NULL;
+    gcry_error_t gerr = 0;
     pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;
     size_t qlen;
 
@@ -269,16 +288,18 @@ static pgprRC pgprVerifySigDSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size
 	qlen = 20;		/* sanity */
     if (hashlen > qlen)
 	hashlen = qlen;		/* dsa2: truncate hash to qlen */
-    gcry_sexp_build(&sexp_sig, NULL, "(sig-val (dsa (r %M) (s %M)))", sig->r, sig->s);
-    gcry_sexp_build(&sexp_data, NULL, "(data (flags raw) (value %b))", (int)hashlen, (const char *)hash);
-    gcry_sexp_build(&sexp_pkey, NULL, "(public-key (dsa (p %M) (q %M) (g %M) (y %M)))", key->p, key->q, key->g, key->y);
-    if (sexp_sig && sexp_data && sexp_pkey)
-	if (gcry_pk_verify(sexp_sig, sexp_data, sexp_pkey) == 0)
+    gerr = gcry_sexp_build(&sexp_sig, NULL, "(sig-val (dsa (r %M) (s %M)))", sig->r, sig->s);
+    if (!gerr)
+	gcry_sexp_build(&sexp_data, NULL, "(data (flags raw) (value %b))", (int)hashlen, (const char *)hash);
+    if (!gerr)
+	gcry_sexp_build(&sexp_pkey, NULL, "(public-key (dsa (p %M) (q %M) (g %M) (y %M)))", key->p, key->q, key->g, key->y);
+    if (!gerr && sexp_sig && sexp_data && sexp_pkey)
+	if ((gerr = gcry_pk_verify(sexp_sig, sexp_data, sexp_pkey)) == 0)
 	    rc = PGPR_OK;
     gcry_sexp_release(sexp_sig);
     gcry_sexp_release(sexp_data);
     gcry_sexp_release(sexp_pkey);
-    return rc;
+    return check_out_of_mem(rc, gerr);
 }
 
 static void pgprFreeSigDSA(pgprAlg sa)
@@ -337,6 +358,7 @@ struct pgprAlgKeyECC_s {
 static pgprRC pgprSetSigMpiECC(pgprAlg sa, int num, const uint8_t *p, int mlen)
 {
     struct pgprAlgSigECC_s *sig = sa->data;
+    gcry_error_t gerr = 0;
     pgprRC rc = PGPR_ERROR_REJECTED_SIGNATURE;
 
     if (!sig)
@@ -345,28 +367,29 @@ static pgprRC pgprSetSigMpiECC(pgprAlg sa, int num, const uint8_t *p, int mlen)
 	return PGPR_ERROR_NO_MEMORY;
 
     if (num == -1) {
-	if (sa->algo == PGPRPUBKEYALGO_ED25519 && mlen == 2 * 32 && !gcry_mpi_scan(&sig->r, GCRYMPI_FMT_USG, p, 32, NULL) && !gcry_mpi_scan(&sig->s, GCRYMPI_FMT_USG, p + 32, 32, NULL))
+	if (sa->algo == PGPRPUBKEYALGO_ED25519 && mlen == 2 * 32 && !(gerr = gcry_mpi_scan(&sig->r, GCRYMPI_FMT_USG, p, 32, NULL)) && !(gerr = gcry_mpi_scan(&sig->s, GCRYMPI_FMT_USG, p + 32, 32, NULL)))
 	    rc = PGPR_OK;
-	else if (sa->algo == PGPRPUBKEYALGO_ED448 && mlen == 2 * 57 && !gcry_mpi_scan(&sig->r, GCRYMPI_FMT_USG, p, 57, NULL) && !gcry_mpi_scan(&sig->s, GCRYMPI_FMT_USG, p + 57, 57, NULL))
+	else if (sa->algo == PGPRPUBKEYALGO_ED448 && mlen == 2 * 57 && !(gerr = gcry_mpi_scan(&sig->r, GCRYMPI_FMT_USG, p, 57, NULL)) && !(gerr = gcry_mpi_scan(&sig->s, GCRYMPI_FMT_USG, p + 57, 57, NULL)))
 	    rc = PGPR_OK;
 	return rc;
     }
     switch (num) {
     case 0:
-	if (!gcry_mpi_scan(&sig->r, GCRYMPI_FMT_PGP, p, mlen, NULL))
+	if (!(gerr = gcry_mpi_scan(&sig->r, GCRYMPI_FMT_PGP, p, mlen, NULL)))
 	    rc = PGPR_OK;
 	break;
     case 1:
-	if (!gcry_mpi_scan(&sig->s, GCRYMPI_FMT_PGP, p, mlen, NULL))
+	if (!(gerr = gcry_mpi_scan(&sig->s, GCRYMPI_FMT_PGP, p, mlen, NULL)))
 	    rc = PGPR_OK;
 	break;
     }
-    return rc;
+    return check_out_of_mem(rc, gerr);
 }
 
 static pgprRC pgprSetKeyMpiECC(pgprAlg ka, int num, const uint8_t *p, int mlen)
 {
     struct pgprAlgKeyECC_s *key = ka->data;
+    gcry_error_t gerr = 0;
     pgprRC rc = PGPR_ERROR_REJECTED_PUBKEY;
 
     if (!key)
@@ -375,20 +398,20 @@ static pgprRC pgprSetKeyMpiECC(pgprAlg ka, int num, const uint8_t *p, int mlen)
 	return PGPR_ERROR_NO_MEMORY;
 
     if (num == -1) {
-	if (ka->curve == PGPRCURVE_ED25519 && mlen == 32 && !gcry_mpi_scan(&key->q, GCRYMPI_FMT_USG, p, 32, NULL))
+	if (ka->curve == PGPRCURVE_ED25519 && mlen == 32 && !(gerr = gcry_mpi_scan(&key->q, GCRYMPI_FMT_USG, p, 32, NULL)))
 	    rc = PGPR_OK;
-	else if (ka->curve == PGPRCURVE_ED448 && mlen == 57 && !gcry_mpi_scan(&key->q, GCRYMPI_FMT_USG, p, 57, NULL))
+	else if (ka->curve == PGPRCURVE_ED448 && mlen == 57 && !(gerr = gcry_mpi_scan(&key->q, GCRYMPI_FMT_USG, p, 57, NULL)))
 	    rc = PGPR_OK;
 	return rc;
     }
 
     switch (num) {
     case 0:
-	if (!gcry_mpi_scan(&key->q, GCRYMPI_FMT_PGP, p, mlen, NULL))
+	if (!(gerr = gcry_mpi_scan(&key->q, GCRYMPI_FMT_PGP, p, mlen, NULL)))
 	    rc = PGPR_OK;
 	break;
     }
-    return rc;
+    return check_out_of_mem(rc, gerr);
 }
 
 static int eddsa_zero_extend(gcry_mpi_t x, unsigned char *buf, int bufl)
@@ -408,6 +431,7 @@ static pgprRC pgprVerifySigECC(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size
     struct pgprAlgKeyECC_s *key = ka->data;
     struct pgprAlgSigECC_s *sig = sa->data;
     gcry_sexp_t sexp_sig = NULL, sexp_data = NULL, sexp_pkey = NULL;
+    gcry_error_t gerr = 0;
     pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;
 
     if (!sig || !key || !sig->r || !sig->s || !key->q)
@@ -416,33 +440,38 @@ static pgprRC pgprVerifySigECC(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size
 	unsigned char buf_r[32], buf_s[32];
 	if (eddsa_zero_extend(sig->r, buf_r, 32) || eddsa_zero_extend(sig->s, buf_s, 32))
 	    return rc;
-	gcry_sexp_build(&sexp_sig, NULL, "(sig-val (eddsa (r %b) (s %b)))", 32, (const char *)buf_r, 32, (const char *)buf_s);
-	gcry_sexp_build(&sexp_data, NULL, "(data (flags eddsa) (hash-algo sha512) (value %b))", (int)hashlen, (const char *)hash);
-	gcry_sexp_build(&sexp_pkey, NULL, "(public-key (ecc (curve \"Ed25519\") (flags eddsa) (q %M)))", key->q);
+	gerr = gcry_sexp_build(&sexp_sig, NULL, "(sig-val (eddsa (r %b) (s %b)))", 32, (const char *)buf_r, 32, (const char *)buf_s);
+	if (!gerr)
+	    gcry_sexp_build(&sexp_data, NULL, "(data (flags eddsa) (hash-algo sha512) (value %b))", (int)hashlen, (const char *)hash);
+	if (!gerr)
+	    gcry_sexp_build(&sexp_pkey, NULL, "(public-key (ecc (curve \"Ed25519\") (flags eddsa) (q %M)))", key->q);
     } else if (ka->curve == PGPRCURVE_ED448) {
 	unsigned char buf_r[57], buf_s[57];
 	if (eddsa_zero_extend(sig->r, buf_r, 57) || eddsa_zero_extend(sig->s, buf_s, 57))
 	    return rc;
-	gcry_sexp_build(&sexp_sig, NULL, "(sig-val (eddsa (r %b) (s %b)))", 57, (const char *)buf_r, 57, (const char *)buf_s);
-	gcry_sexp_build(&sexp_data, NULL, "(data (flags eddsa) (value %b))", (int)hashlen, (const char *)hash);
-	gcry_sexp_build(&sexp_pkey, NULL, "(public-key (ecc (curve \"Ed448\") (flags eddsa) (q %M)))", key->q);
+	gerr = gcry_sexp_build(&sexp_sig, NULL, "(sig-val (eddsa (r %b) (s %b)))", 57, (const char *)buf_r, 57, (const char *)buf_s);
+	if (!gerr)
+	    gcry_sexp_build(&sexp_data, NULL, "(data (flags eddsa) (value %b))", (int)hashlen, (const char *)hash);
+	if (!gerr)
+	    gcry_sexp_build(&sexp_pkey, NULL, "(public-key (ecc (curve \"Ed448\") (flags eddsa) (q %M)))", key->q);
     } else if (ka->curve == PGPRCURVE_NIST_P_256 || ka->curve == PGPRCURVE_NIST_P_384 || ka->curve == PGPRCURVE_NIST_P_521) {
-	gcry_sexp_build(&sexp_sig, NULL, "(sig-val (ecdsa (r %M) (s %M)))", sig->r, sig->s);
-	gcry_sexp_build(&sexp_data, NULL, "(data (value %b))", (int)hashlen, (const char *)hash);
-	if (ka->curve == PGPRCURVE_NIST_P_256)
-	    gcry_sexp_build(&sexp_pkey, NULL, "(public-key (ecc (curve \"NIST P-256\") (q %M)))", key->q);
-	else if (ka->curve == PGPRCURVE_NIST_P_384)
-	    gcry_sexp_build(&sexp_pkey, NULL, "(public-key (ecc (curve \"NIST P-384\") (q %M)))", key->q);
-	else if (ka->curve == PGPRCURVE_NIST_P_521)
-	    gcry_sexp_build(&sexp_pkey, NULL, "(public-key (ecc (curve \"NIST P-521\") (q %M)))", key->q);
+	gerr = gcry_sexp_build(&sexp_sig, NULL, "(sig-val (ecdsa (r %M) (s %M)))", sig->r, sig->s);
+	if (!gerr)
+	    gcry_sexp_build(&sexp_data, NULL, "(data (value %b))", (int)hashlen, (const char *)hash);
+	if (!gerr && ka->curve == PGPRCURVE_NIST_P_256)
+	    gerr = gcry_sexp_build(&sexp_pkey, NULL, "(public-key (ecc (curve \"NIST P-256\") (q %M)))", key->q);
+	else if (!gerr && ka->curve == PGPRCURVE_NIST_P_384)
+	    gerr = gcry_sexp_build(&sexp_pkey, NULL, "(public-key (ecc (curve \"NIST P-384\") (q %M)))", key->q);
+	else if (!gerr && ka->curve == PGPRCURVE_NIST_P_521)
+	    gerr = gcry_sexp_build(&sexp_pkey, NULL, "(public-key (ecc (curve \"NIST P-521\") (q %M)))", key->q);
     }
-    if (sexp_sig && sexp_data && sexp_pkey)
-	if (gcry_pk_verify(sexp_sig, sexp_data, sexp_pkey) == 0)
+    if (!gerr && sexp_sig && sexp_data && sexp_pkey)
+	if ((gerr = gcry_pk_verify(sexp_sig, sexp_data, sexp_pkey)) == 0)
 	    rc = PGPR_OK;
     gcry_sexp_release(sexp_sig);
     gcry_sexp_release(sexp_data);
     gcry_sexp_release(sexp_pkey);
-    return rc;
+    return check_out_of_mem(rc, gerr);
 }
 
 static void pgprFreeSigECC(pgprAlg sa)
@@ -504,6 +533,7 @@ struct pgprAlgKeyMLDSA_s {
 static pgprRC pgprSetSigMpiMLDSA(pgprAlg sa, int num, const uint8_t *p, int mlen)
 {
     struct pgprAlgSigMLDSA_s *sig = sa->data;
+    gcry_error_t gerr = 0;
     pgprRC rc = PGPR_ERROR_REJECTED_SIGNATURE;
     int sigl = 0;
 
@@ -525,15 +555,16 @@ static pgprRC pgprSetSigMpiMLDSA(pgprAlg sa, int num, const uint8_t *p, int mlen
 	    break;
     }
     if (sigl && mlen == sigl) {
-	if (!gcry_mpi_scan(&sig->s, GCRYMPI_FMT_USG, p, sigl, NULL))
+	if (!(gerr = gcry_mpi_scan(&sig->s, GCRYMPI_FMT_USG, p, sigl, NULL)))
 	    rc = PGPR_OK;
     }
-    return rc;
+    return check_out_of_mem(rc, gerr);
 }
 
 static pgprRC pgprSetKeyMpiMLDSA(pgprAlg ka, int num, const uint8_t *p, int mlen)
 {
     struct pgprAlgKeyMLDSA_s *key = ka->data;
+    gcry_error_t gerr = 0;
     pgprRC rc = PGPR_ERROR_REJECTED_PUBKEY;
     int keyl = 0;
 
@@ -555,36 +586,39 @@ static pgprRC pgprSetKeyMpiMLDSA(pgprAlg ka, int num, const uint8_t *p, int mlen
 	    break;
     }
     if (keyl && mlen == keyl) {
-	if (!gcry_mpi_scan(&key->p, GCRYMPI_FMT_USG, p, keyl, NULL))
+	if (!(gerr = gcry_mpi_scan(&key->p, GCRYMPI_FMT_USG, p, keyl, NULL)))
 	    rc = PGPR_OK;
     }
-    return rc;
+    return check_out_of_mem(rc, gerr);
 }
 
 static pgprRC pgprVerifySigMLDSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size_t hashlen, int hash_algo)
 {
-    pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;
     struct pgprAlgKeyMLDSA_s *key = ka->data;
     struct pgprAlgSigMLDSA_s *sig = sa->data;
     gcry_sexp_t sexp_sig = NULL, sexp_data = NULL, sexp_pkey = NULL;
+    gcry_error_t gerr = 0;
+    pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;
 
     if (!sig || !key || !sig->s || !key->p)
 	return rc;
-    gcry_sexp_build(&sexp_data, NULL, "(data (raw) (value %b))", (int)hashlen, (const char *)hash);
-    if (ka->algo == PGPRPUBKEYALGO_INTERNAL_MLDSA65) {
-	gcry_sexp_build(&sexp_sig, NULL, "(sig-val (dilithium3 (s %M)))", sig->s);
-	gcry_sexp_build(&sexp_pkey, NULL, "(public-key (dilithium3 (p %M)))", key->p);
-    } else if (ka->algo == PGPRPUBKEYALGO_INTERNAL_MLDSA87) {
-	gcry_sexp_build(&sexp_sig, NULL, "(sig-val (dilithium5 (s %M)))", sig->s);
-	gcry_sexp_build(&sexp_pkey, NULL, "(public-key (dilithium5 (p %M)))", key->p);
+    gerr = gcry_sexp_build(&sexp_data, NULL, "(data (raw) (value %b))", (int)hashlen, (const char *)hash);
+    if (!gerr && ka->algo == PGPRPUBKEYALGO_INTERNAL_MLDSA65) {
+	gerr = gcry_sexp_build(&sexp_sig, NULL, "(sig-val (dilithium3 (s %M)))", sig->s);
+	if (!gerr)
+	    gcry_sexp_build(&sexp_pkey, NULL, "(public-key (dilithium3 (p %M)))", key->p);
+    } else if (!gerr && ka->algo == PGPRPUBKEYALGO_INTERNAL_MLDSA87) {
+	gerr = gcry_sexp_build(&sexp_sig, NULL, "(sig-val (dilithium5 (s %M)))", sig->s);
+	if (!gerr)
+	    gcry_sexp_build(&sexp_pkey, NULL, "(public-key (dilithium5 (p %M)))", key->p);
     }
-    if (sexp_sig && sexp_data && sexp_pkey)
-	if (gcry_pk_verify(sexp_sig, sexp_data, sexp_pkey) == 0)
+    if (!gerr && sexp_sig && sexp_data && sexp_pkey)
+	if ((gerr = gcry_pk_verify(sexp_sig, sexp_data, sexp_pkey)) == 0)
 		rc = PGPR_OK;
     gcry_sexp_release(sexp_sig);
     gcry_sexp_release(sexp_data);
     gcry_sexp_release(sexp_pkey);
-    return rc;
+    return check_out_of_mem(rc, gerr);
 }
 
 static void pgprFreeSigMLDSA(pgprAlg sa)
@@ -690,14 +724,15 @@ pgprRC pgprFreeCrypto(void)
 
 pgprRC pgprDigestInit(int hashalgo, pgprDigCtx *ret)
 {
+    gcry_error_t gerr = 0;
     gcry_md_hd_t h = NULL;
     int gcryalgo = hashalgo2gcryalgo(hashalgo);
     if (!gcryalgo)
 	return PGPR_ERROR_UNSUPPORTED_DIGEST;
-    if (gcry_md_open(&h, gcryalgo, 0) != 0)
-	return PGPR_ERROR_INTERNAL;
+    if ((gerr = gcry_md_open(&h, gcryalgo, 0)) != 0)
+	h = NULL;
     *ret = h;
-    return h ? PGPR_OK : PGPR_ERROR_INTERNAL;
+    return h ? PGPR_OK : check_out_of_mem(PGPR_ERROR_INTERNAL, gerr);
 }
 
 pgprRC pgprDigestUpdate(pgprDigCtx ctx, const void * data, size_t len)
@@ -737,12 +772,13 @@ pgprRC pgprDigestFinal(pgprDigCtx ctx, void ** datap, size_t *lenp)
 
 pgprRC pgprDigestDup(pgprDigCtx oldctx, pgprDigCtx *ret)
 {
+    gcry_error_t gerr = 0;
     gcry_md_hd_t oldh = oldctx;
     gcry_md_hd_t h = NULL;
-    if (oldh && gcry_md_copy(&h, oldh) != 0)
+    if (oldh && (gerr = gcry_md_copy(&h, oldh)) != 0)
 	h = NULL;
     *ret = h;
-    return h ? PGPR_OK : PGPR_ERROR_INTERNAL;
+    return h ? PGPR_OK : check_out_of_mem(PGPR_ERROR_INTERNAL, gerr);
 }
 
 size_t pgprDigestLength(int hashalgo)

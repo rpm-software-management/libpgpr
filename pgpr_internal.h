@@ -207,6 +207,9 @@ PGPR_GNUC_INTERNAL
 uint32_t pgprCurrentTime(void);
 
 PGPR_GNUC_INTERNAL
+void pgprOOM(size_t num, size_t len);
+
+PGPR_GNUC_INTERNAL
 void *pgprMalloc(size_t size);
 
 PGPR_GNUC_INTERNAL

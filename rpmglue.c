@@ -15,6 +15,9 @@ extern int pgpDigParamsSalt(pgpDigParams digp, const uint8_t **datap, size_t *le
 
 /* forward declarations for internal function implemented by rpm */
 RPM_GNUC_INTERNAL
+void pgprOOM(size_t num, size_t len);
+
+RPM_GNUC_INTERNAL
 void *pgprMalloc(size_t size);
 
 RPM_GNUC_INTERNAL
@@ -273,6 +276,10 @@ pgpArmor pgpParsePkts(const char *armor, uint8_t ** pkt, size_t * pktlen)
 }
 
 /* functions implemented by rpm */
+
+void pgprOOM(size_t num, size_t len)
+{
+}
 
 void *pgprMalloc(size_t size)
 {

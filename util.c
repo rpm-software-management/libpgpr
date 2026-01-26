@@ -50,7 +50,7 @@ int pgprAsprintf(char **strp, const char *fmt, ...)
 
 #ifndef PGPR_RPM_INTREE
 
-static void pgprOOM(size_t num, size_t len)
+void pgprOOM(size_t num, size_t len)
 {
     if (num)
 	fprintf(stderr, "Out of memory allocating %zu*%zu bytes!\n", num, len);
