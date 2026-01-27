@@ -164,9 +164,9 @@ static pgprRC pgprVerifySigRSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size
 
     gerr = gcry_sexp_build(&sexp_sig, NULL, "(sig-val (rsa (s %M)))", sig->s);
     if (!gerr)
-	gcry_sexp_build(&sexp_data, NULL, "(data (flags pkcs1) (hash %s %b))", gcry_md_algo_name(gcry_hash_algo), (int)hashlen, (const char *)hash);
+	gerr = gcry_sexp_build(&sexp_data, NULL, "(data (flags pkcs1) (hash %s %b))", gcry_md_algo_name(gcry_hash_algo), (int)hashlen, (const char *)hash);
     if (!gerr)
-	gcry_sexp_build(&sexp_pkey, NULL, "(public-key (rsa (n %M) (e %M)))", key->n, key->e);
+	gerr = gcry_sexp_build(&sexp_pkey, NULL, "(public-key (rsa (n %M) (e %M)))", key->n, key->e);
     if (!gerr && sexp_sig && sexp_data && sexp_pkey)
 	if ((gerr = gcry_pk_verify(sexp_sig, sexp_data, sexp_pkey)) == 0)
 	    rc = PGPR_OK;
@@ -305,9 +305,9 @@ static pgprRC pgprVerifySigDSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size
 	hashlen = qlen;		/* dsa2: truncate hash to qlen */
     gerr = gcry_sexp_build(&sexp_sig, NULL, "(sig-val (dsa (r %M) (s %M)))", sig->r, sig->s);
     if (!gerr)
-	gcry_sexp_build(&sexp_data, NULL, "(data (flags raw) (value %b))", (int)hashlen, (const char *)hash);
+	gerr = gcry_sexp_build(&sexp_data, NULL, "(data (flags raw) (value %b))", (int)hashlen, (const char *)hash);
     if (!gerr)
-	gcry_sexp_build(&sexp_pkey, NULL, "(public-key (dsa (p %M) (q %M) (g %M) (y %M)))", key->p, key->q, key->g, key->y);
+	gerr = gcry_sexp_build(&sexp_pkey, NULL, "(public-key (dsa (p %M) (q %M) (g %M) (y %M)))", key->p, key->q, key->g, key->y);
     if (!gerr && sexp_sig && sexp_data && sexp_pkey)
 	if ((gerr = gcry_pk_verify(sexp_sig, sexp_data, sexp_pkey)) == 0)
 	    rc = PGPR_OK;
@@ -457,18 +457,18 @@ static pgprRC pgprVerifySigECC(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size
 	    return rc;
 	gerr = gcry_sexp_build(&sexp_sig, NULL, "(sig-val (eddsa (r %b) (s %b)))", 32, (const char *)buf_r, 32, (const char *)buf_s);
 	if (!gerr)
-	    gcry_sexp_build(&sexp_data, NULL, "(data (flags eddsa) (hash-algo sha512) (value %b))", (int)hashlen, (const char *)hash);
+	    gerr = gcry_sexp_build(&sexp_data, NULL, "(data (flags eddsa) (hash-algo sha512) (value %b))", (int)hashlen, (const char *)hash);
 	if (!gerr)
-	    gcry_sexp_build(&sexp_pkey, NULL, "(public-key (ecc (curve \"Ed25519\") (flags eddsa) (q %M)))", key->q);
+	    gerr = gcry_sexp_build(&sexp_pkey, NULL, "(public-key (ecc (curve \"Ed25519\") (flags eddsa) (q %M)))", key->q);
     } else if (ka->curve == PGPRCURVE_ED448) {
 	unsigned char buf_r[57], buf_s[57];
 	if (eddsa_zero_extend(sig->r, buf_r, 57) || eddsa_zero_extend(sig->s, buf_s, 57))
 	    return rc;
 	gerr = gcry_sexp_build(&sexp_sig, NULL, "(sig-val (eddsa (r %b) (s %b)))", 57, (const char *)buf_r, 57, (const char *)buf_s);
 	if (!gerr)
-	    gcry_sexp_build(&sexp_data, NULL, "(data (flags eddsa) (value %b))", (int)hashlen, (const char *)hash);
+	    gerr = gcry_sexp_build(&sexp_data, NULL, "(data (flags eddsa) (value %b))", (int)hashlen, (const char *)hash);
 	if (!gerr)
-	    gcry_sexp_build(&sexp_pkey, NULL, "(public-key (ecc (curve \"Ed448\") (flags eddsa) (q %M)))", key->q);
+	    gerr = gcry_sexp_build(&sexp_pkey, NULL, "(public-key (ecc (curve \"Ed448\") (flags eddsa) (q %M)))", key->q);
     } else if (ka->curve == PGPRCURVE_NIST_P_256 || ka->curve == PGPRCURVE_NIST_P_384 || ka->curve == PGPRCURVE_NIST_P_521) {
 	gerr = gcry_sexp_build(&sexp_sig, NULL, "(sig-val (ecdsa (r %M) (s %M)))", sig->r, sig->s);
 	if (!gerr)
@@ -619,11 +619,11 @@ static pgprRC pgprVerifySigMLDSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, si
     if (!gerr && ka->algo == PGPRPUBKEYALGO_INTERNAL_MLDSA65) {
 	gerr = gcry_sexp_build(&sexp_sig, NULL, "(sig-val (dilithium3 (s %M)))", sig->s);
 	if (!gerr)
-	    gcry_sexp_build(&sexp_pkey, NULL, "(public-key (dilithium3 (p %M)))", key->p);
+	    gerr = gcry_sexp_build(&sexp_pkey, NULL, "(public-key (dilithium3 (p %M)))", key->p);
     } else if (!gerr && ka->algo == PGPRPUBKEYALGO_INTERNAL_MLDSA87) {
 	gerr = gcry_sexp_build(&sexp_sig, NULL, "(sig-val (dilithium5 (s %M)))", sig->s);
 	if (!gerr)
-	    gcry_sexp_build(&sexp_pkey, NULL, "(public-key (dilithium5 (p %M)))", key->p);
+	    gerr = gcry_sexp_build(&sexp_pkey, NULL, "(public-key (dilithium5 (p %M)))", key->p);
     }
     if (!gerr && sexp_sig && sexp_data && sexp_pkey)
 	if ((gerr = gcry_pk_verify(sexp_sig, sexp_data, sexp_pkey)) == 0)
@@ -671,6 +671,8 @@ static pgprRC pgprInitKeyMLDSA(pgprAlg ka)
     return PGPR_OK;
 }
 
+
+/****************************** Interface **************************************/
 
 pgprRC pgprAlgInitPubkey(pgprAlg ka)
 {
