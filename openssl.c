@@ -145,8 +145,6 @@ static void free_bn_param(OSSL_PARAM *param)
 /* Key */
 
 struct pgprAlgKeyRSA_s {
-    size_t nbytes; /* Size of modulus */
-
     BIGNUM *n; /* Common Modulus */
     BIGNUM *e; /* Public Exponent */
     EVP_PKEY *evp_pkey; /* Fully constructed key */
@@ -217,27 +215,18 @@ static pgprRC pgprSetKeyMpiRSA(pgprAlg ka, int num, const uint8_t *p, int mlen)
 
     ERR_clear_error();
     switch (num) {
-    case 0:
-        /* Modulus */
+    case 0:		/* Modulus */
         if (key->n)
-            return PGPR_ERROR_INTERNAL;	/* This should only ever happen once per key */
-	key->nbytes = mlen - 2;
+            return PGPR_ERROR_INTERNAL;
 	ka->info = 8 * (((mlen - 2) + 7) & ~7);
-        /* Create a BIGNUM from the pointer.
-           Note: this assumes big-endian data as required by PGPR */
-        key->n = BN_bin2bn(p + 2, mlen - 2, NULL);
-        if (key->n)
+        if ((key->n = BN_bin2bn(p + 2, mlen - 2, NULL)) != 0)
 	    rc = PGPR_OK;
         break;
 
-    case 1:
-        /* Exponent */
+    case 1:		/* Exponent */
         if (key->e)
-            return PGPR_ERROR_INTERNAL;	/* This should only ever happen once per key */
-        /* Create a BIGNUM from the pointer.
-           Note: this assumes big-endian data as required by PGPR */
-        key->e = BN_bin2bn(p + 2, mlen - 2, NULL);
-        if (key->e)
+            return PGPR_ERROR_INTERNAL;
+        if ((key->e = BN_bin2bn(p + 2, mlen - 2, NULL)) != 0)
 	    rc = PGPR_OK;
         break;
     }
@@ -278,16 +267,8 @@ static pgprRC pgprSetSigMpiRSA(pgprAlg sa, int num, const uint8_t *p, int mlen)
     switch (num) {
     case 0:
         if (sig->bn)
-            return PGPR_ERROR_INTERNAL;	/* This should only ever happen once per signature */
-        /* Create a BIGNUM from the signature pointer.
-           Note: this assumes big-endian data as required
-           by the PGPR multiprecision integer format
-           (RFC4880, Section 3.2)
-           This will be useful later, as we can
-           retrieve this value with appropriate
-           padding. */
-        sig->bn = BN_bin2bn(p + 2, mlen - 2, NULL);
-        if (sig->bn)
+            return PGPR_ERROR_INTERNAL;
+        if ((sig->bn = BN_bin2bn(p + 2, mlen - 2, NULL)) != 0)
 	    rc = PGPR_OK;
         break;
     }
@@ -300,7 +281,7 @@ static void pgprFreeSigRSA(pgprAlg sa)
     if (sig) {
 	if (sig->bn)
 	    BN_clear_free(sig->bn);
-        free(sa->data);
+        free(sig);
     }
 }
 
@@ -455,37 +436,29 @@ static pgprRC pgprSetKeyMpiDSA(pgprAlg ka, int num, const uint8_t *p, int mlen)
 
     ERR_clear_error();
     switch (num) {
-    case 0:
-        /* Prime */
+    case 0:	/* Prime */
         if (key->p)
-            return PGPR_ERROR_INTERNAL;	/* This should only ever happen once per key */
+            return PGPR_ERROR_INTERNAL;
 	ka->info = 8 * (((mlen - 2) + 7) & ~7);
-        key->p = BN_bin2bn(p + 2, mlen - 2, NULL);
-	if (key->p)
+        if ((key->p = BN_bin2bn(p + 2, mlen - 2, NULL)) != 0)
 	    rc = PGPR_OK;
         break;
-    case 1:
-        /* Subprime */
+    case 1:	/* Subprime */
         if (key->q)
-            return PGPR_ERROR_INTERNAL;	/* This should only ever happen once per key */
-        key->q = BN_bin2bn(p + 2, mlen - 2, NULL);
-	if (key->q)
+            return PGPR_ERROR_INTERNAL;
+        if ((key->q = BN_bin2bn(p + 2, mlen - 2, NULL)) != 0)
 	    rc = PGPR_OK;
         break;
-    case 2:
-        /* Base */
+    case 2:	/* Base */
         if (key->g)
-            return PGPR_ERROR_INTERNAL;	/* This should only ever happen once per key */
-        key->g = BN_bin2bn(p + 2, mlen - 2, NULL);
-	if (key->g)
+            return PGPR_ERROR_INTERNAL;
+        if ((key->g = BN_bin2bn(p + 2, mlen - 2, NULL)) != 0)
 	    rc = PGPR_OK;
         break;
-    case 3:
-        /* Public */
+    case 3:	/* Public */
         if (key->y)
-            return PGPR_ERROR_INTERNAL;	/* This should only ever happen once per key */
-        key->y = BN_bin2bn(p + 2, mlen - 2, NULL);
-	if (key->y)
+            return PGPR_ERROR_INTERNAL;
+        if ((key->y = BN_bin2bn(p + 2, mlen - 2, NULL)) != 0)
 	    rc = PGPR_OK;
         break;
     }
@@ -569,18 +542,16 @@ static pgprRC pgprSetSigMpiDSA(pgprAlg sa, int num, const uint8_t *p, int mlen)
     switch (num) {
     case 0:
         if (sig->r)
-            return PGPR_ERROR_INTERNAL;	/* This should only ever happen once per signature */
-	sig->r = pgprMemdup(p + 2, mlen - 2);
-	if (!sig->r)
+            return PGPR_ERROR_INTERNAL;
+	if ((sig->r = pgprMemdup(p + 2, mlen - 2)) == 0)
 	    return PGPR_ERROR_NO_MEMORY;
         sig->rlen = mlen - 2;
         rc = PGPR_OK;
         break;
     case 1:
         if (sig->s)
-            return PGPR_ERROR_INTERNAL;	/* This should only ever happen once per signature */
-	sig->s = pgprMemdup(p + 2, mlen - 2);
-	if (!sig->s)
+            return PGPR_ERROR_INTERNAL;
+	if ((sig->s = pgprMemdup(p + 2, mlen - 2)) == 0)
 	    return PGPR_ERROR_NO_MEMORY;
         sig->slen = mlen - 2;
         rc = PGPR_OK;
@@ -739,8 +710,7 @@ static pgprRC pgprSetKeyMpiECDSA(pgprAlg ka, int num, const uint8_t *p, int mlen
     if (num == 0 && mlen > 3 && p[2] == 0x04) {
 	if (key->q)
 	    return PGPR_ERROR_INTERNAL;
-	key->q = pgprMemdup(p + 2, mlen - 2);
-	if (!key->q)
+	if ((key->q = pgprMemdup(p + 2, mlen - 2)) == 0)
 	    return PGPR_ERROR_NO_MEMORY;
 	key->qlen = mlen - 2;
 	rc = PGPR_OK;
@@ -780,18 +750,16 @@ static pgprRC pgprSetSigMpiECDSA(pgprAlg sa, int num, const uint8_t *p, int mlen
     switch (num) {
     case 0:
         if (sig->r)
-            return PGPR_ERROR_INTERNAL;	/* This should only ever happen once per signature */
-	sig->r = pgprMemdup(p + 2, mlen - 2);
-	if (!sig->r)
+            return PGPR_ERROR_INTERNAL;
+	if ((sig->r = pgprMemdup(p + 2, mlen - 2)) == 0)
 	    return PGPR_ERROR_NO_MEMORY;
 	sig->rlen = mlen - 2;
         rc = PGPR_OK;
         break;
     case 1:
         if (sig->s)
-            return 1;	/* This should only ever happen once per signature */
-	sig->s = pgprMemdup(p + 2, mlen - 2);
-	if (!sig->s)
+            return PGPR_ERROR_INTERNAL;
+	if ((sig->s = pgprMemdup(p + 2, mlen - 2)) == 0)
 	    return PGPR_ERROR_NO_MEMORY;
 	sig->slen = mlen - 2;
         rc = PGPR_OK;
@@ -807,8 +775,8 @@ static void pgprFreeSigECDSA(pgprAlg sa)
     if (sig) {
 	free(sig->r);
 	free(sig->s);
+	free(sig);
     }
-    free(sa->data);
 }
 
 static pgprRC pgprVerifySigECDSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size_t hashlen, int hash_algo)
@@ -907,14 +875,12 @@ static pgprRC pgprSetKeyMpiEDDSA(pgprAlg ka, int num, const uint8_t *p, int mlen
 	if (key->q)
 	    return PGPR_ERROR_INTERNAL;
 	if (ka->curve == PGPRCURVE_ED25519 && mlen == 32) {
-	    key->q = pgprMemdup(p, 32);
-	    if (!key->q)
+	    if ((key->q = pgprMemdup(p, 32)) == 0)
 		return PGPR_ERROR_NO_MEMORY;
 	    key->qlen = 32;
 	    rc = PGPR_OK;
 	} else if (ka->curve == PGPRCURVE_ED448 && mlen == 57) {
-	    key->q = pgprMemdup(p, 57);
-	    if (!key->q)
+	    if ((key->q = pgprMemdup(p, 57)) == 0)
 		return PGPR_ERROR_NO_MEMORY;
 	    key->qlen = 57;
 	    rc = PGPR_OK;
@@ -922,18 +888,20 @@ static pgprRC pgprSetKeyMpiEDDSA(pgprAlg ka, int num, const uint8_t *p, int mlen
 	return rc;
     }
     if (ka->curve == PGPRCURVE_ED25519 && num == 0 && !key->q && mlen > 3 && p[2] == 0x40) {
-	rc = PGPR_OK;
-	key->q = pgprMemdup(p + 3, mlen - 3);	/* we do not copy the leading 0x40 */
-	if (!key->q)
+	if (key->q)
+	    return PGPR_ERROR_INTERNAL;
+	if ((key->q = pgprMemdup(p + 3, mlen - 3)) == 0)	/* we do not copy the leading 0x40 */
 	    return PGPR_ERROR_NO_MEMORY;
 	key->qlen = mlen - 3;
+	rc = PGPR_OK;
     }
     if (ka->curve == PGPRCURVE_ED448 && num == 0 && !key->q && mlen > 3 && mlen <= 59) {
-	key->q = pgprCalloc(1, 57);
-	if (!key->q)
+	if (key->q)
+	    return PGPR_ERROR_INTERNAL;
+	if ((key->q = pgprCalloc(1, 57)) == 0)
 	    return PGPR_ERROR_NO_MEMORY;
-	key->qlen = 57;
 	memcpy(key->q + 57 - (mlen - 2), p + 2, mlen - 2);
+	key->qlen = 57;
 	rc = PGPR_OK;
     }
     return rc;
@@ -1103,6 +1071,9 @@ static pgprRC pgprSetKeyMpiMLDSA(pgprAlg ka, int num, const uint8_t *p, int mlen
 	key = ka->data = pgprCalloc(1, sizeof(*key));
     if (!key)
 	return PGPR_ERROR_NO_MEMORY;
+    if (key->keyl)
+	return PGPR_ERROR_INTERNAL;
+
     switch (ka->algo) {
 	case PGPRPUBKEYALGO_INTERNAL_MLDSA65:
 	    keyl = 1952;
@@ -1138,6 +1109,8 @@ static pgprRC pgprSetSigMpiMLDSA(pgprAlg sa, int num, const uint8_t *p, int mlen
 	sig = sa->data = pgprCalloc(1, sizeof(*sig));
     if (!sig)
 	return PGPR_ERROR_NO_MEMORY;
+    if (sig->sigl)
+	return PGPR_ERROR_INTERNAL;
 
     switch (sa->algo) {
 	case PGPRPUBKEYALGO_INTERNAL_MLDSA65:
@@ -1211,7 +1184,7 @@ static pgprRC pgprInitKeyMLDSA(pgprAlg ka)
 #endif
 
 
-/****************************** PGP **************************************/
+/****************************** Interface **************************************/
 
 pgprRC pgprAlgInitPubkey(pgprAlg ka)
 {
