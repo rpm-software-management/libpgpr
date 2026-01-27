@@ -118,6 +118,8 @@ static pgprRC pgprSetSigMpiRSA(pgprAlg sa, int num, const uint8_t *p, int mlen)
 
     switch (num) {
     case 0:
+	if (sig->s)
+	    return PGPR_ERROR_INTERNAL;
 	if (!(gerr = gcry_mpi_scan(&sig->s, GCRYMPI_FMT_PGP, p, mlen, NULL)))
 	    rc = PGPR_OK;
 	break;
@@ -138,11 +140,15 @@ static pgprRC pgprSetKeyMpiRSA(pgprAlg ka, int num, const uint8_t *p, int mlen)
 
     switch (num) {
     case 0:
+	if (key->n)
+	    return PGPR_ERROR_INTERNAL;
 	ka->info = 8 * (((mlen - 2) + 7) & ~7);
 	if (!(gerr = gcry_mpi_scan(&key->n, GCRYMPI_FMT_PGP, p, mlen, NULL)))
 	    rc = PGPR_OK;
 	break;
     case 1:
+	if (key->e)
+	    return PGPR_ERROR_INTERNAL;
 	if (!(gerr = gcry_mpi_scan(&key->e, GCRYMPI_FMT_PGP, p, mlen, NULL)))
 	    rc = PGPR_OK;
 	break;
@@ -242,10 +248,14 @@ static pgprRC pgprSetSigMpiDSA(pgprAlg sa, int num, const uint8_t *p, int mlen)
 
     switch (num) {
     case 0:
+	if (sig->r)
+	    return PGPR_ERROR_INTERNAL;
 	if (!(gerr = gcry_mpi_scan(&sig->r, GCRYMPI_FMT_PGP, p, mlen, NULL)))
 	    rc = PGPR_OK;
 	break;
     case 1:
+	if (sig->s)
+	    return PGPR_ERROR_INTERNAL;
 	if (!(gerr = gcry_mpi_scan(&sig->s, GCRYMPI_FMT_PGP, p, mlen, NULL)))
 	    rc = PGPR_OK;
 	break;
@@ -266,19 +276,27 @@ static pgprRC pgprSetKeyMpiDSA(pgprAlg ka, int num, const uint8_t *p, int mlen)
 
     switch (num) {
     case 0:
+	if (key->p)
+	    return PGPR_ERROR_INTERNAL;
 	ka->info = 8 * (((mlen - 2) + 7) & ~7);
 	if (!(gerr = gcry_mpi_scan(&key->p, GCRYMPI_FMT_PGP, p, mlen, NULL)))
 	    rc = PGPR_OK;
 	break;
     case 1:
+	if (key->q)
+	    return PGPR_ERROR_INTERNAL;
 	if (!(gerr = gcry_mpi_scan(&key->q, GCRYMPI_FMT_PGP, p, mlen, NULL)))
 	    rc = PGPR_OK;
 	break;
     case 2:
+	if (key->g)
+	    return PGPR_ERROR_INTERNAL;
 	if (!(gerr = gcry_mpi_scan(&key->g, GCRYMPI_FMT_PGP, p, mlen, NULL)))
 	    rc = PGPR_OK;
 	break;
     case 3:
+	if (key->y)
+	    return PGPR_ERROR_INTERNAL;
 	if (!(gerr = gcry_mpi_scan(&key->y, GCRYMPI_FMT_PGP, p, mlen, NULL)))
 	    rc = PGPR_OK;
 	break;
@@ -390,10 +408,14 @@ static pgprRC pgprSetSigMpiECC(pgprAlg sa, int num, const uint8_t *p, int mlen)
     }
     switch (num) {
     case 0:
+	if (sig->r)
+	    return PGPR_ERROR_INTERNAL;
 	if (!(gerr = gcry_mpi_scan(&sig->r, GCRYMPI_FMT_PGP, p, mlen, NULL)))
 	    rc = PGPR_OK;
 	break;
     case 1:
+	if (sig->s)
+	    return PGPR_ERROR_INTERNAL;
 	if (!(gerr = gcry_mpi_scan(&sig->s, GCRYMPI_FMT_PGP, p, mlen, NULL)))
 	    rc = PGPR_OK;
 	break;
@@ -413,6 +435,8 @@ static pgprRC pgprSetKeyMpiECC(pgprAlg ka, int num, const uint8_t *p, int mlen)
 	return PGPR_ERROR_NO_MEMORY;
 
     if (num == -1) {
+	if (key->q)
+	    return PGPR_ERROR_INTERNAL;
 	if (ka->curve == PGPRCURVE_ED25519 && mlen == 32 && !(gerr = gcry_mpi_scan(&key->q, GCRYMPI_FMT_USG, p, 32, NULL)))
 	    rc = PGPR_OK;
 	else if (ka->curve == PGPRCURVE_ED448 && mlen == 57 && !(gerr = gcry_mpi_scan(&key->q, GCRYMPI_FMT_USG, p, 57, NULL)))
@@ -422,6 +446,8 @@ static pgprRC pgprSetKeyMpiECC(pgprAlg ka, int num, const uint8_t *p, int mlen)
 
     switch (num) {
     case 0:
+	if (key->q)
+	    return PGPR_ERROR_INTERNAL;
 	if (!(gerr = gcry_mpi_scan(&key->q, GCRYMPI_FMT_PGP, p, mlen, NULL)))
 	    rc = PGPR_OK;
 	break;
@@ -556,6 +582,8 @@ static pgprRC pgprSetSigMpiMLDSA(pgprAlg sa, int num, const uint8_t *p, int mlen
 	sig = sa->data = pgprCalloc(1, sizeof(*sig));
     if (!sig)
 	return PGPR_ERROR_NO_MEMORY;
+    if (sig->s)
+	return PGPR_ERROR_INTERNAL;
 
     switch (sa->algo) {
 	case PGPRPUBKEYALGO_INTERNAL_MLDSA65:
@@ -587,6 +615,8 @@ static pgprRC pgprSetKeyMpiMLDSA(pgprAlg ka, int num, const uint8_t *p, int mlen
 	key = ka->data = pgprCalloc(1, sizeof(*key));
     if (!key)
 	return PGPR_ERROR_NO_MEMORY;
+    if (key->p)
+	return PGPR_ERROR_INTERNAL;
 
     switch (ka->algo) {
 	case PGPRPUBKEYALGO_INTERNAL_MLDSA65:
