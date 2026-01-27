@@ -62,7 +62,7 @@ static pgprRC pgprVerifySelfSig(pgprItem key, pgprItem selfsig,
     uint8_t *hash = NULL;
     size_t hashlen = 0;
 
-    if (pgprDigestInit(selfsig->hash_algo, &ctx) != PGPR_OK || !ctx)
+    if (pgprDigestInit(selfsig->hash_algo, &ctx) != PGPR_OK)
 	return rc;
 
     /* hash header */
