@@ -442,6 +442,39 @@ digest(int argc, char **argv)
     return 0;
 }
 
+static int
+feature(int argc, char **argv)
+{
+    pgprRC rc = PGPR_OK;
+    char *feature;
+    size_t len;
+    if (argc != 2) {
+	fprintf(stderr, "usage: testpgpr feature <name>\n");
+	exit(1);
+    }
+    feature = argv[1];
+    len = strlen(feature);
+    if (!strncmp(feature, "algo(", 5) && feature[len - 1] == ')') {
+	int curve = 0, algo = atoi(feature + 5);
+	char *cp;
+	if ((cp = strchr(feature + 5, '.')) != 0)
+	    curve = atoi(cp + 1);
+	rc = pgprSupportedAlgo(algo, curve);
+    } else if (!strncmp(feature, "digest(", 7) && feature[len - 1] == ')') {
+	int digest = atoi(feature + 7);
+	rc = pgprDigestLength(digest) > 0 ? PGPR_OK : PGPR_ERROR_UNSUPPORTED_DIGEST;
+    } else {
+	fprintf(stderr, "unknown feature '%s'\n", feature);
+	exit(1);
+    }
+    if (rc == PGPR_OK) {
+	printf("OK\n");
+    } else {
+	printf("FAIL: %s\n", pgprErrorStr(rc));
+    }
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     pgprRC rc;
@@ -468,6 +501,8 @@ int main(int argc, char **argv)
         st = digest(argc - 1, argv + 1);
     } else if (!strcmp(argv[1], "merge")) {
         st = merge(argc - 1, argv + 1);
+    } else if (!strcmp(argv[1], "feature")) {
+        st = feature(argc - 1, argv + 1);
     } else {
 	fprintf(stderr, "unknown command '%s'\n", argv[1]);
 	exit(1);
