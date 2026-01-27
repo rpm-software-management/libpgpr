@@ -50,23 +50,49 @@ static pgprRC check_out_of_mem(pgprRC rc)
     return rc;
 }
 
-static int pgprSupportedCurve(int algo, int curve)
+pgprRC pgprSupportedAlgo(int algo, int curve)
 {
+    pgprRC rc;
+    switch (algo) {
+    case PGPRPUBKEYALGO_RSA:
+    case PGPRPUBKEYALGO_DSA:
+	return PGPR_OK;
+    case PGPRPUBKEYALGO_ECDSA:
+	if (curve == PGPRCURVE_NIST_P_256 || curve == PGPRCURVE_NIST_P_384 || curve == PGPRCURVE_NIST_P_521)
+	    return PGPR_OK;
+	return curve ? PGPR_ERROR_UNSUPPORTED_CURVE : PGPR_OK;
 #ifdef EVP_PKEY_ED25519
-    if (algo == PGPRPUBKEYALGO_EDDSA && curve == PGPRCURVE_ED25519)
-	return 1;
-#endif
+    case PGPRPUBKEYALGO_EDDSA:
+    case PGPRPUBKEYALGO_ED25519:
+    case PGPRPUBKEYALGO_ED448:
+	if (algo == PGPRPUBKEYALGO_ED25519 || curve == PGPRCURVE_ED25519)
+	    return PGPR_OK;
+	if (algo == PGPRPUBKEYALGO_ED448)
+	    curve = PGPRCURVE_ED448;
 #ifdef EVP_PKEY_ED448
-    if (algo == PGPRPUBKEYALGO_EDDSA && curve == PGPRCURVE_ED448)
-	return 1;
+	if (curve == PGPRCURVE_ED448)
+	    return PGPR_OK;
 #endif
-    if (algo == PGPRPUBKEYALGO_ECDSA && curve == PGPRCURVE_NIST_P_256)
-	return 1;
-    if (algo == PGPRPUBKEYALGO_ECDSA && curve == PGPRCURVE_NIST_P_384)
-	return 1;
-    if (algo == PGPRPUBKEYALGO_ECDSA && curve == PGPRCURVE_NIST_P_521)
-	return 1;
-    return 0;
+	return curve ? PGPR_ERROR_UNSUPPORTED_CURVE : PGPR_OK;
+#endif
+#if defined(EVP_PKEY_ML_DSA_65)
+    case PGPRPUBKEYALGO_INTERNAL_MLDSA65:
+	return PGPR_OK;
+#endif
+#if defined(EVP_PKEY_ML_DSA_87)
+    case PGPRPUBKEYALGO_INTERNAL_MLDSA87:
+	return PGPR_OK;
+#endif
+    case PGPRPUBKEYALGO_MLDSA65_ED25519:
+	rc = pgprSupportedAlgo(PGPRPUBKEYALGO_INTERNAL_MLDSA65, 0);
+	return rc == PGPR_OK ? pgprSupportedAlgo(PGPRPUBKEYALGO_ED25519, 0) : rc;
+    case PGPRPUBKEYALGO_MLDSA87_ED448:
+	rc = pgprSupportedAlgo(PGPRPUBKEYALGO_INTERNAL_MLDSA87, 0);
+	return rc == PGPR_OK ? pgprSupportedAlgo(PGPRPUBKEYALGO_ED448, 0) : rc;
+    default:
+        break;
+    }
+    return PGPR_ERROR_UNSUPPORTED_ALGORITHM;
 }
 
 /*********************** pkey construction *******************************/
@@ -835,8 +861,6 @@ static pgprRC pgprInitSigECDSA(pgprAlg sa)
 
 static pgprRC pgprInitKeyECDSA(pgprAlg ka)
 {
-    if (!pgprSupportedCurve(ka->algo, ka->curve))
-	return PGPR_ERROR_UNSUPPORTED_CURVE;
     ka->setmpi = pgprSetKeyMpiECDSA;
     ka->free = pgprFreeKeyECDSA;
     ka->mpis = 1;
@@ -1022,8 +1046,6 @@ static pgprRC pgprInitKeyEDDSA(pgprAlg ka)
 	ka->curve = PGPRCURVE_ED25519;
     if (ka->algo == PGPRPUBKEYALGO_ED448)
 	ka->curve = PGPRCURVE_ED448;
-    if (!pgprSupportedCurve(PGPRPUBKEYALGO_EDDSA, ka->curve))
-	return PGPR_ERROR_UNSUPPORTED_CURVE;
     ka->setmpi = pgprSetKeyMpiEDDSA;
     ka->free = pgprFreeKeyEDDSA;
     ka->mpis = ka->algo == PGPRPUBKEYALGO_EDDSA ? 1 : 0;
@@ -1270,7 +1292,6 @@ pgprRC pgprDigestInit(int hashalgo, pgprDigCtx *ret)
     ERR_clear_error();
     ctx = EVP_MD_CTX_new();
     if (ctx && !EVP_DigestInit_ex(ctx, md, NULL)) {
-check_out_of_mem(PGPR_ERROR_INTERNAL);
 	EVP_MD_CTX_free(ctx);
 	ctx = NULL;
     }

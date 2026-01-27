@@ -157,6 +157,9 @@ pgprRC pgprInitCrypto(void);
 
 pgprRC pgprFreeCrypto(void);
 
+/* feature introspection */
+pgprRC pgprSupportedAlgo(int algo, int curve);
+
 /* item management */
 pgprItem pgprItemNew(uint8_t tag);
 

@@ -213,7 +213,9 @@ pgprRC pgprAlgSetupPubkey(pgprAlg alg, int algo, int curve, const uint8_t *p, co
     pgprRC rc;
     alg->algo = algo;
     alg->curve = curve;
-    rc = pgprAlgInitPubkey(alg);
+    rc = pgprSupportedAlgo(algo, curve);
+    if (rc == PGPR_OK)
+	rc = pgprAlgInitPubkey(alg);
     if (rc == PGPR_OK)
 	rc = pgprAlgProcessMpis(alg, p, pend);
     alg->setup_rc = rc;
@@ -224,7 +226,9 @@ pgprRC pgprAlgSetupSignature(pgprAlg alg, int algo, const uint8_t *p, const uint
 {
     pgprRC rc;
     alg->algo = algo;
-    rc = pgprAlgInitSignature(alg);
+    rc = pgprSupportedAlgo(algo, 0);
+    if (rc == PGPR_OK)
+	rc = pgprAlgInitSignature(alg);
     if (rc == PGPR_OK)
 	rc = pgprAlgProcessMpis(alg, p, pend);
     alg->setup_rc = rc;

@@ -41,33 +41,48 @@ static int check_gcrypt_supported(const char *sexpstr)
     return nbits > 0 ? 1 : -1;
 }
 
-static int pgprSupportedCurve(int algo, int curve)
+pgprRC pgprSupportedAlgo(int algo, int curve)
 {
-    if (algo == PGPRPUBKEYALGO_EDDSA && curve == PGPRCURVE_ED25519) {
-	static int supported_ed25519;
-	if (!supported_ed25519)
-	    supported_ed25519 = check_gcrypt_supported("(public-key (ecc (curve \"Ed25519\")))");
-	return supported_ed25519 > 0;
-    }
-    if (algo == PGPRPUBKEYALGO_EDDSA && curve == PGPRCURVE_ED448) {
-	static int supported_ed448;
-	if (!supported_ed448)
-	    supported_ed448 = check_gcrypt_supported("(public-key (ecc (curve \"Ed448\")))");
-	return supported_ed448 > 0;
-    }
-    if (algo == PGPRPUBKEYALGO_ECDSA && curve == PGPRCURVE_NIST_P_256)
-	return 1;
-    if (algo == PGPRPUBKEYALGO_ECDSA && curve == PGPRCURVE_NIST_P_384)
-	return 1;
-    if (algo == PGPRPUBKEYALGO_ECDSA && curve == PGPRCURVE_NIST_P_521)
-	return 1;
-    if (algo == PGPRPUBKEYALGO_INTERNAL_MLDSA65 || algo == PGPRPUBKEYALGO_INTERNAL_MLDSA87) {
-	static int supported_mldsa;
+    static int supported_ed25519, supported_ed448, supported_mldsa;
+    pgprRC rc;
+
+    switch (algo) {
+    case PGPRPUBKEYALGO_RSA:
+    case PGPRPUBKEYALGO_DSA:
+	return PGPR_OK;
+    case PGPRPUBKEYALGO_ECDSA:
+	if (curve == PGPRCURVE_NIST_P_256 || curve == PGPRCURVE_NIST_P_384 || curve == PGPRCURVE_NIST_P_521)
+	    return PGPR_OK;
+	return curve ? PGPR_ERROR_UNSUPPORTED_CURVE : PGPR_OK;
+    case PGPRPUBKEYALGO_EDDSA:
+    case PGPRPUBKEYALGO_ED25519:
+    case PGPRPUBKEYALGO_ED448:
+	if (algo == PGPRPUBKEYALGO_ED25519 || curve == PGPRCURVE_ED25519) {
+	    if (!supported_ed25519)
+		supported_ed25519 = check_gcrypt_supported("(public-key (ecc (curve \"Ed25519\")))");
+	    return supported_ed25519 > 0 ? PGPR_OK : PGPR_ERROR_UNSUPPORTED_CURVE;
+	}
+	if (algo == PGPRPUBKEYALGO_ED448 || curve == PGPRCURVE_ED448) {
+	    if (!supported_ed448)
+		supported_ed448 = check_gcrypt_supported("(public-key (ecc (curve \"Ed448\")))");
+	    return supported_ed448 > 0 ? PGPR_OK : PGPR_ERROR_UNSUPPORTED_CURVE;
+	}
+	return curve ? PGPR_ERROR_UNSUPPORTED_CURVE : PGPR_OK;
+    case PGPRPUBKEYALGO_INTERNAL_MLDSA65:
+    case PGPRPUBKEYALGO_INTERNAL_MLDSA87:
 	if (!supported_mldsa)
 	    supported_mldsa = check_gcrypt_supported("(public-key (dilithium3))");
-	return supported_mldsa > 0;
+	return supported_mldsa > 0 ? PGPR_OK : PGPR_ERROR_UNSUPPORTED_ALGORITHM;
+    case PGPRPUBKEYALGO_MLDSA65_ED25519:
+	rc = pgprSupportedAlgo(PGPRPUBKEYALGO_INTERNAL_MLDSA65, 0);
+	return rc == PGPR_OK ? pgprSupportedAlgo(PGPRPUBKEYALGO_ED25519, 0) : rc;
+    case PGPRPUBKEYALGO_MLDSA87_ED448:
+	rc = pgprSupportedAlgo(PGPRPUBKEYALGO_INTERNAL_MLDSA87, 0);
+	return rc == PGPR_OK ? pgprSupportedAlgo(PGPRPUBKEYALGO_ED448, 0) : rc;
+    default:
+        break;
     }
-    return 0;
+    return PGPR_ERROR_UNSUPPORTED_ALGORITHM;
 }
 
 static pgprRC check_out_of_mem(pgprRC rc, gcry_error_t gerr)
@@ -510,8 +525,6 @@ static pgprRC pgprInitKeyECC(pgprAlg ka)
 	ka->curve = PGPRCURVE_ED25519;
     if (ka->algo == PGPRPUBKEYALGO_ED448)
 	ka->curve = PGPRCURVE_ED448;
-    if (!pgprSupportedCurve(ka->algo == PGPRPUBKEYALGO_ECDSA ? ka->algo : PGPRPUBKEYALGO_EDDSA, ka->curve))
-	return PGPR_ERROR_UNSUPPORTED_CURVE;
     ka->setmpi = pgprSetKeyMpiECC;
     ka->free = pgprFreeKeyECC;
     ka->mpis = ka->algo == PGPRPUBKEYALGO_ECDSA || ka->algo == PGPRPUBKEYALGO_EDDSA ? 1 : 0;
@@ -652,8 +665,6 @@ static pgprRC pgprInitSigMLDSA(pgprAlg sa)
 
 static pgprRC pgprInitKeyMLDSA(pgprAlg ka)
 {
-    if (!pgprSupportedCurve(ka->algo, 0))
-	return PGPR_ERROR_UNSUPPORTED_ALGORITHM;
     ka->setmpi = pgprSetKeyMpiMLDSA;
     ka->free = pgprFreeKeyMLDSA;
     ka->mpis = 0;
