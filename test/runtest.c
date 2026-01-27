@@ -12,6 +12,12 @@ static void die(const char *msg)
     exit(1);
 }
 
+static void die_errno(const char *msg)
+{
+    perror(msg);
+    exit(1);
+}
+
 static char *slurp(const char *fn, size_t *lenp)
 {
     size_t len = 0;
@@ -26,12 +32,10 @@ static char *slurp(const char *fn, size_t *lenp)
     while (1) {
 	buf = realloc(buf, len + 65536);
 	if (!buf)
-	    abort();
+	    die("out of memory");
 	l = fread(buf + len, 1, 65536, fp);
-	if (l < 0) {
-	    perror("fread");
-	    exit(1);
-	}
+	if (l < 0)
+	    die_errno("fread");
 	if (l == 0)
 	    break;
 	len += l;
@@ -39,7 +43,7 @@ static char *slurp(const char *fn, size_t *lenp)
     fclose(fp);
     buf = realloc(buf, len + 1);
     if (!buf)
-	abort();
+	die("out of memory");
     buf[len] = 0;
     if (lenp)
 	*lenp = len;
@@ -56,28 +60,20 @@ do_run(char **args, char **out_p, size_t *outl_p)
     ssize_t l;
     int status;
 
-    if (pipe(fds)) {
-	perror("pipe");
-	exit(1);
-    }
+    if (pipe(fds))
+	die_errno("pipe");
     pid = fork();
-    if (pid == (pid_t)-1) {
-	perror("fork");
-	exit(1);
-    }
+    if (pid == (pid_t)-1)
+	die_errno("fork");
     if (pid == 0) {
 	close(fds[0]);
 	if (fds[1] != 1) {
-	    if (dup2(fds[1], 1) == -1) {
-		perror("dup2");
-		exit(1);
-	    }
+	    if (dup2(fds[1], 1) == -1)
+		die_errno("dup2");
 	}
 	close(2);
-	if (dup2(1, 2) == -1) {
-	    perror("dup2");
-	    exit(1);
-	}
+	if (dup2(1, 2) == -1)
+	    die_errno("dup2");
 	execvp(args[0], args);
 	perror(args[0]);
 	_exit(1);
@@ -91,8 +87,7 @@ do_run(char **args, char **out_p, size_t *outl_p)
 	if (l < 0) {
 	    if (errno == EINTR)
 		continue;
-	    perror("read");
-	    exit(1);
+	    die_errno("read");
 	}
 	outl += l;
     }
@@ -102,13 +97,10 @@ do_run(char **args, char **out_p, size_t *outl_p)
 	if (p == (pid_t)-1) {
 	    if (errno == EINTR)
 		continue;
-	    perror("waitpid");
-	    exit(1);
+	    die_errno("waitpid");
 	}
-	if (p != pid) {
-	    fprintf(stderr, "weird pid returned by waitpid\n");
-	    exit(1);
-	}
+	if (p != pid)
+	    die("weird pid returned by waitpid");
 	break;
     }
     if (outl && out[outl - 1] != '\n') {
@@ -268,10 +260,8 @@ int main(int argc, char **argv)
 		*cmd++ = 0;
 		while (*cmd == ' ' || *cmd == '\t')
 		    cmd++;
-		if (*cmd) {
-		    fprintf(stderr, "REQUIRE/ALLREQUIRE can only handle one arg\n");
-		    exit(1);
-		}
+		if (*cmd)
+		    die("REQUIRE/ALLREQUIRE can only handle one arg");
 	    }
 	    args[0] = testpgpr;
 	    args[1] = "feature";
