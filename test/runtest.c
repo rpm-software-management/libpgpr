@@ -6,6 +6,12 @@
 #include <errno.h>
 #include <sys/wait.h>
 
+static void die(const char *msg)
+{
+    fprintf(stderr, "%s\n", msg);
+    exit(1);
+}
+
 static char *slurp(const char *fn, size_t *lenp)
 {
     size_t len = 0;
@@ -175,18 +181,39 @@ do_diff(char *out, size_t outl, char *exp, size_t expl)
     return hasdiff;
 }
 
+void
+add_skip(char *what, char **skipp)
+{
+    size_t whatl = strlen(what);
+    char *s;
+    s = *skipp;
+    while (s && *s) {
+	if (!strncmp(s, what, whatl))
+	    return;	/* already in skip */
+	s = strchr(s, ',');
+	if (s && *s == ' ')
+	    s++;
+    }
+    if (!*skipp)
+	*skipp = strdup(what);
+    else {
+	size_t oldlen = strlen(*skipp);
+	*skipp = realloc(*skipp, oldlen + 2 + whatl + 1);
+	strcpy(*skipp + oldlen, ", ");
+	strcpy(*skipp + oldlen + 2, what);
+    }
+}
+
 int main(int argc, char **argv)
 {
     char *testcase = NULL;
     char *line, *nextline, *p, *cmd;
     char *testpgpr;
     size_t cmdlen;
-    int failed = 0;
+    int succeeded = 0, failed = 0, skipped = 0;
+    char *skip = NULL, *allskip = NULL;
+    int skip_rc = 0;
 
-    if (argc != 2) {
-	fprintf(stderr, "Usage: runtest <test.t>\n");
-	exit(1);
-    }
     p = strrchr(argv[0], '/');
     if (p) {
 	testpgpr = malloc(p - argv[0] + 8 + 2);
@@ -194,6 +221,14 @@ int main(int argc, char **argv)
 	memcpy(testpgpr + (p - argv[0] + 1), "testpgpr", 8 + 1);
     } else
 	testpgpr = strdup("testpgpr");
+
+    if (argc > 3 && !strcmp(argv[1], "--skip-return-code")) {
+	skip_rc = atoi(argv[2]);
+	argc -= 2;
+	argv += 2;
+    }
+    if (argc != 2)
+	die("Usage: runtest [--skip-return-code <rc>] <test.t>");
 
     testcase = slurp(argv[1], NULL);
     for (line = testcase; *line; line = nextline) {
@@ -216,6 +251,44 @@ int main(int argc, char **argv)
 	    while (*cmd == ' ' || *cmd == '\t')
 		cmd++;
 	    printf("Testing %s\n", cmd);
+	} if ((cmdlen == 7 && strncmp(cmd, "REQUIRE", 7) == 0) || (cmdlen == 10 && strncmp(cmd, "ALLREQUIRE", 10) == 0)) {
+	    int isall = cmdlen == 10 ? 1 : 0;
+	    char *what;
+	    char *out = 0;
+	    size_t outl = 0;
+	    char *args[4];
+
+	    cmd += cmdlen;
+	    while (*cmd == ' ' || *cmd == '\t')
+		cmd++;
+	    what = cmd;
+	    while (*cmd && *cmd != ' ' && *cmd != '\t')
+		cmd++;
+	    if (*cmd) {
+		*cmd++ = 0;
+		while (*cmd == ' ' || *cmd == '\t')
+		    cmd++;
+		if (*cmd) {
+		    fprintf(stderr, "REQUIRE/ALLREQUIRE can only handle one arg\n");
+		    exit(1);
+		}
+	    }
+	    args[0] = testpgpr;
+	    args[1] = "feature";
+	    args[2] = what;
+	    args[3] = NULL;
+	    do_run(args, &out, &outl);
+	    if (outl == 0)
+		die("bad result from feature check");
+	    out[outl - 1] = 0;
+	    if (!strncmp(out, "OK", 2))
+		continue;
+	    if (!strncmp(out, "FAIL", 4))
+		add_skip(what, isall ? &allskip :  &skip);
+	    else if (strncmp(out, "OK", 2) != 0) {
+		fprintf(stderr, "feature check error: %s\n", out);
+		exit(1);
+	    }
 	} else if (cmdlen == 3 && strncmp(cmd, "RUN", 3) == 0) {
 	    char *saveptr = NULL;
 	    char *arg;
@@ -226,15 +299,22 @@ int main(int argc, char **argv)
 	    char *exp = 0;
 	    size_t expl = 0;
 
+	    if (skip || allskip) {
+		printf("(skipped: %s)\n", allskip ? allskip : skip);
+		skipped++;
+		if (skip) {
+		    free(skip);
+		    skip = 0;
+		}
+		continue;
+	    }
 	    args[nargs++] = strdup(testpgpr);
 	    cmd += cmdlen;
 	    while (*cmd == ' ' || *cmd == '\t')
 		cmd++;
 	    while ((arg = strtok_r(cmd, " \t", &saveptr)) != NULL) {
-		if (nargs == 18) {
-		    fprintf(stderr, "too many args to RUN\n");
-		    exit(1);
-		}
+		if (nargs == 18)
+		    die("too many args to RUN");
 		args[nargs++] = strdup(arg);
 		cmd = NULL;
 	    }
@@ -258,12 +338,17 @@ int main(int argc, char **argv)
 	    }
 	    if (do_diff(out, outl, exp, expl))
 		failed++;
+	    else
+		succeeded++;
 	    free(out);
 	    while (nargs > 0)
 		free(args[--nargs]);
 	}
     }
+    free(skip);
+    free(allskip);
     free(testcase);
     free(testpgpr);
-    return failed ? 1 : 0;
+    printf("succeeded: %d, failed: %d, skipped: %d\n", succeeded, failed, skipped);
+    return failed ? 1 : (skipped && !succeeded) ? skip_rc : 0;
 }
