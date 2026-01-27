@@ -281,6 +281,44 @@ certinfo(int argc, char **argv)
 }
 
 static int
+merge(int argc, char **argv)
+{
+    pgprRC rc;
+    char *pubkey1_a;
+    unsigned char *pubkey1;
+    size_t pubkey1l;
+    char *pubkey2_a;
+    unsigned char *pubkey2;
+    size_t pubkey2l;
+    unsigned char *pubkeym = NULL;
+    size_t pubkeyml = 0;
+    char *pubkeym_a = NULL;
+    
+    if (argc - 1 != 2) {
+	fprintf(stderr, "usage: testpgpr merge <pubkey1> <pubkey2>\n");
+	exit(1);
+    }
+    pubkey1_a = slurp(argv[1], NULL);
+    if ((rc = pgprArmorUnwrap("PUBLIC KEY BLOCK", pubkey1_a, &pubkey1, &pubkey1l)) != PGPR_OK)
+	die("pubkey1 unwrap error", rc);
+    pubkey2_a = slurp(argv[2], NULL);
+    if ((rc = pgprArmorUnwrap("PUBLIC KEY BLOCK", pubkey2_a, &pubkey2, &pubkey2l)) != PGPR_OK)
+	die("pubkey2 unwrap error", rc);
+    if ((rc = pgprPubkeyMerge(pubkey1, pubkey1l, pubkey2, pubkey2l, &pubkeym, &pubkeyml)) != PGPR_OK)
+	die("merge error", rc);
+    if ((rc = pgprArmorWrap("PUBLIC KEY BLOCK", NULL, pubkeym, pubkeyml, &pubkeym_a)) != PGPR_OK)
+	die("pubkey wrap error", rc);
+    printf("%s", pubkeym_a);
+    free(pubkey1_a);
+    free(pubkey1);
+    free(pubkey2_a);
+    free(pubkey2);
+    free(pubkeym_a);
+    free(pubkeym);
+    return 0;
+}
+
+static int
 siginfo(int argc, char **argv)
 {
     pgprRC rc;
@@ -428,6 +466,8 @@ int main(int argc, char **argv)
         st = dearmor(argc - 1, argv + 1);
     } else if (!strcmp(argv[1], "digest")) {
         st = digest(argc - 1, argv + 1);
+    } else if (!strcmp(argv[1], "merge")) {
+        st = merge(argc - 1, argv + 1);
     } else {
 	fprintf(stderr, "unknown command '%s'\n", argv[1]);
 	exit(1);
