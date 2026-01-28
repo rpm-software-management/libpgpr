@@ -196,6 +196,30 @@ add_skip(char *what, char **skipp)
     }
 }
 
+int split_into_words(char *line, char **args, int max)
+{
+    int cnt = 0;
+    for (;;) {
+	while (*line == ' ' || *line == '\t')
+	    line++;
+	if (!*line)
+	    return cnt;
+	if (cnt == max)
+	    die("too many args");
+	if (*line == '"') {
+	    args[cnt++] = ++line;
+	    while (*line && *line != '"')
+		line++;
+	} else {
+	    args[cnt++] = line;
+	    while (*line && *line != ' ' && *line != '\t')
+		line++;
+	}
+	if (*line)
+	    *line++ = 0;
+    }
+}
+
 int main(int argc, char **argv)
 {
     char *testcase = NULL;
@@ -243,45 +267,31 @@ int main(int argc, char **argv)
 	    while (*cmd == ' ' || *cmd == '\t')
 		cmd++;
 	    printf("Testing %s\n", cmd);
-	} if ((cmdlen == 7 && strncmp(cmd, "REQUIRE", 7) == 0) || (cmdlen == 10 && strncmp(cmd, "ALLREQUIRE", 10) == 0)) {
+	} else if ((cmdlen == 7 && strncmp(cmd, "REQUIRE", 7) == 0) || (cmdlen == 10 && strncmp(cmd, "ALLREQUIRE", 10) == 0)) {
+	    char *args[20];
+	    int nargs = 0;
 	    int isall = cmdlen == 10 ? 1 : 0;
-	    char *what;
 	    char *out = 0;
 	    size_t outl = 0;
-	    char *args[4];
 
-	    cmd += cmdlen;
-	    while (*cmd == ' ' || *cmd == '\t')
-		cmd++;
-	    what = cmd;
-	    while (*cmd && *cmd != ' ' && *cmd != '\t')
-		cmd++;
-	    if (*cmd) {
-		*cmd++ = 0;
-		while (*cmd == ' ' || *cmd == '\t')
-		    cmd++;
-		if (*cmd)
-		    die("REQUIRE/ALLREQUIRE can only handle one arg");
-	    }
-	    args[0] = testpgpr;
-	    args[1] = "feature";
-	    args[2] = what;
-	    args[3] = NULL;
+	    args[nargs++] = testpgpr;
+	    args[nargs++] = "feature";
+	    nargs += split_into_words(cmd + cmdlen, args + nargs, sizeof(args)/sizeof(*args) - nargs - 1);
+	    args[nargs] = 0;
+	    if (nargs != 3)
+		die("REQUIRE/ALLREQUIRE can only handle one arg");
 	    do_run(args, &out, &outl);
 	    if (outl == 0)
 		die("bad result from feature check");
 	    out[outl - 1] = 0;
-	    if (!strncmp(out, "OK", 2))
-		continue;
 	    if (!strncmp(out, "FAIL", 4))
-		add_skip(what, isall ? &allskip :  &skip);
+		add_skip(args[2], isall ? &allskip :  &skip);
 	    else if (strncmp(out, "OK", 2) != 0) {
 		fprintf(stderr, "feature check error: %s\n", out);
 		exit(1);
 	    }
+	    free(out);
 	} else if (cmdlen == 3 && strncmp(cmd, "RUN", 3) == 0) {
-	    char *saveptr = NULL;
-	    char *arg;
 	    char *args[20];
 	    int nargs = 0;
 	    char *out = 0;
@@ -289,33 +299,15 @@ int main(int argc, char **argv)
 	    char *exp = 0;
 	    size_t expl = 0;
 
-	    if (skip || allskip) {
-		printf("(skipped: %s)\n", allskip ? allskip : skip);
-		skipped++;
-		if (skip) {
-		    free(skip);
-		    skip = 0;
-		}
-		continue;
-	    }
-	    args[nargs++] = strdup(testpgpr);
-	    cmd += cmdlen;
-	    while (*cmd == ' ' || *cmd == '\t')
-		cmd++;
-	    while ((arg = strtok_r(cmd, " \t", &saveptr)) != NULL) {
-		if (nargs == 18)
-		    die("too many args to RUN");
-		args[nargs++] = strdup(arg);
-		cmd = NULL;
-	    }
+	    args[nargs++] = testpgpr;
+	    nargs += split_into_words(cmd + cmdlen, args + nargs, sizeof(args)/sizeof(*args) - nargs - 1);
 	    args[nargs] = 0;
-	    do_run(args, &out, &outl);
+	    if (!skip && !allskip)
+		do_run(args, &out, &outl);
 	    if (strncmp(nextline, "---\n", 4) == 0) {
-		exp = nextline + 4;
 		nextline += 4;
-		while (*nextline) {
-		    if (strncmp(nextline, "---\n", 4) == 0)
-			break;
+		exp = nextline;
+		while (*nextline && strncmp(nextline, "---\n", 4) != 0) {
 		    if ((p = strchr(nextline, '\n')) != 0) {
 			nextline = p + 1;
 		    } else {
@@ -326,13 +318,20 @@ int main(int argc, char **argv)
 		if (*nextline)
 		    nextline += 4;	/* the ---\n above */
 	    }
-	    if (do_diff(out, outl, exp, expl))
+	    if (skip || allskip) {
+		printf("(skipped: %s)\n", allskip ? allskip : skip);
+		skipped++;
+	    } else if (do_diff(out, outl, exp, expl))
 		failed++;
 	    else
 		succeeded++;
 	    free(out);
-	    while (nargs > 0)
-		free(args[--nargs]);
+	    free(skip);
+	    skip = 0;
+	} else {
+	    cmd[cmdlen] = 0;
+	    fprintf(stderr, "Unknown directive '%s'\n", cmd);
+	    exit(1);
 	}
     }
     free(skip);

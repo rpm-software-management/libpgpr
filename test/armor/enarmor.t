@@ -2871,10 +2871,10 @@ wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v
 -----END PGP DATA-----
 ---
 TEST enarmor with keystr len 0
-RUN enarmor -k Verstion:1.0 DATA len0
+RUN enarmor -k "Version: 1.0" DATA len0
 ---
 -----BEGIN PGP DATA-----
-Verstion:1.0
+Version: 1.0
 
 =twTO
 -----END PGP DATA-----
