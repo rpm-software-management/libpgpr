@@ -363,6 +363,8 @@ pgprRC pgprParseSigNoParams(pgprPkt *pkt, pgprItem item)
 	if (!item->hash)
 	    return PGPR_ERROR_NO_MEMORY;
 	item->time = pgprGrab4(v->time);
+	if (!item->time)
+	    return PGPR_ERROR_CORRUPT_PGP_PACKET;
 	memcpy(item->keyid, v->keyid, sizeof(item->keyid));
 	item->saved = PGPRITEM_SAVED_TIME | PGPRITEM_SAVED_ID;
 	item->pubkey_algo = v->pubkey_algo;
@@ -413,6 +415,8 @@ pgprRC pgprParseSigNoParams(pgprPkt *pkt, pgprItem item)
 
 	if (!(item->saved & PGPRITEM_SAVED_TIME))
 	    return PGPR_ERROR_NO_CREATION_TIME;	/* RFC 4880 §5.2.3.4 creation time MUST be present */
+	if (!item->time)
+	    return PGPR_ERROR_CORRUPT_PGP_PACKET;
 
 	if (p > hend || hend - p < 2)
 	    return PGPR_ERROR_CORRUPT_PGP_PACKET;
@@ -574,6 +578,8 @@ pgprRC pgprParseKey(pgprPkt *pkt, pgprItem item)
 	if (pkt->blen <= sizeof(*v) || v->pubkey_algo != PGPRPUBKEYALGO_RSA)
 	    return PGPR_ERROR_CORRUPT_PGP_PACKET;
 	item->time = pgprGrab4(v->time);
+	if (!item->time)
+	    return PGPR_ERROR_CORRUPT_PGP_PACKET;
 	item->saved |= PGPRITEM_SAVED_TIME;
 	item->pubkey_algo = v->pubkey_algo;
 	item->mpi_offset = sizeof(*v);
@@ -590,6 +596,8 @@ pgprRC pgprParseKey(pgprPkt *pkt, pgprItem item)
 	if (pkt->blen <= sizeof(*v))
 	    return PGPR_ERROR_CORRUPT_PGP_PACKET;
 	item->time = pgprGrab4(v->time);
+	if (!item->time)
+	    return PGPR_ERROR_CORRUPT_PGP_PACKET;
 	item->saved |= PGPRITEM_SAVED_TIME;
 	item->pubkey_algo = v->pubkey_algo;
 	item->mpi_offset = sizeof(*v);
@@ -605,6 +613,8 @@ pgprRC pgprParseKey(pgprPkt *pkt, pgprItem item)
 	if (pubkey_len > PGPR_MAX_OPENPGP_BYTES || pkt->blen != sizeof(*v) + pubkey_len)
 	    return PGPR_ERROR_CORRUPT_PGP_PACKET;
 	item->time = pgprGrab4(v->time);
+	if (!item->time)
+	    return PGPR_ERROR_CORRUPT_PGP_PACKET;
 	item->saved |= PGPRITEM_SAVED_TIME;
 	item->pubkey_algo = v->pubkey_algo;
 	item->mpi_offset = sizeof(*v);
