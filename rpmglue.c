@@ -69,12 +69,12 @@ int pgpDigParamsVersion(pgpDigParams digp)
 
 uint32_t pgpDigParamsCreationTime(pgpDigParams digp)
 {
-    return pgprItemCreationTime((pgprItem)digp);
+    return (uint32_t)pgprItemCreationTime((pgprItem)digp);
 }
 
 uint32_t pgpDigParamsModificationTime(pgpDigParams digp)
 {
-    return pgprItemModificationTime((pgprItem)digp);
+    return (uint32_t)pgprItemModificationTime((pgprItem)digp);
 }
 
 int pgpDigParamsSalt(pgpDigParams _digp, const uint8_t **datap, size_t *lenp)

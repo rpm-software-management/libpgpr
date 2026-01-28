@@ -101,12 +101,12 @@ int pgprItemVersion(pgprItem item)
     return item->version;
 }
 
-uint32_t pgprItemCreationTime(pgprItem item)
+int64_t pgprItemCreationTime(pgprItem item)
 {
     return item->time;
 }
 
-uint32_t pgprItemModificationTime(pgprItem item)
+int64_t pgprItemModificationTime(pgprItem item)
 {
     return item->tag == PGPRTAG_PUBLIC_KEY ? item->key_mtime : 0;
 }
