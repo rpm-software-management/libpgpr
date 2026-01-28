@@ -344,7 +344,9 @@ pgprRC pgprParseSigNoParams(pgprPkt *pkt, pgprItem item)
     const uint8_t * p;
     size_t plen;
 
-    if (item->version || item->saved || item->tag != PGPRTAG_SIGNATURE || pkt->tag != item->tag)
+    if (item->version || item->saved)
+	return PGPR_ERROR_INTERNAL;
+    if (item->tag != PGPRTAG_SIGNATURE || pkt->tag != item->tag)
 	return PGPR_ERROR_INTERNAL;
 
     if (pkt->blen == 0)
@@ -474,8 +476,10 @@ static pgprRC pgprParseKeyFp_V3(pgprPkt *pkt, pgprItem item)
     size_t blen = pkt->blen;
     int mpil1, mpil2;
 
-    if (blen < sizeof(struct pgprPktKeyV3_s) + 4 + 8)
+    /* make sure this is a v3 rsa key */
+    if (blen < sizeof(struct pgprPktKeyV3_s) + 4 + 8 || p[0] != 3 || p[7] != PGPRPUBKEYALGO_RSA)
 	return PGPR_ERROR_CORRUPT_PGP_PACKET;
+    /* find the two rsa mpis */
     p += sizeof(struct pgprPktKeyV3_s);
     blen -= sizeof(struct pgprPktKeyV3_s);
     mpil1 = pgprMpiLen(p);
@@ -484,6 +488,7 @@ static pgprRC pgprParseKeyFp_V3(pgprPkt *pkt, pgprItem item)
     mpil2 = pgprMpiLen(p + mpil1);
     if (mpil2 < 2 + 1 || blen !=  mpil1 + mpil2)
 	return PGPR_ERROR_CORRUPT_PGP_PACKET;
+
     rc = pgprDigestInit(PGPRHASHALGO_MD5, &ctx);
     if (rc != PGPR_OK)
 	return rc;
@@ -498,6 +503,7 @@ static pgprRC pgprParseKeyFp_V3(pgprPkt *pkt, pgprItem item)
     item->fp_len = outlen;
     item->fp_version = 3;
     free(out);
+    /* calculate the keyid from the modulus */
     memcpy(item->keyid, p + mpil1 - 8, 8);
     item->saved |= PGPRITEM_SAVED_FP | PGPRITEM_SAVED_ID;
     return PGPR_OK;
@@ -521,8 +527,6 @@ pgprRC pgprParseKeyFp(pgprPkt *pkt, pgprItem item)
 
     if (version == 3)
 	return pgprParseKeyFp_V3(pkt, item);
-
-    /* We only permit V4/5/6 keys, V3 keys are long long since deprecated */
     if (version != 4 && version != 5 && version != 6)
 	return PGPR_ERROR_UNSUPPORTED_VERSION;
 
@@ -569,7 +573,6 @@ pgprRC pgprParseKey(pgprPkt *pkt, pgprItem item)
 	return PGPR_ERROR_CORRUPT_PGP_PACKET;
     item->version = pkt->body[0];
 
-    /* We only permit V4 keys, V3 keys are long long since deprecated */
     switch (item->version) {
     case 3:
     {   pgprPktKeyV3 v = (pgprPktKeyV3)pkt->body;
