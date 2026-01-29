@@ -143,8 +143,8 @@ pgprRC pgprParseCertificate(const uint8_t * pkts, size_t pktslen, pgprItem item)
 {
     const uint8_t *p = pkts;
     const uint8_t *pend = pkts + pktslen;
-    pgprItem sigitem = NULL;
-    pgprItem newest_item = NULL;
+    pgprItem sig = NULL;
+    pgprItem newest_sig = NULL;
     pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;		/* assume failure */
     uint32_t key_expire_sig_time = 0;
     uint32_t key_flags_sig_time = 0;
@@ -193,36 +193,36 @@ pgprRC pgprParseCertificate(const uint8_t * pkts, size_t pktslen, pgprItem item)
 		break;
 	    }
 	    /* take the data from the newest signature */
-	    if (newest_item && (sectionpkt.tag == PGPRTAG_USER_ID || sectionpkt.tag == PGPRTAG_PUBLIC_KEY) && newest_item->sigtype != PGPRSIGTYPE_CERT_REVOKE) {
+	    if (newest_sig && (sectionpkt.tag == PGPRTAG_USER_ID || sectionpkt.tag == PGPRTAG_PUBLIC_KEY) && newest_sig->sigtype != PGPRSIGTYPE_CERT_REVOKE) {
 		item->saved |= PGPRITEM_SAVED_VALID;	/* we have a valid binding sig */
-		if ((newest_item->saved & PGPRITEM_SAVED_KEY_EXPIRE) != 0) {
-		    if ((!key_expire_sig_time || newest_item->time > key_expire_sig_time)) {
-			item->key_expire = newest_item->key_expire;
+		if ((newest_sig->saved & PGPRITEM_SAVED_KEY_EXPIRE) != 0) {
+		    if ((!key_expire_sig_time || newest_sig->time > key_expire_sig_time)) {
+			item->key_expire = newest_sig->key_expire;
 			item->saved |= PGPRITEM_SAVED_KEY_EXPIRE;
-			key_expire_sig_time = newest_item->time;
-			if (newest_item->sigtype == PGPRSIGTYPE_SIGNED_KEY)
+			key_expire_sig_time = newest_sig->time;
+			if (newest_sig->sigtype == PGPRSIGTYPE_SIGNED_KEY)
 			    key_expire_sig_time = 0xffffffffU;	/* expires from the direct signatures are final */
 		    }
 		}
-		if ((newest_item->saved & PGPRITEM_SAVED_KEY_FLAGS) != 0) {
-		    if ((!key_flags_sig_time || newest_item->time > key_flags_sig_time)) {
-			item->key_flags = newest_item->key_flags;
+		if ((newest_sig->saved & PGPRITEM_SAVED_KEY_FLAGS) != 0) {
+		    if ((!key_flags_sig_time || newest_sig->time > key_flags_sig_time)) {
+			item->key_flags = newest_sig->key_flags;
 			item->saved |= PGPRITEM_SAVED_KEY_FLAGS;
-			key_flags_sig_time = newest_item->time;
-			if (newest_item->sigtype == PGPRSIGTYPE_SIGNED_KEY)
+			key_flags_sig_time = newest_sig->time;
+			if (newest_sig->sigtype == PGPRSIGTYPE_SIGNED_KEY)
 			    key_flags_sig_time = 0xffffffffU;	/* key flags from the direct signatures are final */
 		    }
 		}
 		if (sectionpkt.tag == PGPRTAG_USER_ID) {
-		    if (!item->userid || ((newest_item->saved & PGPRITEM_SAVED_PRIMARY) != 0 && (item->saved & PGPRITEM_SAVED_PRIMARY) == 0)) {
+		    if (!item->userid || ((newest_sig->saved & PGPRITEM_SAVED_PRIMARY) != 0 && (item->saved & PGPRITEM_SAVED_PRIMARY) == 0)) {
 			if ((rc = pgprParseUserID(&sectionpkt, item)) != PGPR_OK)
 			    break;
-			if ((newest_item->saved & PGPRITEM_SAVED_PRIMARY) != 0)
+			if ((newest_sig->saved & PGPRITEM_SAVED_PRIMARY) != 0)
 			    item->saved |= PGPRITEM_SAVED_PRIMARY;
 		    }
 		}
 	    }
-	    newest_item = pgprItemFree(newest_item);
+	    newest_sig = pgprItemFree(newest_sig);
 	}
 
 	if (p == pend)
@@ -230,33 +230,33 @@ pgprRC pgprParseCertificate(const uint8_t * pkts, size_t pktslen, pgprItem item)
 
 	if (pkt.tag == PGPRTAG_SIGNATURE) {
 	    int isselfsig, needsig = 0;
-	    sigitem = pgprItemNew(pkt.tag);
-	    if (!sigitem) {
+	    sig = pgprItemNew(pkt.tag);
+	    if (!sig) {
 		rc = PGPR_ERROR_NO_MEMORY;
 		break;
 	    }
 	    /* use the NoParams variant because we want to ignore non self-sigs */
-	    if ((rc = pgprParseSigNoParams(&pkt, sigitem)) != PGPR_OK)
+	    if ((rc = pgprParseSigNoParams(&pkt, sig)) != PGPR_OK)
 		break;
-	    isselfsig = is_same_keyid(item, sigitem);
+	    isselfsig = is_same_keyid(item, sig);
 
 	    /* check if we understand this signature type and make sure it is in the right section */
-	    if (sigitem->sigtype == PGPRSIGTYPE_KEY_REVOKE) {
+	    if (sig->sigtype == PGPRSIGTYPE_KEY_REVOKE) {
 		/* sections don't matter here */
 		needsig = 1;
-	    } else if (sigitem->sigtype == PGPRSIGTYPE_SUBKEY_BINDING || sigitem->sigtype == PGPRSIGTYPE_SUBKEY_REVOKE) {
+	    } else if (sig->sigtype == PGPRSIGTYPE_SUBKEY_BINDING || sig->sigtype == PGPRSIGTYPE_SUBKEY_REVOKE) {
 		if (sectionpkt.tag != PGPRTAG_PUBLIC_SUBKEY) {
 		    rc = PGPR_ERROR_BAD_PUBKEY_STRUCTURE;
 		    break;		/* signature in wrong section */
 		}
 		needsig = 1;
-	    } else if (sigitem->sigtype == PGPRSIGTYPE_SIGNED_KEY) {
+	    } else if (sig->sigtype == PGPRSIGTYPE_SIGNED_KEY) {
 		if (sectionpkt.tag != PGPRTAG_PUBLIC_KEY) {
 		    rc = PGPR_ERROR_BAD_PUBKEY_STRUCTURE;
 		    break;		/* signature in wrong section */
 		}
 		needsig = isselfsig;
-	    } else if (sigitem->sigtype == PGPRSIGTYPE_GENERIC_CERT || sigitem->sigtype == PGPRSIGTYPE_PERSONA_CERT || sigitem->sigtype == PGPRSIGTYPE_CASUAL_CERT || sigitem->sigtype == PGPRSIGTYPE_POSITIVE_CERT || sigitem->sigtype == PGPRSIGTYPE_CERT_REVOKE) {
+	    } else if (sig->sigtype == PGPRSIGTYPE_GENERIC_CERT || sig->sigtype == PGPRSIGTYPE_PERSONA_CERT || sig->sigtype == PGPRSIGTYPE_CASUAL_CERT || sig->sigtype == PGPRSIGTYPE_POSITIVE_CERT || sig->sigtype == PGPRSIGTYPE_CERT_REVOKE) {
 		if (sectionpkt.tag != PGPRTAG_USER_ID && sectionpkt.tag != PGPRTAG_USER_ATTRIBUTE) {
 		    rc = PGPR_ERROR_BAD_PUBKEY_STRUCTURE;
 		    break;		/* signature in wrong section */
@@ -272,38 +272,38 @@ pgprRC pgprParseCertificate(const uint8_t * pkts, size_t pktslen, pgprItem item)
 		    break;
 		}
 		/* add MPIs so we can verify */
-	        if ((rc = pgprParseSigParams(&pkt, sigitem)) != PGPR_OK)
+	        if ((rc = pgprParseSigParams(&pkt, sig)) != PGPR_OK)
 		    break;
-		if ((rc = pgprVerifySelfSig(item, sigitem, &mainpkt, &sectionpkt)) != PGPR_OK)
+		if ((rc = pgprVerifySelfSig(item, sig, &mainpkt, &sectionpkt)) != PGPR_OK)
 		    break;		/* verification failed */
-		if (sigitem->sigtype != PGPRSIGTYPE_KEY_REVOKE)
+		if (sig->sigtype != PGPRSIGTYPE_KEY_REVOKE)
 		    haveselfsig = 1;
-		if (sigitem->time > item->key_mtime)
-		    item->key_mtime = sigitem->time;
+		if (sig->time > item->key_mtime)
+		    item->key_mtime = sig->time;
 	    }
 
 	    /* check if this signature is expired */
-	    if (needsig && (sigitem->saved & PGPRITEM_SAVED_SIG_EXPIRE) != 0 && sigitem->sig_expire) {
+	    if (needsig && (sig->saved & PGPRITEM_SAVED_SIG_EXPIRE) != 0 && sig->sig_expire) {
 		if (!now)
 		    now = pgprCurrentTime();
-		if (now < sigitem->time || sigitem->sig_expire < now - sigitem->time)
+		if (now < sig->time || sig->sig_expire < now - sig->time)
 		    needsig = 0;	/* signature is expired, ignore */
 	    }
 
 	    /* handle key revokations right away */
-	    if (needsig && sigitem->sigtype == PGPRSIGTYPE_KEY_REVOKE) {
+	    if (needsig && sig->sigtype == PGPRSIGTYPE_KEY_REVOKE) {
 		item->revoked = 1;				/* this is final */
 		item->saved |= PGPRITEM_SAVED_VALID;		/* we have at least one correct self-sig */
 		needsig = 0;
 	    }
 
 	    /* find the newest self-sig for all the other types */
-	    if (needsig && (!newest_item || sigitem->time >= newest_item->time)) {
-		newest_item = pgprItemFree(newest_item);
-		newest_item = sigitem;
-		sigitem = NULL;
+	    if (needsig && (!newest_sig || sig->time >= newest_sig->time)) {
+		newest_sig = pgprItemFree(newest_sig);
+		newest_sig = sig;
+		sig = NULL;
 	    }
-	    sigitem = pgprItemFree(sigitem);
+	    sig = pgprItemFree(sig);
 	} else if (pkt.tag == PGPRTAG_USER_ID || pkt.tag == PGPRTAG_USER_ATTRIBUTE) {
 	    if (sectionpkt.tag == PGPRTAG_PUBLIC_SUBKEY) {
 		rc = PGPR_ERROR_BAD_PUBKEY_STRUCTURE;
@@ -322,8 +322,8 @@ pgprRC pgprParseCertificate(const uint8_t * pkts, size_t pktslen, pgprItem item)
     }
     if (rc == PGPR_OK && p != pend)
 	rc = PGPR_ERROR_INTERNAL;
-    sigitem = pgprItemFree(sigitem);
-    newest_item = pgprItemFree(newest_item);
+    sig = pgprItemFree(sig);
+    newest_sig = pgprItemFree(newest_sig);
     return rc;
 }
 	
@@ -336,9 +336,9 @@ pgprRC pgprParseCertificateSubkeys(const uint8_t *pkts, size_t pktslen,
 {
     const uint8_t *p = pkts;
     const uint8_t *pend = pkts + pktslen;
-    pgprItem *items = NULL, subitem = NULL;
-    pgprItem sigitem = NULL;
-    pgprItem newest_item = NULL;
+    pgprItem *items = NULL, subkey = NULL;
+    pgprItem sig = NULL;
+    pgprItem newest_sig = NULL;
     pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;		/* assume failure */
     int count = 0;
     int alloced = 10;
@@ -381,18 +381,18 @@ pgprRC pgprParseCertificateSubkeys(const uint8_t *pkts, size_t pktslen,
 	/* finish up this subkey if we are at the end or a new one comes next */
 	if (p == pend || pkt.tag == PGPRTAG_PUBLIC_SUBKEY) {
 	    /* take the data from the newest signature */
-	    if (newest_item && subitem && newest_item->sigtype == PGPRSIGTYPE_SUBKEY_BINDING) {
-		subitem->saved |= PGPRITEM_SAVED_VALID;	/* at least one binding sig */
-		if ((newest_item->saved & PGPRITEM_SAVED_KEY_FLAGS) != 0) {
-		    subitem->key_flags = newest_item->key_flags;
-		    subitem->saved |= PGPRITEM_SAVED_KEY_FLAGS;
+	    if (newest_sig && subkey && newest_sig->sigtype == PGPRSIGTYPE_SUBKEY_BINDING) {
+		subkey->saved |= PGPRITEM_SAVED_VALID;	/* at least one binding sig */
+		if ((newest_sig->saved & PGPRITEM_SAVED_KEY_FLAGS) != 0) {
+		    subkey->key_flags = newest_sig->key_flags;
+		    subkey->saved |= PGPRITEM_SAVED_KEY_FLAGS;
 		}
-		if ((newest_item->saved & PGPRITEM_SAVED_KEY_EXPIRE) != 0) {
-		    subitem->key_expire = newest_item->key_expire;
-		    subitem->saved |= PGPRITEM_SAVED_KEY_EXPIRE;
+		if ((newest_sig->saved & PGPRITEM_SAVED_KEY_EXPIRE) != 0) {
+		    subkey->key_expire = newest_sig->key_expire;
+		    subkey->saved |= PGPRITEM_SAVED_KEY_EXPIRE;
 		}
 	    }
-	    newest_item = pgprItemFree(newest_item);
+	    newest_sig = pgprItemFree(newest_sig);
 	}
 
 	if (p == pend)
@@ -400,28 +400,28 @@ pgprRC pgprParseCertificateSubkeys(const uint8_t *pkts, size_t pktslen,
 	p += (pkt.body - pkt.head) + pkt.blen;
 
 	if (pkt.tag == PGPRTAG_PUBLIC_SUBKEY) {
-	    subitem = pgprItemNew(PGPRTAG_PUBLIC_SUBKEY);
-	    if (!subitem) {
+	    subkey = pgprItemNew(PGPRTAG_PUBLIC_SUBKEY);
+	    if (!subkey) {
 		rc = PGPR_ERROR_NO_MEMORY;
 		break;
 	    }
 	    /* Copy keyid of main key for error messages */
-	    memcpy(subitem->mainid, mainkey->keyid, sizeof(mainkey->keyid));
+	    memcpy(subkey->mainid, mainkey->keyid, sizeof(mainkey->keyid));
 	    /* Copy UID from main key to subkey */
 	    if (mainkey->userid) {
-		if ((subitem->userid = pgprStrdup(mainkey->userid)) == NULL) {
+		if ((subkey->userid = pgprStrdup(mainkey->userid)) == NULL) {
 		    rc = PGPR_ERROR_NO_MEMORY;
 		    break;
 		}
 	    }
 	    /* if the main key is revoked, all the subkeys are also revoked */
-	    subitem->revoked = mainkey->revoked ? 2 : 0;
-	    if (pgprParseKey(&pkt, subitem)) {
-		subitem = pgprItemFree(subitem);
+	    subkey->revoked = mainkey->revoked ? 2 : 0;
+	    if (pgprParseKey(&pkt, subkey)) {
+		subkey = pgprItemFree(subkey);
 	    } else {
-		if (mainkey->version == 6 && subitem->version != 6) {
+		if (mainkey->version == 6 && subkey->version != 6) {
 		    /* version 6 keys can only have version 6 subkeys */
-		    subitem = pgprItemFree(subitem);
+		    subkey = pgprItemFree(subkey);
 		    continue;
 		}
 		if (count == alloced) {
@@ -434,62 +434,62 @@ pgprRC pgprParseCertificateSubkeys(const uint8_t *pkts, size_t pktslen,
 		    }
 		    items = newitems;
 		}
-		items[count++] = subitem;
+		items[count++] = subkey;
 		subkeypkt = pkt;
 	    }
-	} else if (pkt.tag == PGPRTAG_SIGNATURE && subitem != NULL) {
+	} else if (pkt.tag == PGPRTAG_SIGNATURE && subkey != NULL) {
 	    int needsig = 0;
-	    sigitem = pgprItemNew(pkt.tag);
-	    if (!sigitem) {
+	    sig = pgprItemNew(pkt.tag);
+	    if (!sig) {
 		rc = PGPR_ERROR_NO_MEMORY;
 		break;
 	    }
 	    /* we use the NoParams variant because we do not verify */
-	    if (pgprParseSigNoParams(&pkt, sigitem) != PGPR_OK) {
-		sigitem = pgprItemFree(sigitem);
+	    if (pgprParseSigNoParams(&pkt, sig) != PGPR_OK) {
+		sig = pgprItemFree(sig);
 	    }
 
 	    /* check if we understand this signature */
-	    if (sigitem && sigitem->sigtype == PGPRSIGTYPE_SUBKEY_REVOKE) {
+	    if (sig && sig->sigtype == PGPRSIGTYPE_SUBKEY_REVOKE) {
 		needsig = 1;
-	    } else if (sigitem && sigitem->sigtype == PGPRSIGTYPE_SUBKEY_BINDING) {
+	    } else if (sig && sig->sigtype == PGPRSIGTYPE_SUBKEY_BINDING) {
 		/* insist on a embedded primary key binding signature if this is used for signing */
-		int key_flags = (sigitem->saved & PGPRITEM_SAVED_KEY_FLAGS) ? sigitem->key_flags : 0;
-		if (!(key_flags & 0x02) || verifyPrimaryBindingSig(&mainpkt, &subkeypkt, subitem, sigitem) == PGPR_OK)
+		int key_flags = (sig->saved & PGPRITEM_SAVED_KEY_FLAGS) ? sig->key_flags : 0;
+		if (!(key_flags & 0x02) || verifyPrimaryBindingSig(&mainpkt, &subkeypkt, subkey, sig) == PGPR_OK)
 		    needsig = 1;
 	    }
 	    /* the code in pgprParseCertificate always checks that SUBKEY_BINDING
              * and SUBKEY_REVOKE are self-signatures and verify ok */
 
 	    /* check if this signature is expired */
-	    if (needsig && (sigitem->saved & PGPRITEM_SAVED_SIG_EXPIRE) != 0 && sigitem->sig_expire) {
+	    if (needsig && (sig->saved & PGPRITEM_SAVED_SIG_EXPIRE) != 0 && sig->sig_expire) {
 		if (!now)
 		    now = pgprCurrentTime();
-		if (now < sigitem->time || sigitem->sig_expire < now - sigitem->time)
+		if (now < sig->time || sig->sig_expire < now - sig->time)
 		    needsig = 0;	/* signature is expired, ignore */
 	    }
 
 	    /* handle subkey revokations right away */
-	    if (needsig && sigitem->sigtype == PGPRSIGTYPE_SUBKEY_REVOKE) {
-		if (subitem->revoked != 2)
-		    subitem->revoked = 1;
-		subitem->saved |= PGPRITEM_SAVED_VALID;	/* at least one binding sig */
+	    if (needsig && sig->sigtype == PGPRSIGTYPE_SUBKEY_REVOKE) {
+		if (subkey->revoked != 2)
+		    subkey->revoked = 1;
+		subkey->saved |= PGPRITEM_SAVED_VALID;	/* at least one binding sig */
 		needsig = 0;
 	    }
 
 	    /* find the newest self-sig for all the other types */
-	    if (needsig && (!newest_item || sigitem->time >= newest_item->time)) {
-		newest_item = pgprItemFree(newest_item);
-		newest_item = sigitem;
-		sigitem = NULL;
+	    if (needsig && (!newest_sig || sig->time >= newest_sig->time)) {
+		newest_sig = pgprItemFree(newest_sig);
+		newest_sig = sig;
+		sig = NULL;
 	    }
-	    sigitem = pgprItemFree(sigitem);
+	    sig = pgprItemFree(sig);
 	}
     }
     if (rc == PGPR_OK && p != pend)
 	rc = PGPR_ERROR_INTERNAL;
-    sigitem = pgprItemFree(sigitem);
-    newest_item = pgprItemFree(newest_item);
+    sig = pgprItemFree(sig);
+    newest_sig = pgprItemFree(newest_sig);
 
     if (rc == PGPR_OK) {
 	pgprItem *newitems = pgprRealloc(items, count * sizeof(*items));
