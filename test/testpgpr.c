@@ -235,6 +235,8 @@ keyinfo(int argc, char **argv)
 	key = select_subkey(pubkey, pubkeyl, key, subkey);
     printf("Version: %d\n", pgprItemVersion(key));
     printf("CreationTime: %lld\n", (long long)pgprItemCreationTime(key));
+    if (pgprItemExpirationTime(key))
+	printf("ExpirationTime: %lld\n", (long long)pgprItemExpirationTime(key));
     printf("Algorithm: %d\n", pgprItemPubkeyAlgo(key));
     printf("AlgorithmInfo: %d\n", pgprItemPubkeyAlgoInfo(key));
     printf("UserID: %s\n", nullify(pgprItemUserID(key)));
@@ -347,6 +349,8 @@ siginfo(int argc, char **argv)
     free(lints);
     printf("Version: %d\n", pgprItemVersion(sig));
     printf("CreationTime: %lld\n", (long long)pgprItemCreationTime(sig));
+    if (pgprItemExpirationTime(sig))
+	printf("ExpirationTime: %lld\n", (long long)pgprItemExpirationTime(sig));
     printf("Algorithm: %d\n", pgprItemPubkeyAlgo(sig));
     printf("Hash: %d\n", pgprItemHashAlgo(sig));
     keyfp = pgprItemKeyFingerprint(sig, &keyfp_len, NULL);

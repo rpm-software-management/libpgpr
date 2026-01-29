@@ -190,6 +190,8 @@ int64_t pgprItemCreationTime(pgprItem item);
 
 int64_t pgprItemModificationTime(pgprItem item);
 
+int64_t pgprItemExpirationTime(pgprItem item);
+
 const uint8_t *pgprItemHashHeader(pgprItem item, size_t *headerlen);
 
 const uint8_t *pgprItemHashTrailer(pgprItem item, size_t *trailerlen);

@@ -3,6 +3,7 @@ RUN keyinfo rsa2048_v6.key
 ---
 Version: 6
 CreationTime: 1767869058
+ExpirationTime: 2083438328
 Algorithm: 1
 AlgorithmInfo: 2048
 UserID: rsa2048_v6

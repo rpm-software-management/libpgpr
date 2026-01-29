@@ -3,6 +3,7 @@ RUN keyinfo ed25519_v6.key
 ---
 Version: 6
 CreationTime: 1767961027
+ExpirationTime: 1862631808
 Algorithm: 27
 AlgorithmInfo: 0
 UserID: ed25519_v6
