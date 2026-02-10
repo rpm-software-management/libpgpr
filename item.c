@@ -113,13 +113,17 @@ int64_t pgprItemModificationTime(pgprItem item)
 
 int64_t pgprItemExpirationTime(pgprItem item)
 {
-    if (item->tag == PGPRTAG_SIGNATURE)
-	return (item->saved & PGPRITEM_SAVED_SIG_EXPIRE) != 0 ? item->sig_expire : 0;
-    if (item->tag != PGPRTAG_PUBLIC_KEY && item->tag != PGPRTAG_PUBLIC_SUBKEY)
-	return 0;
-    if (!(item->saved & PGPRITEM_SAVED_KEY_EXPIRE) || item->key_expire == 0)
-	return 0;
-    return item->time + item->key_expire;
+    if (item->tag == PGPRTAG_SIGNATURE) {
+	if (!(item->saved & PGPRITEM_SAVED_SIG_EXPIRE) || item->sig_expire == 0)
+	    return 0;
+	return item->time + item->sig_expire;
+    }
+    if (item->tag == PGPRTAG_PUBLIC_KEY || item->tag == PGPRTAG_PUBLIC_SUBKEY) {
+	if (!(item->saved & PGPRITEM_SAVED_KEY_EXPIRE) || item->key_expire == 0)
+	    return 0;
+	return item->time + item->key_expire;
+    }
+    return 0;
 }
 
 const uint8_t *pgprItemHashHeader(pgprItem item, size_t *headerlen)

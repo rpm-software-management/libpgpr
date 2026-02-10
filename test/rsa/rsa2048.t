@@ -30,3 +30,14 @@ RUN verifysignature rsa2048.key rsa2048_bad.asc hello
 Exit status: 1
 signature verification error: Bad signature
 ---
+TEST rsa2048 signature expiration parsing
+RUN siginfo rsa2048_expire.asc
+---
+Version: 4
+CreationTime: 1770715992
+ExpirationTime: 1802251992
+Algorithm: 1
+Hash: 8
+KeyFP: 69a80f54946ae787b3fd9f4e8d4f6ec4c9566211
+KeyID: 8d4f6ec4c9566211
+---
