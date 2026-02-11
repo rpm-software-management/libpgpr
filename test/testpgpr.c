@@ -307,7 +307,7 @@ merge(int argc, char **argv)
     pubkey2_a = slurp(argv[2], NULL);
     if ((rc = pgprArmorUnwrap("PUBLIC KEY BLOCK", pubkey2_a, &pubkey2, &pubkey2l)) != PGPR_OK)
 	die_rc("pubkey2 unwrap error", rc);
-    if ((rc = pgprPubkeyMerge(pubkey1, pubkey1l, pubkey2, pubkey2l, &pubkeym, &pubkeyml)) != PGPR_OK)
+    if ((rc = pgprPubkeyMerge(pubkey1, pubkey1l, pubkey2, pubkey2l, &pubkeym, &pubkeyml, 0)) != PGPR_OK)
 	die_rc("merge error", rc);
     if ((rc = pgprArmorWrap("PUBLIC KEY BLOCK", NULL, pubkeym, pubkeyml, &pubkeym_a)) != PGPR_OK)
 	die_rc("pubkey wrap error", rc);

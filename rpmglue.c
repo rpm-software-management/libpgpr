@@ -237,7 +237,7 @@ int pgpPubkeyFingerprint(const uint8_t * pkts, size_t pktslen,
 
 rpmRC pgpPubkeyMerge(const uint8_t *pkts1, size_t pkts1len, const uint8_t *pkts2, size_t pkts2len, uint8_t **pktsm, size_t *pktsmlen, int flags)
 {
-    pgprRC rc = pgprPubkeyMerge(pkts1, pkts1len, pkts2, pkts2len, pktsm, pktsmlen);
+    pgprRC rc = pgprPubkeyMerge(pkts1, pkts1len, pkts2, pkts2len, pktsm, pktsmlen, 0);
     return rc == PGPR_OK ? RPMRC_OK : RPMRC_FAIL;
 }
 

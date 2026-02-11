@@ -214,7 +214,7 @@ pgprRC pgprPubkeyKeyID(const uint8_t *pkts, size_t pktslen, pgprKeyID_t keyid);
 
 pgprRC pgprPubkeyFingerprint(const uint8_t *pkts, size_t pktslen, uint8_t **fp, size_t *fp_len, int *fp_version);
 
-pgprRC pgprPubkeyMerge(const uint8_t *pkts1, size_t pkts1len, const uint8_t *pkts2, size_t pkts2len, uint8_t **pktsm, size_t *pktsmlen);
+pgprRC pgprPubkeyMerge(const uint8_t *pkts1, size_t pkts1len, const uint8_t *pkts2, size_t pkts2len, uint8_t **pktsm, size_t *pktsmlen, int flags);
 
 /* armor functions */
 pgprRC pgprArmorWrap(const char *armortype, const char *keys, const unsigned char *s, size_t ns, char **armorp);
