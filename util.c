@@ -10,9 +10,15 @@
 
 #include "pgpr_internal.h"
 
+static time_t fixed_time;	/* for testting */
+
 uint32_t pgprCurrentTime(void) {
-    time_t t = time(NULL);
+    time_t t = fixed_time ? fixed_time : time(NULL);
     return (uint32_t)t;
+}
+
+void pgprSetFixedTime(uint64_t t) {
+    fixed_time = (time_t)t;
 }
 
 void *pgprMemdup(const void *ptr, size_t len)

@@ -229,7 +229,9 @@ int main(int argc, char **argv)
     int succeeded = 0, failed = 0, skipped = 0;
     char *skip = NULL, *allskip = NULL;
     int skip_rc = 0;
+    char *fixed_time = NULL;
 
+    setenv("TZ", "UTC", 1);
     p = strrchr(argv[0], '/');
     if (p) {
 	testpgpr = malloc(p - argv[0] + 8 + 2);
@@ -300,6 +302,10 @@ int main(int argc, char **argv)
 	    size_t expl = 0;
 
 	    args[nargs++] = testpgpr;
+	    if (fixed_time) {
+		args[nargs++] = "--fixed-time";
+		args[nargs++] = fixed_time;
+	    }
 	    nargs += split_into_words(cmd + cmdlen, args + nargs, sizeof(args)/sizeof(*args) - nargs - 1);
 	    args[nargs] = 0;
 	    if (!skip && !allskip)
@@ -328,6 +334,11 @@ int main(int argc, char **argv)
 	    free(out);
 	    free(skip);
 	    skip = 0;
+	    fixed_time = 0;
+	} else if (cmdlen == 9 && strncmp(cmd, "FIXEDTIME", 9) == 0) {
+	    fixed_time = 0;
+	    if (split_into_words(cmd + cmdlen, &fixed_time, 1) != 1)
+		die("FIXEDTIME: one arg required");
 	} else {
 	    cmd[cmdlen] = 0;
 	    fprintf(stderr, "Unknown directive '%s'\n", cmd);

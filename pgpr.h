@@ -235,3 +235,5 @@ size_t pgprDigestLength(int hashalgo);
 /* error reporting */
 const char *pgprErrorStr(pgprRC rc);
 
+/* configuration and testing */
+void pgprSetFixedTime(uint64_t t);

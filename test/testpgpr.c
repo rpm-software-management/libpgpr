@@ -474,6 +474,18 @@ int main(int argc, char **argv)
 {
     pgprRC rc;
     int st = 1;
+
+    while (argc > 1) {
+	if (argc > 2 && !strcmp(argv[1], "--fixed-time")) {
+	    unsigned long long t = strtoull(argv[2], NULL, 10);
+	    pgprSetFixedTime(t);
+	    argc -= 2;
+	    argv += 2;
+	} else {
+	    break;
+	}
+    }
+
     if (argc < 2)
 	die("usage: testpgpr <cmd>...");
     if ((rc = pgprInitCrypto()) != PGPR_OK)
