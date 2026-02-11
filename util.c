@@ -10,7 +10,7 @@
 
 #include "pgpr_internal.h"
 
-static time_t fixed_time;	/* for testting */
+static time_t fixed_time;	/* for testing */
 
 uint32_t pgprCurrentTime(void) {
     time_t t = fixed_time ? fixed_time : time(NULL);
