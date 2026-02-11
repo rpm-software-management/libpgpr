@@ -26,3 +26,15 @@ RUN verifysignature -s 1 mldsa87ed448.key mldsa87ed448.asc hello
 ---
 signature verified OK
 ---
+TEST mldsa87ed448 signature verification failure 1
+RUN verifysignature -s 1 mldsa87ed448.key mldsa87ed448_bad1.asc hello
+---
+Exit status: 1
+signature verification error: Bad signature
+---
+TEST mldsa87ed448 signature verification failure 2
+RUN verifysignature -s 1 mldsa87ed448.key mldsa87ed448_bad2.asc hello
+---
+Exit status: 1
+signature verification error: Bad signature
+---
