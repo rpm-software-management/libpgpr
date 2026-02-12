@@ -68,7 +68,8 @@ static int pgprMergePktIdentical(pgprMergePkt *mp1, pgprMergePkt *mp2)
     return 1;
 }
 
-static pgprRC pgprMergePktNew(pgprPkt *pkt, int source, pgprKeyID_t primaryid, pgprMergePkt **mpptr) {
+static pgprRC pgprMergePktNew(pgprPkt *pkt, int source, pgprKeyID_t primaryid, pgprMergePkt **mpptr)
+{
     pgprRC rc = PGPR_OK;
     pgprMergePkt *mp = pgprCalloc(1, sizeof(pgprMergePkt));
 
@@ -78,7 +79,7 @@ static pgprRC pgprMergePktNew(pgprPkt *pkt, int source, pgprKeyID_t primaryid, p
     mp->source = source;
     mp->hashlen = pkt->blen;
     if (pkt->tag == PGPRTAG_SIGNATURE) {
-        pgprItem sigitem = pgprItemNew(pkt->tag);
+	pgprItem sigitem = pgprItemNew(pkt->tag);
 	if (!sigitem)
 	    rc = PGPR_ERROR_NO_MEMORY;
 	else
@@ -115,12 +116,14 @@ static pgprMergePkt *pgprMergePktFree(pgprMergePkt *mp)
  *  Pubkey data handling
  */
 
-static pgprMergeKey *pgprMergeKeyNew(void) {
+static pgprMergeKey *pgprMergeKeyNew(void)
+{
     pgprMergeKey *mk = pgprCalloc(1, sizeof(pgprMergeKey));
     return mk;
 }
 
-static pgprMergeKey *pgprMergeKeyFree(pgprMergeKey *mk) {
+static pgprMergeKey *pgprMergeKeyFree(pgprMergeKey *mk)
+{
     if (mk) {
 	pgprMergePkt *mp, *smp;
 	int i;
@@ -135,7 +138,8 @@ static pgprMergeKey *pgprMergeKeyFree(pgprMergeKey *mk) {
     return NULL;
 }
 
-static int pgprMergeKeyMaxSource(pgprMergeKey *mk) {
+static int pgprMergeKeyMaxSource(pgprMergeKey *mk)
+{
     pgprMergePkt *mp, *smp;
     int i, max = 0;
     for (i = 0; i < PGP_NUMSECTIONS; i++) {
@@ -151,7 +155,8 @@ static int pgprMergeKeyMaxSource(pgprMergeKey *mk) {
 }
 
 
-static pgprMergePkt *pgprMergeKeyHashFind(pgprMergeKey *mk, pgprMergePkt *mp, int checksubsection) {
+static pgprMergePkt *pgprMergeKeyHashFind(pgprMergeKey *mk, pgprMergePkt *mp, int checksubsection)
+{
     int hh = mp->hash % (sizeof(mk->hash) / sizeof(*mk->hash));
     pgprMergePkt *h = mk->hash[hh];
     for (; h; h = h->next_hash)
@@ -160,13 +165,15 @@ static pgprMergePkt *pgprMergeKeyHashFind(pgprMergeKey *mk, pgprMergePkt *mp, in
     return h;
 }
 
-static void pgprMergeKeyHashAdd(pgprMergeKey *mk, pgprMergePkt *mp) {
+static void pgprMergeKeyHashAdd(pgprMergeKey *mk, pgprMergePkt *mp)
+{
     int hh = mp->hash % (sizeof(mk->hash) / sizeof(*mk->hash));
     mp->next_hash = mk->hash[hh];
     mk->hash[hh] = mp;
 }
 
-static void pgprMergeKeySectionAdd(pgprMergeKey *mk, pgprMergePkt *mp) {
+static void pgprMergeKeySectionAdd(pgprMergeKey *mk, pgprMergePkt *mp)
+{
     pgprMergePkt **mpp = mk->sections + mp->section;
     mp->subsection = 0;
     while (*mpp) {
@@ -176,7 +183,8 @@ static void pgprMergeKeySectionAdd(pgprMergeKey *mk, pgprMergePkt *mp) {
     *mpp = mp;
 }
 
-static void pgprMergeKeySubAddSig(pgprMergePkt *mp_section, pgprMergePkt *mp) {
+static void pgprMergeKeySubAddSig(pgprMergePkt *mp_section, pgprMergePkt *mp)
+{
     pgprMergePkt *lastsig = NULL, **mpp, *mp2;
     for (mpp = &mp_section->sub; (mp2 = *mpp) != NULL; mpp = &mp2->next) {
 	if (mp2->pkt.tag == PGPRTAG_SIGNATURE && mp2->selfsig == mp->selfsig) {
@@ -198,7 +206,8 @@ static void pgprMergeKeySubAddSig(pgprMergePkt *mp_section, pgprMergePkt *mp) {
     *mpp = mp;
 }
 
-static void pgprMergeKeySubAdd(pgprMergePkt *mp_section, pgprMergePkt *mp) {
+static void pgprMergeKeySubAdd(pgprMergePkt *mp_section, pgprMergePkt *mp)
+{
     /* signatures are ordered by creation time, everything else goes to the end */
     /* (we only change the order of new packets, i.e. where source is not zero) */
     if (mp->pkt.tag == PGPRTAG_SIGNATURE && mp->source != 0) {
@@ -211,7 +220,8 @@ static void pgprMergeKeySubAdd(pgprMergePkt *mp_section, pgprMergePkt *mp) {
     }
 }
 
-static pgprRC pgprMergeKeyAddPubkey(pgprMergeKey *mk, int source, const uint8_t * pkts, size_t pktlen) {
+static pgprRC pgprMergeKeyAddPubkey(pgprMergeKey *mk, int source, const uint8_t *pkts, size_t pktlen)
+{
     pgprRC rc;
     const uint8_t *p = pkts;
     const uint8_t *pend = pkts + pktlen;
@@ -314,7 +324,8 @@ static pgprRC pgprMergeKeyConcat(pgprMergeKey *mk, uint8_t **pktsm, size_t *pktl
     return PGPR_OK;
 }
 
-pgprRC pgprPubkeyMerge(const uint8_t *pkts1, size_t pktlen1, const uint8_t *pkts2, size_t pktlen2, uint8_t **pktsm, size_t *pktlenm, int flags) {
+pgprRC pgprPubkeyMerge(const uint8_t *pkts1, size_t pktlen1, const uint8_t *pkts2, size_t pktlen2, uint8_t **pktsm, size_t *pktlenm, int flags)
+{
     pgprRC rc;
     pgprMergeKey *mk = pgprMergeKeyNew();
 

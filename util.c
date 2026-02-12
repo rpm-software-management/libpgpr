@@ -2,22 +2,24 @@
  * Some internal utility functions
  */
 
-#include <stdlib.h>
-#include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 #include "pgpr_internal.h"
 
 static time_t fixed_time;	/* for testing */
 
-uint32_t pgprCurrentTime(void) {
+uint32_t pgprCurrentTime(void)
+{
     time_t t = fixed_time ? fixed_time : time(NULL);
     return (uint32_t)t;
 }
 
-void pgprSetFixedTime(uint64_t t) {
+void pgprSetFixedTime(uint64_t t)
+{
     fixed_time = (time_t)t;
 }
 

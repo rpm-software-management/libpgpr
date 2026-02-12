@@ -1,5 +1,5 @@
-#include <string.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include "pgpr_internal.h"
 
@@ -50,20 +50,20 @@ static pgprRC pgprSetSigMpiHybrid(pgprAlg sa, int num, const uint8_t *p, int mle
 	return PGPR_ERROR_NO_MEMORY;
 
     switch (sa->algo) {
-	case PGPRPUBKEYALGO_MLDSA65_ED25519:
-	    eddsasize = 64;
-	    mldsasize = 3309;
-	    eddsaalgo = PGPRPUBKEYALGO_ED25519;
-	    mldsaalgo = PGPRPUBKEYALGO_INTERNAL_MLDSA65;
-	    break;
-	case PGPRPUBKEYALGO_MLDSA87_ED448:
-	    eddsasize = 114;
-	    mldsasize = 4627;
-	    eddsaalgo = PGPRPUBKEYALGO_ED448;
-	    mldsaalgo = PGPRPUBKEYALGO_INTERNAL_MLDSA87;
-	    break;
-	default:
-	    break;
+    case PGPRPUBKEYALGO_MLDSA65_ED25519:
+	eddsasize = 64;
+	mldsasize = 3309;
+	eddsaalgo = PGPRPUBKEYALGO_ED25519;
+	mldsaalgo = PGPRPUBKEYALGO_INTERNAL_MLDSA65;
+	break;
+    case PGPRPUBKEYALGO_MLDSA87_ED448:
+	eddsasize = 114;
+	mldsasize = 4627;
+	eddsaalgo = PGPRPUBKEYALGO_ED448;
+	mldsaalgo = PGPRPUBKEYALGO_INTERNAL_MLDSA87;
+	break;
+    default:
+	break;
     }
     if (!eddsasize || !mldsasize || mlen != eddsasize + mldsasize || !eddsaalgo || !mldsaalgo)
 	return rc;
@@ -94,20 +94,20 @@ static pgprRC pgprSetKeyMpiHybrid(pgprAlg ka, int num, const uint8_t *p, int mle
 	return PGPR_ERROR_NO_MEMORY;
 
     switch (ka->algo) {
-	case PGPRPUBKEYALGO_MLDSA65_ED25519:
-	    eddsasize = 32;
-	    mldsasize = 1952;
-	    eddsaalgo = PGPRPUBKEYALGO_ED25519;
-	    mldsaalgo = PGPRPUBKEYALGO_INTERNAL_MLDSA65;
-	    break;
-	case PGPRPUBKEYALGO_MLDSA87_ED448:
-	    eddsasize = 57;
-	    mldsasize = 2592;
-	    eddsaalgo = PGPRPUBKEYALGO_ED448;
-	    mldsaalgo = PGPRPUBKEYALGO_INTERNAL_MLDSA87;
-	    break;
-	default:
-	    break;
+    case PGPRPUBKEYALGO_MLDSA65_ED25519:
+	eddsasize = 32;
+	mldsasize = 1952;
+	eddsaalgo = PGPRPUBKEYALGO_ED25519;
+	mldsaalgo = PGPRPUBKEYALGO_INTERNAL_MLDSA65;
+	break;
+    case PGPRPUBKEYALGO_MLDSA87_ED448:
+	eddsasize = 57;
+	mldsasize = 2592;
+	eddsaalgo = PGPRPUBKEYALGO_ED448;
+	mldsaalgo = PGPRPUBKEYALGO_INTERNAL_MLDSA87;
+	break;
+    default:
+	break;
     }
     if (!eddsasize || !mldsasize || mlen != eddsasize + mldsasize || !eddsaalgo || !mldsaalgo)
 	return rc;

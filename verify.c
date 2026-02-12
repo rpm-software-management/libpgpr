@@ -1,5 +1,5 @@
-#include <string.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include "pgpr_internal.h"
 
@@ -33,7 +33,7 @@ pgprRC pgprVerifySignature(pgprItem key, pgprItem sig, const uint8_t *hash, size
     pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;	/* assume failure */
 
     if (lints)
-        *lints = NULL;
+	*lints = NULL;
 
     if (!sig || sig->tag != PGPRTAG_SIGNATURE || (sig->sigtype != PGPRSIGTYPE_BINARY && sig->sigtype != PGPRSIGTYPE_TEXT && sig->sigtype != PGPRSIGTYPE_STANDALONE))
 	goto exit;
@@ -92,7 +92,7 @@ exit:
 pgprRC pgprVerifySignatureNoKey(pgprItem sig, const uint8_t *hash, size_t hashlen, char **lints)
 {
     if (lints)
-        *lints = NULL;
+	*lints = NULL;
     if (!sig || sig->tag != PGPRTAG_SIGNATURE || (sig->sigtype != PGPRSIGTYPE_BINARY && sig->sigtype != PGPRSIGTYPE_TEXT && sig->sigtype != PGPRSIGTYPE_STANDALONE))
 	return PGPR_ERROR_BAD_SIGNATURE;
     if (hash) {

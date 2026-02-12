@@ -76,8 +76,8 @@ static int pgprCurveByOid(const uint8_t *p, int l)
 {
     uint8_t *curve;
     for (curve = curve_oids; *curve; curve += 2 + curve[1])
-        if (l == (int)curve[1] && !memcmp(p, curve + 2, l))
-            return (int)curve[0];
+	if (l == (int)curve[1] && !memcmp(p, curve + 2, l))
+	    return (int)curve[0];
     return 0;
 }
 
@@ -95,7 +95,7 @@ static pgprRC pgprParseKeyParams(pgprPkt *pkt, pgprItem item)
 	return PGPR_ERROR_INTERNAL;
     /* We can't handle more than one key at a time */
     if (item->alg || !item->mpi_offset || item->mpi_offset > pkt->blen)
-	return  PGPR_ERROR_INTERNAL;
+	return PGPR_ERROR_INTERNAL;
     p = pkt->body + item->mpi_offset;
     if (item->pubkey_algo == PGPRPUBKEYALGO_EDDSA || item->pubkey_algo == PGPRPUBKEYALGO_ECDSA) {
 	size_t plen = pkt->blen - item->mpi_offset;
@@ -341,7 +341,7 @@ static pgprRC create_sig_salt(pgprItem item, const uint8_t *salt, size_t saltlen
 pgprRC pgprParseSigNoParams(pgprPkt *pkt, pgprItem item)
 {
     pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;		/* assume failure */
-    const uint8_t * p;
+    const uint8_t *p;
     size_t plen;
 
     if (item->version || item->saved)
@@ -486,7 +486,7 @@ static pgprRC pgprParseKeyFp_V3(pgprPkt *pkt, pgprItem item)
     if (mpil1 < 2 + 8 || blen < mpil1 + 2)
 	return PGPR_ERROR_CORRUPT_PGP_PACKET;
     mpil2 = pgprMpiLen(p + mpil1);
-    if (mpil2 < 2 + 1 || blen !=  mpil1 + mpil2)
+    if (mpil2 < 2 + 1 || blen != mpil1 + mpil2)
 	return PGPR_ERROR_CORRUPT_PGP_PACKET;
 
     rc = pgprDigestInit(PGPRHASHALGO_MD5, &ctx);
@@ -518,7 +518,7 @@ pgprRC pgprParseKeyFp(pgprPkt *pkt, pgprItem item)
     int version;
     size_t blen = pkt->blen;
 
-    if  ((item->tag != PGPRTAG_PUBLIC_KEY && item->tag != PGPRTAG_PUBLIC_SUBKEY) || pkt->tag != item->tag)
+    if ((item->tag != PGPRTAG_PUBLIC_KEY && item->tag != PGPRTAG_PUBLIC_SUBKEY) || pkt->tag != item->tag)
 	return PGPR_ERROR_INTERNAL;
 
     if (blen == 0)

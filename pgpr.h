@@ -1,11 +1,11 @@
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #define PGPR_KEYID_LEN 8
 
 /* type definitions */
-typedef struct pgprItem_s * pgprItem;
-typedef void * pgprDigCtx;
+typedef struct pgprItem_s *pgprItem;
+typedef void *pgprDigCtx;
 typedef uint8_t pgprKeyID_t[PGPR_KEYID_LEN];
 
 /* enum definitions */
@@ -224,7 +224,7 @@ pgprRC pgprArmorUnwrap(const char *armortype, const char *armor, uint8_t **pkts,
 /* digest functions */
 pgprRC pgprDigestInit(int hashalgo, pgprDigCtx *ret);
 
-pgprRC pgprDigestUpdate(pgprDigCtx ctx,  const void *data, size_t len);
+pgprRC pgprDigestUpdate(pgprDigCtx ctx, const void *data, size_t len);
 
 pgprRC pgprDigestFinal(pgprDigCtx ctx, void **datap, size_t *lenp);
 

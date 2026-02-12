@@ -1,5 +1,5 @@
-#include <string.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include "pgpr_internal.h"
 
@@ -74,7 +74,7 @@ int pgprItemHashAlgo(pgprItem item)
 
 int pgprItemPubkeyAlgoInfo(pgprItem item)
 {
-    return item && item->alg ? item->alg->info: -1;
+    return item && item->alg ? item->alg->info : -1;
 }
 
 const uint8_t *pgprItemKeyID(pgprItem item)

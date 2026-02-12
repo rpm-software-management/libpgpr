@@ -30,7 +30,7 @@ static inline const char *r64dec1(const char *p, unsigned int *vp, int *eofp)
     int i, x;
     unsigned int v = 0;
 
-    for (i = 0; i < 4; ) {
+    for (i = 0; i < 4;) {
 	x = *p++;
 	if (x >= 'A' && x <= 'Z')
 	    x -= 'A';
@@ -80,15 +80,15 @@ static const char *r64dec(const char *in, uint8_t **out, size_t *outlen)
 	return in;
     }
     while (!eof) {
-        unsigned int v;
+	unsigned int v;
 	in = r64dec1(in, &v, &eof);
 	if (!in) {
 	    free(obuf);
 	    return NULL;
 	}
-        *optr++ = v >> 16;
-        *optr++ = v >> 8;
-        *optr++ = v;
+	*optr++ = v >> 16;
+	*optr++ = v >> 8;
+	*optr++ = v;
     }
     *out = obuf;
     *outlen = (optr - eof) - obuf;
@@ -114,13 +114,13 @@ static char *r64enc(const unsigned char *data, size_t len)
 	    linelen = 64 / 4 - 1;
 	    *optr++ = '\n';
 	}
-        a = *data++;
-        b = len > 1 ? *data++ : 0;
-        c = len > 2 ? *data++ : 0;
-        *optr++ = bintoasc[a >> 2];
-        *optr++ = bintoasc[(a & 3) << 4 | b >> 4];
-        *optr++ = len > 1 ? bintoasc[(b & 15) << 2 | c >> 6] : '=';
-        *optr++ = len > 2 ? bintoasc[c & 63] : '=';
+	a = *data++;
+	b = len > 1 ? *data++ : 0;
+	c = len > 2 ? *data++ : 0;
+	*optr++ = bintoasc[a >> 2];
+	*optr++ = bintoasc[(a & 3) << 4 | b >> 4];
+	*optr++ = len > 1 ? bintoasc[(b & 15) << 2 | c >> 6] : '=';
+	*optr++ = len > 2 ? bintoasc[c & 63] : '=';
 	len = len < 3 ? 0 : len - 3;
     }
     *optr = 0;
@@ -131,7 +131,7 @@ pgprRC pgprArmorUnwrap(const char *armortype, const char *armor, uint8_t **pkts,
 {
     const char *enc = NULL;
     const char *encend = NULL;
-    uint8_t * dec;
+    uint8_t *dec;
     size_t declen;
     const char *t, *te;
     int pstate = 0;
@@ -272,8 +272,8 @@ pgprRC pgprArmorWrap(const char *armortype, const char *keys, const unsigned cha
     if (!buf)
 	return PGPR_ERROR_NO_MEMORY;
     pgprAsprintf(&val, "-----BEGIN PGP %s-----\n%s%s\n"
-		    "%s\n-----END PGP %s-----\n",
-		    armortype, keys != NULL ? keys : "", keysnl, buf != NULL ? buf : "", armortype);
+		       "%s\n-----END PGP %s-----\n",
+	armortype, keys != NULL ? keys : "", keysnl, buf != NULL ? buf : "", armortype);
     free(buf);
     if (!val)
 	return PGPR_ERROR_NO_MEMORY;

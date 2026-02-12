@@ -2,10 +2,10 @@
 #if OPENSSL_VERSION_MAJOR >= 3
 # include <openssl/params.h>
 #endif
-#include <openssl/rsa.h>
 #include <openssl/dsa.h>
 #include <openssl/ec.h>
 #include <openssl/err.h>
+#include <openssl/rsa.h>
 
 #include "pgpr_internal.h"
 
@@ -14,17 +14,17 @@ static const EVP_MD *getEVPMD(int hashalgo)
     switch (hashalgo) {
 
     case PGPRHASHALGO_MD5:
-        return EVP_md5();
+	return EVP_md5();
     case PGPRHASHALGO_SHA1:
-        return EVP_sha1();
+	return EVP_sha1();
     case PGPRHASHALGO_SHA256:
-        return EVP_sha256();
+	return EVP_sha256();
     case PGPRHASHALGO_SHA384:
-        return EVP_sha384();
+	return EVP_sha384();
     case PGPRHASHALGO_SHA512:
-        return EVP_sha512();
+	return EVP_sha512();
     case PGPRHASHALGO_SHA224:
-        return EVP_sha224();
+	return EVP_sha224();
 #if OPENSSL_VERSION_MAJOR >= 3 || (OPENSSL_VERSION_MAJOR == 1 && OPENSSL_VERSION_MINOR == 1 && OPENSSL_VERSION_PATCH >= 1)
     case PGPRHASHALGO_SHA3_256:
 	return EVP_sha3_256();
@@ -32,7 +32,7 @@ static const EVP_MD *getEVPMD(int hashalgo)
 	return EVP_sha3_512();
 #endif
     default:
-        return EVP_md_null();
+	return EVP_md_null();
     }
 }
 
@@ -90,7 +90,7 @@ pgprRC pgprSupportedAlgo(int algo, int curve)
 	rc = pgprSupportedAlgo(PGPRPUBKEYALGO_INTERNAL_MLDSA87, 0);
 	return rc == PGPR_OK ? pgprSupportedAlgo(PGPRPUBKEYALGO_ED448, 0) : rc;
     default:
-        break;
+	break;
     }
     return PGPR_ERROR_UNSUPPORTED_ALGORITHM;
 }
@@ -153,7 +153,7 @@ struct pgprAlgKeyRSA_s {
 static int constructRSASigningKey(struct pgprAlgKeyRSA_s *key)
 {
     if (key->evp_pkey)
-        return 1;	/* We've already constructed it, so just reuse it */
+	return 1;	/* We've already constructed it, so just reuse it */
 
 #if OPENSSL_VERSION_MAJOR >= 3
     OSSL_PARAM params[] = {
@@ -188,8 +188,8 @@ static int constructRSASigningKey(struct pgprAlgKeyRSA_s *key)
     /* Assign the RSA key to the EVP_PKEY structure.
        This will take over memory management of the key */
     if (EVP_PKEY_assign_RSA(key->evp_pkey, rsa) != 1) {
-        EVP_PKEY_free(key->evp_pkey);
-        key->evp_pkey = NULL;
+	EVP_PKEY_free(key->evp_pkey);
+	key->evp_pkey = NULL;
 	goto exit;
     }
 
@@ -206,7 +206,7 @@ static pgprRC pgprSetKeyMpiRSA(pgprAlg ka, int num, const uint8_t *p, int mlen)
     struct pgprAlgKeyRSA_s *key = ka->data;
 
     if (!key)
-        key = ka->data = pgprCalloc(1, sizeof(*key));
+	key = ka->data = pgprCalloc(1, sizeof(*key));
     if (!key)
 	return PGPR_ERROR_NO_MEMORY;
 
@@ -216,19 +216,19 @@ static pgprRC pgprSetKeyMpiRSA(pgprAlg ka, int num, const uint8_t *p, int mlen)
     ERR_clear_error();
     switch (num) {
     case 0:		/* Modulus */
-        if (key->n)
-            return PGPR_ERROR_INTERNAL;
+	if (key->n)
+	    return PGPR_ERROR_INTERNAL;
 	ka->info = 8 * (((mlen - 2) + 7) & ~7);
-        if ((key->n = BN_bin2bn(p + 2, mlen - 2, NULL)) != 0)
+	if ((key->n = BN_bin2bn(p + 2, mlen - 2, NULL)) != 0)
 	    rc = PGPR_OK;
-        break;
+	break;
 
     case 1:		/* Exponent */
-        if (key->e)
-            return PGPR_ERROR_INTERNAL;
-        if ((key->e = BN_bin2bn(p + 2, mlen - 2, NULL)) != 0)
+	if (key->e)
+	    return PGPR_ERROR_INTERNAL;
+	if ((key->e = BN_bin2bn(p + 2, mlen - 2, NULL)) != 0)
 	    rc = PGPR_OK;
-        break;
+	break;
     }
     return check_out_of_mem(rc);
 }
@@ -237,13 +237,13 @@ static void pgprFreeKeyRSA(pgprAlg ka)
 {
     struct pgprAlgKeyRSA_s *key = ka->data;
     if (key) {
-        if (key->evp_pkey)
-            EVP_PKEY_free(key->evp_pkey);
+	if (key->evp_pkey)
+	    EVP_PKEY_free(key->evp_pkey);
 	if (key->n)
-            BN_clear_free(key->n);
+	    BN_clear_free(key->n);
 	if (key->e)
-            BN_clear_free(key->e);
-        free(key);
+	    BN_clear_free(key->e);
+	free(key);
     }
 }
 
@@ -259,18 +259,18 @@ static pgprRC pgprSetSigMpiRSA(pgprAlg sa, int num, const uint8_t *p, int mlen)
     struct pgprAlgSigRSA_s *sig = sa->data;
 
     if (!sig)
-        sig = sa->data = pgprCalloc(1, sizeof(*sig));
+	sig = sa->data = pgprCalloc(1, sizeof(*sig));
     if (!sig)
 	return PGPR_ERROR_NO_MEMORY;
 
     ERR_clear_error();
     switch (num) {
     case 0:
-        if (sig->bn)
-            return PGPR_ERROR_INTERNAL;
-        if ((sig->bn = BN_bin2bn(p + 2, mlen - 2, NULL)) != 0)
+	if (sig->bn)
+	    return PGPR_ERROR_INTERNAL;
+	if ((sig->bn = BN_bin2bn(p + 2, mlen - 2, NULL)) != 0)
 	    rc = PGPR_OK;
-        break;
+	break;
     }
     return check_out_of_mem(rc);
 }
@@ -281,7 +281,7 @@ static void pgprFreeSigRSA(pgprAlg sa)
     if (sig) {
 	if (sig->bn)
 	    BN_clear_free(sig->bn);
-        free(sig);
+	free(sig);
     }
 }
 
@@ -299,7 +299,7 @@ static pgprRC pgprVerifySigRSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size
 
     ERR_clear_error();
     if (!constructRSASigningKey(key)) {
-        rc = PGPR_ERROR_REJECTED_PUBKEY;
+	rc = PGPR_ERROR_REJECTED_PUBKEY;
 	goto done;
     }
     pkey_ctx = EVP_PKEY_CTX_new(key->evp_pkey, NULL);
@@ -325,7 +325,7 @@ static pgprRC pgprVerifySigRSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size
 	goto done;
 
     if (EVP_PKEY_verify(pkey_ctx, padded_sig, pkey_len, hash, hashlen) == 1)
-        rc = PGPR_OK;		/* Success */
+	rc = PGPR_OK;		/* Success */
 
 done:
     rc = check_out_of_mem(rc);
@@ -368,7 +368,7 @@ struct pgprAlgKeyDSA_s {
 static int constructDSASigningKey(struct pgprAlgKeyDSA_s *key)
 {
     if (key->evp_pkey)
-        return 1;	/* We've already constructed it, so just reuse it */
+	return 1;	/* We've already constructed it, so just reuse it */
 
 #if OPENSSL_VERSION_MAJOR >= 3
     OSSL_PARAM params[] = {
@@ -398,10 +398,10 @@ static int constructDSASigningKey(struct pgprAlgKeyDSA_s *key)
     if (!dsa)
 	return 0;
     if (DSA_set0_pqg(dsa, key->p, key->q, key->g) != 1)
-        goto exit;
+	goto exit;
     key->p = key->q = key->g = NULL;
     if (DSA_set0_key(dsa, key->y, NULL) != 1)
-        goto exit;
+	goto exit;
     key->y = NULL;
 
     /* Create an EVP_PKEY container to abstract the key-type. */
@@ -411,8 +411,8 @@ static int constructDSASigningKey(struct pgprAlgKeyDSA_s *key)
     /* Assign the DSA key to the EVP_PKEY structure.
        This will take over memory management of the key */
     if (EVP_PKEY_assign_DSA(key->evp_pkey, dsa) != 1) {
-        EVP_PKEY_free(key->evp_pkey);
-        key->evp_pkey = NULL;
+	EVP_PKEY_free(key->evp_pkey);
+	key->evp_pkey = NULL;
 	goto exit;
     }
     return 1;
@@ -430,37 +430,37 @@ static pgprRC pgprSetKeyMpiDSA(pgprAlg ka, int num, const uint8_t *p, int mlen)
     struct pgprAlgKeyDSA_s *key = ka->data;
 
     if (!key)
-        key = ka->data = pgprCalloc(1, sizeof(*key));
+	key = ka->data = pgprCalloc(1, sizeof(*key));
     if (!key)
 	return PGPR_ERROR_NO_MEMORY;
 
     ERR_clear_error();
     switch (num) {
     case 0:	/* Prime */
-        if (key->p)
-            return PGPR_ERROR_INTERNAL;
+	if (key->p)
+	    return PGPR_ERROR_INTERNAL;
 	ka->info = 8 * (((mlen - 2) + 7) & ~7);
-        if ((key->p = BN_bin2bn(p + 2, mlen - 2, NULL)) != 0)
+	if ((key->p = BN_bin2bn(p + 2, mlen - 2, NULL)) != 0)
 	    rc = PGPR_OK;
-        break;
+	break;
     case 1:	/* Subprime */
-        if (key->q)
-            return PGPR_ERROR_INTERNAL;
-        if ((key->q = BN_bin2bn(p + 2, mlen - 2, NULL)) != 0)
+	if (key->q)
+	    return PGPR_ERROR_INTERNAL;
+	if ((key->q = BN_bin2bn(p + 2, mlen - 2, NULL)) != 0)
 	    rc = PGPR_OK;
-        break;
+	break;
     case 2:	/* Base */
-        if (key->g)
-            return PGPR_ERROR_INTERNAL;
-        if ((key->g = BN_bin2bn(p + 2, mlen - 2, NULL)) != 0)
+	if (key->g)
+	    return PGPR_ERROR_INTERNAL;
+	if ((key->g = BN_bin2bn(p + 2, mlen - 2, NULL)) != 0)
 	    rc = PGPR_OK;
-        break;
+	break;
     case 3:	/* Public */
-        if (key->y)
-            return PGPR_ERROR_INTERNAL;
-        if ((key->y = BN_bin2bn(p + 2, mlen - 2, NULL)) != 0)
+	if (key->y)
+	    return PGPR_ERROR_INTERNAL;
+	if ((key->y = BN_bin2bn(p + 2, mlen - 2, NULL)) != 0)
 	    rc = PGPR_OK;
-        break;
+	break;
     }
     return check_out_of_mem(rc);
 }
@@ -469,17 +469,17 @@ static void pgprFreeKeyDSA(pgprAlg ka)
 {
     struct pgprAlgKeyDSA_s *key = ka->data;
     if (key) {
-        if (key->evp_pkey)
-            EVP_PKEY_free(key->evp_pkey);
+	if (key->evp_pkey)
+	    EVP_PKEY_free(key->evp_pkey);
 	if (key->p)
-            BN_clear_free(key->p);
+	    BN_clear_free(key->p);
 	if (key->q)
-            BN_clear_free(key->q);
+	    BN_clear_free(key->q);
 	if (key->g)
-            BN_clear_free(key->g);
+	    BN_clear_free(key->g);
 	if (key->y)
-            BN_clear_free(key->y);
-        free(key);
+	    BN_clear_free(key->y);
+	free(key);
     }
 }
 
@@ -534,28 +534,28 @@ static pgprRC pgprSetSigMpiDSA(pgprAlg sa, int num, const uint8_t *p, int mlen)
     struct pgprAlgSigDSA_s *sig = sa->data;
 
     if (!sig)
-        sig = sa->data = pgprCalloc(1, sizeof(*sig));
+	sig = sa->data = pgprCalloc(1, sizeof(*sig));
     if (!sig)
 	return PGPR_ERROR_NO_MEMORY;
 
     ERR_clear_error();
     switch (num) {
     case 0:
-        if (sig->r)
-            return PGPR_ERROR_INTERNAL;
+	if (sig->r)
+	    return PGPR_ERROR_INTERNAL;
 	if ((sig->r = pgprMemdup(p + 2, mlen - 2)) == 0)
 	    return PGPR_ERROR_NO_MEMORY;
-        sig->rlen = mlen - 2;
-        rc = PGPR_OK;
-        break;
+	sig->rlen = mlen - 2;
+	rc = PGPR_OK;
+	break;
     case 1:
-        if (sig->s)
-            return PGPR_ERROR_INTERNAL;
+	if (sig->s)
+	    return PGPR_ERROR_INTERNAL;
 	if ((sig->s = pgprMemdup(p + 2, mlen - 2)) == 0)
 	    return PGPR_ERROR_NO_MEMORY;
-        sig->slen = mlen - 2;
-        rc = PGPR_OK;
-        break;
+	sig->slen = mlen - 2;
+	rc = PGPR_OK;
+	break;
     }
     return check_out_of_mem(rc);
 }
@@ -676,7 +676,7 @@ static int constructECDSASigningKey(struct pgprAlgKeyECDSA_s *key, int curve)
 	return 0;
 
     if (EC_KEY_oct2key(ec, key->q, key->qlen, NULL) != 1)
-        goto exit;
+	goto exit;
 
     /* Create an EVP_PKEY container to abstract the key-type. */
     if (!(key->evp_pkey = EVP_PKEY_new()))
@@ -685,8 +685,8 @@ static int constructECDSASigningKey(struct pgprAlgKeyECDSA_s *key, int curve)
     /* Assign the EC key to the EVP_PKEY structure.
        This will take over memory management of the key */
     if (EVP_PKEY_assign_EC_KEY(key->evp_pkey, ec) != 1) {
-        EVP_PKEY_free(key->evp_pkey);
-        key->evp_pkey = NULL;
+	EVP_PKEY_free(key->evp_pkey);
+	key->evp_pkey = NULL;
 	goto exit;
     }
     return 1;
@@ -743,27 +743,27 @@ static pgprRC pgprSetSigMpiECDSA(pgprAlg sa, int num, const uint8_t *p, int mlen
     struct pgprAlgSigECDSA_s *sig = sa->data;
 
     if (!sig)
-        sig = sa->data = pgprCalloc(1, sizeof(*sig));
+	sig = sa->data = pgprCalloc(1, sizeof(*sig));
     if (!sig)
 	return PGPR_ERROR_NO_MEMORY;
 
     switch (num) {
     case 0:
-        if (sig->r)
-            return PGPR_ERROR_INTERNAL;
+	if (sig->r)
+	    return PGPR_ERROR_INTERNAL;
 	if ((sig->r = pgprMemdup(p + 2, mlen - 2)) == 0)
 	    return PGPR_ERROR_NO_MEMORY;
 	sig->rlen = mlen - 2;
-        rc = PGPR_OK;
-        break;
+	rc = PGPR_OK;
+	break;
     case 1:
-        if (sig->s)
-            return PGPR_ERROR_INTERNAL;
+	if (sig->s)
+	    return PGPR_ERROR_INTERNAL;
 	if ((sig->s = pgprMemdup(p + 2, mlen - 2)) == 0)
 	    return PGPR_ERROR_NO_MEMORY;
 	sig->slen = mlen - 2;
-        rc = PGPR_OK;
-        break;
+	rc = PGPR_OK;
+	break;
     }
 
     return rc;
@@ -947,7 +947,7 @@ static pgprRC pgprSetSigMpiEDDSA(pgprAlg sa, int num, const uint8_t *p, int mlen
     }
     mlen -= 2;	/* skip mpi len */
     if ((num != 0 && num != 1) || mlen <= 0 || mlen > 57)
-      return rc;
+	return rc;
     memcpy(sig->sig + 57 * num + 57 - mlen, p + 2, mlen);
     if (mlen > 32)
 	sig->not_ed25519 = 1;
@@ -1075,14 +1075,14 @@ static pgprRC pgprSetKeyMpiMLDSA(pgprAlg ka, int num, const uint8_t *p, int mlen
 	return PGPR_ERROR_INTERNAL;
 
     switch (ka->algo) {
-	case PGPRPUBKEYALGO_INTERNAL_MLDSA65:
-	    keyl = 1952;
-	    break;
-	case PGPRPUBKEYALGO_INTERNAL_MLDSA87:
-	    keyl = 2592;
-	    break;
-	default:
-	    break;
+    case PGPRPUBKEYALGO_INTERNAL_MLDSA65:
+	keyl = 1952;
+	break;
+    case PGPRPUBKEYALGO_INTERNAL_MLDSA87:
+	keyl = 2592;
+	break;
+    default:
+	break;
     }
     if (keyl && keyl <= sizeof(key->key) && mlen == keyl) {
 	memcpy(key->key, p, keyl);
@@ -1113,14 +1113,14 @@ static pgprRC pgprSetSigMpiMLDSA(pgprAlg sa, int num, const uint8_t *p, int mlen
 	return PGPR_ERROR_INTERNAL;
 
     switch (sa->algo) {
-	case PGPRPUBKEYALGO_INTERNAL_MLDSA65:
-	    sigl = 3309;
-	    break;
-	case PGPRPUBKEYALGO_INTERNAL_MLDSA87:
-	    sigl = 4627;
-	    break;
-	default:
-	    break;
+    case PGPRPUBKEYALGO_INTERNAL_MLDSA65:
+	sigl = 3309;
+	break;
+    case PGPRPUBKEYALGO_INTERNAL_MLDSA87:
+	sigl = 4627;
+	break;
+    default:
+	break;
     }
     if (sigl && sigl <= sizeof(sig->sig) && mlen == sigl) {
 	memcpy(sig->sig, p, sigl);
@@ -1210,7 +1210,7 @@ pgprRC pgprAlgInitPubkey(pgprAlg ka)
     case PGPRPUBKEYALGO_MLDSA87_ED448:
 	return pgprInitKeyHybrid(ka);
     default:
-        break;
+	break;
     }
     return PGPR_ERROR_UNSUPPORTED_ALGORITHM;
 }
@@ -1239,7 +1239,7 @@ pgprRC pgprAlgInitSignature(pgprAlg sa)
     case PGPRPUBKEYALGO_MLDSA87_ED448:
 	return pgprInitSigHybrid(sa);
     default:
-        break;
+	break;
     }
     return PGPR_ERROR_UNSUPPORTED_ALGORITHM;
 }
@@ -1272,7 +1272,7 @@ pgprRC pgprDigestInit(int hashalgo, pgprDigCtx *ret)
     return ctx ? PGPR_OK : check_out_of_mem(PGPR_ERROR_INTERNAL);
 }
 
-pgprRC pgprDigestUpdate(pgprDigCtx ctx, const void * data, size_t len)
+pgprRC pgprDigestUpdate(pgprDigCtx ctx, const void *data, size_t len)
 {
     if (!ctx)
 	return PGPR_ERROR_INTERNAL;
@@ -1280,7 +1280,7 @@ pgprRC pgprDigestUpdate(pgprDigCtx ctx, const void * data, size_t len)
     return PGPR_OK;
 }
 
-pgprRC pgprDigestFinal(pgprDigCtx ctx, void ** datap, size_t *lenp)
+pgprRC pgprDigestFinal(pgprDigCtx ctx, void **datap, size_t *lenp)
 {
     uint8_t *digest = NULL;
     int digestlen;
@@ -1311,7 +1311,7 @@ pgprRC pgprDigestFinal(pgprDigCtx ctx, void ** datap, size_t *lenp)
     return digestlen > 0 ? PGPR_OK : check_out_of_mem(PGPR_ERROR_INTERNAL);
 }
 
-pgprRC pgprDigestDup(pgprDigCtx oldctx,  pgprDigCtx *ret)
+pgprRC pgprDigestDup(pgprDigCtx oldctx, pgprDigCtx *ret)
 {
     pgprDigCtx ctx;
     if (!oldctx)

@@ -80,7 +80,7 @@ pgprRC pgprSupportedAlgo(int algo, int curve)
 	rc = pgprSupportedAlgo(PGPRPUBKEYALGO_INTERNAL_MLDSA87, 0);
 	return rc == PGPR_OK ? pgprSupportedAlgo(PGPRPUBKEYALGO_ED448, 0) : rc;
     default:
-        break;
+	break;
     }
     return PGPR_ERROR_UNSUPPORTED_ALGORITHM;
 }
@@ -186,7 +186,7 @@ static void pgprFreeSigRSA(pgprAlg sa)
 {
     struct pgprAlgSigRSA_s *sig = sa->data;
     if (sig) {
-        gcry_mpi_release(sig->s);
+	gcry_mpi_release(sig->s);
 	free(sig);
 	sa->data = NULL;
     }
@@ -196,8 +196,8 @@ static void pgprFreeKeyRSA(pgprAlg ka)
 {
     struct pgprAlgKeyRSA_s *key = ka->data;
     if (key) {
-        gcry_mpi_release(key->n);
-        gcry_mpi_release(key->e);
+	gcry_mpi_release(key->n);
+	gcry_mpi_release(key->e);
 	free(key);
 	ka->data = NULL;
     }
@@ -339,8 +339,8 @@ static void pgprFreeSigDSA(pgprAlg sa)
 {
     struct pgprAlgSigDSA_s *sig = sa->data;
     if (sig) {
-        gcry_mpi_release(sig->r);
-        gcry_mpi_release(sig->s);
+	gcry_mpi_release(sig->r);
+	gcry_mpi_release(sig->s);
 	free(sig);
 	sa->data = NULL;
     }
@@ -350,10 +350,10 @@ static void pgprFreeKeyDSA(pgprAlg ka)
 {
     struct pgprAlgKeyDSA_s *key = ka->data;
     if (key) {
-        gcry_mpi_release(key->p);
-        gcry_mpi_release(key->q);
-        gcry_mpi_release(key->g);
-        gcry_mpi_release(key->y);
+	gcry_mpi_release(key->p);
+	gcry_mpi_release(key->q);
+	gcry_mpi_release(key->g);
+	gcry_mpi_release(key->y);
 	free(key);
 	ka->data = NULL;
     }
@@ -586,14 +586,14 @@ static pgprRC pgprSetSigMpiMLDSA(pgprAlg sa, int num, const uint8_t *p, int mlen
 	return PGPR_ERROR_INTERNAL;
 
     switch (sa->algo) {
-	case PGPRPUBKEYALGO_INTERNAL_MLDSA65:
-	    sigl = 3309;
-	    break;
-	case PGPRPUBKEYALGO_INTERNAL_MLDSA87:
-	    sigl = 4627;
-	    break;
-	default:
-	    break;
+    case PGPRPUBKEYALGO_INTERNAL_MLDSA65:
+	sigl = 3309;
+	break;
+    case PGPRPUBKEYALGO_INTERNAL_MLDSA87:
+	sigl = 4627;
+	break;
+    default:
+	break;
     }
     if (sigl && mlen == sigl) {
 	if (!(gerr = gcry_mpi_scan(&sig->s, GCRYMPI_FMT_USG, p, sigl, NULL)))
@@ -619,14 +619,14 @@ static pgprRC pgprSetKeyMpiMLDSA(pgprAlg ka, int num, const uint8_t *p, int mlen
 	return PGPR_ERROR_INTERNAL;
 
     switch (ka->algo) {
-	case PGPRPUBKEYALGO_INTERNAL_MLDSA65:
-	    keyl = 1952;
-	    break;
-	case PGPRPUBKEYALGO_INTERNAL_MLDSA87:
-	    keyl = 2592;
-	    break;
-	default:
-	    break;
+    case PGPRPUBKEYALGO_INTERNAL_MLDSA65:
+	keyl = 1952;
+	break;
+    case PGPRPUBKEYALGO_INTERNAL_MLDSA87:
+	keyl = 2592;
+	break;
+    default:
+	break;
     }
     if (keyl && mlen == keyl) {
 	if (!(gerr = gcry_mpi_scan(&key->p, GCRYMPI_FMT_USG, p, keyl, NULL)))
@@ -657,7 +657,7 @@ static pgprRC pgprVerifySigMLDSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, si
     }
     if (!gerr && sexp_sig && sexp_data && sexp_pkey)
 	if ((gerr = gcry_pk_verify(sexp_sig, sexp_data, sexp_pkey)) == 0)
-		rc = PGPR_OK;
+	    rc = PGPR_OK;
     gcry_sexp_release(sexp_sig);
     gcry_sexp_release(sexp_data);
     gcry_sexp_release(sexp_pkey);
@@ -718,10 +718,10 @@ pgprRC pgprAlgInitPubkey(pgprAlg ka)
 	return pgprInitKeyECC(ka);
     case PGPRPUBKEYALGO_INTERNAL_MLDSA65:
     case PGPRPUBKEYALGO_INTERNAL_MLDSA87:
-        return pgprInitKeyMLDSA(ka);
+	return pgprInitKeyMLDSA(ka);
     case PGPRPUBKEYALGO_MLDSA65_ED25519:
     case PGPRPUBKEYALGO_MLDSA87_ED448:
-        return pgprInitKeyHybrid(ka);
+	return pgprInitKeyHybrid(ka);
     default:
 	break;
     }
@@ -742,10 +742,10 @@ pgprRC pgprAlgInitSignature(pgprAlg sa)
 	return pgprInitSigECC(sa);
     case PGPRPUBKEYALGO_INTERNAL_MLDSA65:
     case PGPRPUBKEYALGO_INTERNAL_MLDSA87:
-        return pgprInitSigMLDSA(sa);
+	return pgprInitSigMLDSA(sa);
     case PGPRPUBKEYALGO_MLDSA65_ED25519:
     case PGPRPUBKEYALGO_MLDSA87_ED448:
-        return pgprInitSigHybrid(sa);
+	return pgprInitSigHybrid(sa);
     default:
 	break;
     }
@@ -778,7 +778,7 @@ pgprRC pgprDigestInit(int hashalgo, pgprDigCtx *ret)
     return h ? PGPR_OK : check_out_of_mem(PGPR_ERROR_INTERNAL, gerr);
 }
 
-pgprRC pgprDigestUpdate(pgprDigCtx ctx, const void * data, size_t len)
+pgprRC pgprDigestUpdate(pgprDigCtx ctx, const void *data, size_t len)
 {
     gcry_md_hd_t h = ctx;
     if (!ctx)
@@ -787,7 +787,7 @@ pgprRC pgprDigestUpdate(pgprDigCtx ctx, const void * data, size_t len)
     return PGPR_OK;
 }
 
-pgprRC pgprDigestFinal(pgprDigCtx ctx, void ** datap, size_t *lenp)
+pgprRC pgprDigestFinal(pgprDigCtx ctx, void **datap, size_t *lenp)
 {
     int gcryalgo;
     unsigned char *digest;

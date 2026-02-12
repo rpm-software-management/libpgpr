@@ -24,10 +24,10 @@
 /* maximum fingerprint length */
 #define PGPR_MAX_FP_LENGTH 32
 
-typedef struct pgprAlg_s * pgprAlg;
+typedef struct pgprAlg_s *pgprAlg;
 typedef pgprRC (*setmpifunc)(pgprAlg item, int num, const uint8_t *p, int mlen);
 typedef pgprRC (*verifyfunc)(pgprAlg pgprkey, pgprAlg pgprsig,
-                          const uint8_t *hash, size_t hashlen, int hash_algo);
+    const uint8_t *hash, size_t hashlen, int hash_algo);
 typedef void (*freefunc)(pgprAlg item);
 
 struct pgprAlg_s {
@@ -47,7 +47,7 @@ struct pgprAlg_s {
  */
 struct pgprItem_s {
     uint8_t tag;
-    char * userid;		/*!< key user id */
+    char *userid;		/*!< key user id */
     uint8_t key_flags;		/*!< key usage flags */
 
     uint8_t version;		/*!< key/signature version number. */
@@ -72,11 +72,11 @@ struct pgprItem_s {
 #define	PGPRITEM_SAVED_VALID		(1 << 5)
 #define	PGPRITEM_SAVED_SIG_EXPIRE	(1 << 6)
 #define	PGPRITEM_SAVED_FP		(1 << 7)
-    uint8_t * embedded_sig;	/* embedded signature */
+    uint8_t *embedded_sig;	/* embedded signature */
     size_t embedded_sig_len;	/* length of the embedded signature */
     pgprKeyID_t mainid;		/* key id of main key if this is a subkey */
 
-    uint8_t * hash;
+    uint8_t *hash;
     uint32_t hashlen;
     uint32_t saltlen;
 
@@ -184,7 +184,7 @@ PGPR_GNUC_INTERNAL
 pgprRC pgprParseUserID(pgprPkt *pkt, pgprItem item);
 
 PGPR_GNUC_INTERNAL
-pgprRC pgprParseKeyFp(pgprPkt *pkt,  pgprItem item);
+pgprRC pgprParseKeyFp(pgprPkt *pkt, pgprItem item);
 
 /* diagnostics */
 PGPR_GNUC_INTERNAL
@@ -192,11 +192,11 @@ void pgprAddLint(pgprItem item, char **lints, pgprRC error);
 
 /* certificate parsing */
 PGPR_GNUC_INTERNAL
-pgprRC pgprParseCertificate(const uint8_t * pkts, size_t pktslen, pgprItem item);
+pgprRC pgprParseCertificate(const uint8_t *pkts, size_t pktslen, pgprItem item);
 
 PGPR_GNUC_INTERNAL
-pgprRC pgprParseCertificateSubkeys(const uint8_t * pkts, size_t pktslen, pgprItem mainkey,
-				   pgprItem **subkeys, int *subkeysCount);
+pgprRC pgprParseCertificateSubkeys(const uint8_t *pkts, size_t pktslen, pgprItem mainkey,
+    pgprItem **subkeys, int *subkeysCount);
 
 /* signature verification */
 PGPR_GNUC_INTERNAL
@@ -213,7 +213,7 @@ PGPR_GNUC_INTERNAL
 void *pgprMalloc(size_t size);
 
 PGPR_GNUC_INTERNAL
-void *pgprRealloc(void * ptr, size_t size);
+void *pgprRealloc(void *ptr, size_t size);
 
 PGPR_GNUC_INTERNAL
 void *pgprCalloc(size_t nmemb, size_t size);

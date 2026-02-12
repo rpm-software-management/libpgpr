@@ -20,7 +20,7 @@
  * @param[out] *lenp	decoded length
  * @return		packet header length, 0 on error
  */
-static inline size_t pgprOldLen(const uint8_t *s, size_t slen, size_t * lenp)
+static inline size_t pgprOldLen(const uint8_t *s, size_t slen, size_t *lenp)
 {
     size_t dlen, lenlen;
 
@@ -103,14 +103,14 @@ pgprRC pgprDecodePkt(const uint8_t *p, size_t plen, pgprPkt *pkt)
     return rc;
 }
 
-pgprRC pgprSignatureParse(const uint8_t * pkts, size_t pktslen, pgprItem * ret, char **lints)
+pgprRC pgprSignatureParse(const uint8_t *pkts, size_t pktslen, pgprItem *ret, char **lints)
 {
     pgprItem item = NULL;
     pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;	/* assume failure */
     pgprPkt pkt;
 
     if (lints)
-        *lints = NULL;
+	*lints = NULL;
     if (pktslen > PGPR_MAX_OPENPGP_BYTES || pgprDecodePkt(pkts, pktslen, &pkt))
 	goto exit;
 
@@ -133,21 +133,21 @@ exit:
     if (ret && rc == PGPR_OK)
 	*ret = item;
     else {
-	if (lints)
+	if (lints && rc != PGPR_OK)
 	    pgprAddLint(item, lints, rc);
 	pgprItemFree(item);
     }
     return rc;
 }
 
-pgprRC pgprPubkeyParse(const uint8_t * pkts, size_t pktslen, pgprItem * ret, char **lints)
+pgprRC pgprPubkeyParse(const uint8_t *pkts, size_t pktslen, pgprItem *ret, char **lints)
 {
     pgprItem key = NULL;
     pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;	/* assume failure */
     pgprPkt pkt;
 
     if (lints)
-        *lints = NULL;
+	*lints = NULL;
     if (pktslen > PGPR_MAX_OPENPGP_BYTES || pgprDecodePkt(pkts, pktslen, &pkt))
 	goto exit;
     if (pkt.tag != PGPRTAG_PUBLIC_KEY) {
@@ -166,7 +166,7 @@ exit:
     if (ret && rc == PGPR_OK)
 	*ret = key;
     else {
-	if (lints)
+	if (lints && rc != PGPR_OK)
 	    pgprAddLint(key, lints, rc);
 	pgprItemFree(key);
     }
@@ -174,8 +174,7 @@ exit:
 }
 
 pgprRC pgprPubkeyParseSubkeys(const uint8_t *pkts, size_t pktslen,
-			pgprItem key, pgprItem **subkeys,
-			int *subkeysCount)
+    pgprItem key, pgprItem **subkeys, int *subkeysCount)
 {
     return pgprParseCertificateSubkeys(pkts, pktslen, key, subkeys, subkeysCount);
 }
@@ -224,12 +223,12 @@ pgprRC pgprPubkeyKeyID(const uint8_t *pkts, size_t pktslen, pgprKeyID_t keyid)
 }
 
 pgprRC pgprPubkeyFingerprint(const uint8_t *pkts, size_t pktslen,
-                         uint8_t **fp, size_t *fp_len, int *fp_version)
+    uint8_t **fp, size_t *fp_len, int *fp_version)
 {
     struct pgprItem_s key;
     pgprRC rc = parse_key_fp(pkts, pktslen, &key);
     if (rc == PGPR_OK && !(key.saved & PGPRITEM_SAVED_FP))
-        rc = PGPR_ERROR_INTERNAL;
+	rc = PGPR_ERROR_INTERNAL;
     if (rc == PGPR_OK) {
 	uint8_t *fp_dup = pgprMemdup(key.fp, key.fp_len);
 	if (!fp_dup)

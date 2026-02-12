@@ -22,8 +22,8 @@ static pgprRC hashKey(pgprDigCtx ctx, const pgprPkt *pkt, int exptag, int versio
 		version == 5 ? 0x9a : 0x9b,
 		(pkt->blen >> 24),
 		(pkt->blen >> 16),
-		(pkt->blen >> 8),
-		(pkt->blen     ),
+		(pkt->blen >>  8),
+		(pkt->blen      ),
 	    };
 	    pgprDigestUpdate(ctx, head, 5);
 	}
@@ -55,7 +55,7 @@ static pgprRC hashUserID(pgprDigCtx ctx, const pgprPkt *pkt, int exptag, int ver
 }
 
 static pgprRC pgprVerifySelfSig(pgprItem key, pgprItem selfsig,
-			const pgprPkt *mainpkt, const pgprPkt *sectionpkt)
+    const pgprPkt *mainpkt, const pgprPkt *sectionpkt)
 {
     int rc = PGPR_ERROR_SELFSIG_VERIFICATION;
     pgprDigCtx ctx = NULL;
@@ -139,7 +139,7 @@ static int is_same_keyid(pgprItem item1, pgprItem item2)
 
 /* Parse a complete pubkey with all associated packets (also called "transferable pubkey") */
 /* This is similar to gnupg's merge_selfsigs_main() function */
-pgprRC pgprParseCertificate(const uint8_t * pkts, size_t pktslen, pgprItem item)
+pgprRC pgprParseCertificate(const uint8_t *pkts, size_t pktslen, pgprItem item)
 {
     const uint8_t *p = pkts;
     const uint8_t *pend = pkts + pktslen;
@@ -331,8 +331,7 @@ pgprRC pgprParseCertificate(const uint8_t * pkts, size_t pktslen, pgprItem item)
  * made sure that the signatures are self-signatures and verified ok. */
 /* This is similar to gnupg's merge_selfsigs_subkey() function */
 pgprRC pgprParseCertificateSubkeys(const uint8_t *pkts, size_t pktslen,
-			pgprItem mainkey, pgprItem **subkeys,
-			int *subkeysCount)
+    pgprItem mainkey, pgprItem **subkeys, int *subkeysCount)
 {
     const uint8_t *p = pkts;
     const uint8_t *pend = pkts + pktslen;
