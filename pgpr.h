@@ -5,6 +5,15 @@
 
 /* type definitions */
 typedef struct pgprItem_s *pgprItem;
+/*
+ * pointers from libgcrypt or libcrypto are stored in here.
+ *
+ * This works at the moment but sacrifices type safety and traceability.
+ * A better approach could be a union with a tag identifying from which
+ * library the context originates. The context could be completely opaque
+ * outside of libcrypt.c / openssl.c, i.e. it is allocated to point to a
+ * private type only known in the respective crypto compilation units.
+ */
 typedef void *pgprDigCtx;
 typedef uint8_t pgprKeyID_t[PGPR_KEYID_LEN];
 
@@ -158,9 +167,15 @@ pgprRC pgprInitCrypto(void);
 pgprRC pgprFreeCrypto(void);
 
 /* feature introspection */
+// since there are already enum types declared for algo and curve, they should
+// also be used in the function interface, both for clarity and type safety
+// reasons.
 pgprRC pgprSupportedAlgo(int algo, int curve);
 
 /* item management */
+// adding documentation about what `tag` is supposed to be will be helpful.
+// since this seems to be related to `enum pgprTag`, why not use the enum in
+// the interface as well?
 pgprItem pgprItemNew(uint8_t tag);
 
 pgprItem pgprItemFree(pgprItem item);
@@ -168,18 +183,41 @@ pgprItem pgprItemFree(pgprItem item);
 /* item introspection methods */
 int pgprItemTag(pgprItem item);
 
+/* using a `bool` type where applicable might be helpful to make clearer what
+ * is to be expected from a function like this */
 int pgprItemCmp(pgprItem p1, pgprItem p2);
 
+// this could return the enum type as well
+// you can still declare an error enum for each type set to -1, implicit type
+// conversion will support things like `if (pgprItemSignatureType(...) < 0)`
 int pgprItemSignatureType(pgprItem item);
 
+// and here as well
 int pgprItemPubkeyAlgo(pgprItem item);
 
+// some documentation what this info can be would be helpful here
 int pgprItemPubkeyAlgoInfo(pgprItem item);
 
+// can return the enum type
 int pgprItemHashAlgo(pgprItem item);
 
+// here there is a bit of a mismatch between the typedef `pgprKeyID_t`, which
+// refers to a fixed-length array and the uint8_t* pointer now openly exposed
+// in the library API. It could be a better approach to make this type opaque
+// e.g.  by wrapping the array in a `struct` and don't provide the full
+// definition of the struct in the public header.
+//
+// Otherwise, if users of the API are supposed to access the key ID data
+// directly, wrapping the array in a struct would still make it safe, it could
+// then be an out parameter instead of a return value and the length of the
+// array would be clearer than at the moment.
 const uint8_t *pgprItemKeyID(pgprItem item);
 
+// this is similarly a somewhat unsafe API. clients can retrieve the pointer
+// to the fingerprint without retrieving `fp_len`, when `fp_len == NULL`.
+// Filling a small struct containing all the necessary information would
+// reduce the risk of memory errors and avoid the use of optional out
+// parameters.
 const uint8_t *pgprItemKeyFingerprint(pgprItem item, size_t *fp_len, int *fp_version);
 
 const char *pgprItemUserID(pgprItem item);
@@ -192,26 +230,37 @@ int64_t pgprItemModificationTime(pgprItem item);
 
 int64_t pgprItemExpirationTime(pgprItem item);
 
+// similar to pgprItemKeyFingerprint, a safer combined data structure for
+// arrays could be considered here.
 const uint8_t *pgprItemHashHeader(pgprItem item, size_t *headerlen);
 
 const uint8_t *pgprItemHashTrailer(pgprItem item, size_t *trailerlen);
 
 /* signature verification*/
+// some APIDOC what all these parameters mean and what the calling convention
+// is would be helpful for this and all the following complex functions.
+//
+// especially that `*lints` needs to be passed to `free()`.
 pgprRC pgprVerifySignature(pgprItem key, pgprItem sig, const uint8_t *hash, size_t hashlen, char **lints);
 
 pgprRC pgprVerifySignatureNoKey(pgprItem sig, const uint8_t *hash, size_t hashlen, char **lints);
 
 /* pgp packet parsing */
+// `ret` and `lints` need to be freed by the caller, this also goes for some
+// other functions, should be documented.
 pgprRC pgprSignatureParse(const uint8_t *pkts, size_t pktslen, pgprItem *ret, char **lints);
 
 pgprRC pgprPubkeyParse(const uint8_t *pkts, size_t pktslen, pgprItem *ret, char **lints);
 
+// document the logic of the `subkeys` out parameter, memory ownership
+// transfer etc.
 pgprRC pgprPubkeyParseSubkeys(const uint8_t *pkts, size_t pktslen, pgprItem key, pgprItem **subkeys, int *subkeysCount);
 
 pgprRC pgprPubkeyCertLen(const uint8_t *pkts, size_t pktslen, size_t *certlen);
 
 pgprRC pgprPubkeyKeyID(const uint8_t *pkts, size_t pktslen, pgprKeyID_t keyid);
 
+// documentation of out parameters and memory ownership missing
 pgprRC pgprPubkeyFingerprint(const uint8_t *pkts, size_t pktslen, uint8_t **fp, size_t *fp_len, int *fp_version);
 
 pgprRC pgprPubkeyMerge(const uint8_t *pkts1, size_t pkts1len, const uint8_t *pkts2, size_t pkts2len, uint8_t **pktsm, size_t *pktsmlen, int flags);
@@ -224,6 +273,10 @@ pgprRC pgprArmorUnwrap(const char *armortype, const char *armor, uint8_t **pkts,
 /* digest functions */
 pgprRC pgprDigestInit(int hashalgo, pgprDigCtx *ret);
 
+// since `void *data` is not a purely opaque block of data here, but a piece
+// of memory of `len` bytes, using `uint8_t*` or `unsigned char*` for `data`
+// could be considered.
+// this would avoid quite some casting on caller and implementation end.
 pgprRC pgprDigestUpdate(pgprDigCtx ctx, const void *data, size_t len);
 
 pgprRC pgprDigestFinal(pgprDigCtx ctx, void **datap, size_t *lenp);

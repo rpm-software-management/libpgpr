@@ -57,6 +57,7 @@ static pgprRC hashUserID(pgprDigCtx ctx, const pgprPkt *pkt, int exptag, int ver
 static pgprRC pgprVerifySelfSig(pgprItem key, pgprItem selfsig,
     const pgprPkt *mainpkt, const pgprPkt *sectionpkt)
 {
+    // shouldn't this have type pgprRC?
     int rc = PGPR_ERROR_SELFSIG_VERIFICATION;
     pgprDigCtx ctx = NULL;
     uint8_t *hash = NULL;
@@ -99,6 +100,8 @@ static pgprRC pgprVerifySelfSig(pgprItem key, pgprItem selfsig,
     pgprDigestFinal(ctx, (void **)&hash, &hashlen);
 
     if (rc == PGPR_OK) {
+	// isn't this check coming a bit late after all the hashing has
+	// already been done?
 	if (!key)
 	    rc = PGPR_ERROR_INTERNAL;
 	else
@@ -114,6 +117,7 @@ static pgprRC verifyPrimaryBindingSig(pgprPkt *mainpkt, pgprPkt *subkeypkt, pgpr
 {
     pgprItem emb = NULL;
     pgprPkt sigpkt;
+    // shouldn't this have type pgprRC?
     int rc = PGPR_ERROR_SELFSIG_VERIFICATION;		/* assume failure */
     if (!bindsig || !bindsig->embedded_sig)
 	return rc;
@@ -149,6 +153,7 @@ pgprRC pgprParseCertificate(const uint8_t *pkts, size_t pktslen, pgprItem item)
     uint32_t key_expire_sig_time = 0;
     uint32_t key_flags_sig_time = 0;
     pgprPkt mainpkt, sectionpkt;
+    // why not initialize this right away?
     int haveselfsig;
     uint32_t now = 0;
 
@@ -336,14 +341,18 @@ pgprRC pgprParseCertificateSubkeys(const uint8_t *pkts, size_t pktslen,
     const uint8_t *p = pkts;
     const uint8_t *pend = pkts + pktslen;
     pgprItem *items = NULL, subkey = NULL;
+    // it looks like `sig` can be declared in the `else if` branch for for
+    // PGPRTAG_SIGNATURE.
     pgprItem sig = NULL;
     pgprItem newest_sig = NULL;
     pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;		/* assume failure */
     int count = 0;
     int alloced = 10;
     pgprPkt mainpkt, subkeypkt, pkt;
+    // can be moved into the `for` loop that needs it, C99 style
     int i;
     uint32_t now = 0;
+    // subkeys and subkeysCount should be assigned NULL/0 initially
 
     if (mainkey->tag != PGPRTAG_PUBLIC_KEY || !mainkey->version)
 	return PGPR_ERROR_INTERNAL;	/* main key must be a parsed pubkey */
@@ -354,6 +363,10 @@ pgprRC pgprParseCertificateSubkeys(const uint8_t *pkts, size_t pktslen,
 	return PGPR_ERROR_CORRUPT_PGP_PACKET;
     if (mainpkt.tag != PGPRTAG_PUBLIC_KEY)
 	return PGPR_ERROR_UNEXPECTED_PGP_PACKET;
+    // could it make sense to store additional helpful data in pgprPkt to make
+    // such calculations easier and more expressive?
+    // otherwise a macro might help to make this less error prone and more
+    // descriptive
     p += (mainpkt.body - mainpkt.head) + mainpkt.blen;
 
     memset(&subkeypkt, 0, sizeof(subkeypkt));
@@ -399,12 +412,15 @@ pgprRC pgprParseCertificateSubkeys(const uint8_t *pkts, size_t pktslen,
 	p += (pkt.body - pkt.head) + pkt.blen;
 
 	if (pkt.tag == PGPRTAG_PUBLIC_SUBKEY) {
+	    // it could make sense to assign `subkeypkt = NULL` there
+	    // to make sure subkey and subkeypkt are always in sync
 	    subkey = pgprItemNew(PGPRTAG_PUBLIC_SUBKEY);
 	    if (!subkey) {
 		rc = PGPR_ERROR_NO_MEMORY;
 		break;
 	    }
 	    /* Copy keyid of main key for error messages */
+	    // this could use an `assert(sizeof(subkey->mainid) ==  sizeof(mainkey->keyid))`
 	    memcpy(subkey->mainid, mainkey->keyid, sizeof(mainkey->keyid));
 	    /* Copy UID from main key to subkey */
 	    if (mainkey->userid) {
@@ -414,12 +430,16 @@ pgprRC pgprParseCertificateSubkeys(const uint8_t *pkts, size_t pktslen,
 		}
 	    }
 	    /* if the main key is revoked, all the subkeys are also revoked */
+	    // why store `2` in there now? this should be documented, or an
+	    // enum should be used if it has a purpose, otherwise a `bool`
+	    // type can be used.
 	    subkey->revoked = mainkey->revoked ? 2 : 0;
 	    if (pgprParseKey(&pkt, subkey)) {
 		subkey = pgprItemFree(subkey);
 	    } else {
 		if (mainkey->version == 6 && subkey->version != 6) {
 		    /* version 6 keys can only have version 6 subkeys */
+		    // so this is not an error situation?
 		    subkey = pgprItemFree(subkey);
 		    continue;
 		}
@@ -446,14 +466,19 @@ pgprRC pgprParseCertificateSubkeys(const uint8_t *pkts, size_t pktslen,
 	    /* we use the NoParams variant because we do not verify */
 	    if (pgprParseSigNoParams(&pkt, sig) != PGPR_OK) {
 		sig = pgprItemFree(sig);
+		// why not `continue` here?
+		// then also the checks for `sig` in the next if/else if can
+		// be dropped.
 	    }
 
 	    /* check if we understand this signature */
 	    if (sig && sig->sigtype == PGPRSIGTYPE_SUBKEY_REVOKE) {
 		needsig = 1;
 	    } else if (sig && sig->sigtype == PGPRSIGTYPE_SUBKEY_BINDING) {
-		/* insist on a embedded primary key binding signature if this is used for signing */
+		/* insist on an embedded primary key binding signature if this is used for signing */
+		// wouldn't `key_flags` be zero anyway when none are saved?
 		int key_flags = (sig->saved & PGPRITEM_SAVED_KEY_FLAGS) ? sig->key_flags : 0;
+		// 0x02 should be a named constant of some kind
 		if (!(key_flags & 0x02) || verifyPrimaryBindingSig(&mainpkt, &subkeypkt, subkey, sig) == PGPR_OK)
 		    needsig = 1;
 	    }
@@ -478,7 +503,7 @@ pgprRC pgprParseCertificateSubkeys(const uint8_t *pkts, size_t pktslen,
 
 	    /* find the newest self-sig for all the other types */
 	    if (needsig && (!newest_sig || sig->time >= newest_sig->time)) {
-		newest_sig = pgprItemFree(newest_sig);
+		pgprItemFree(newest_sig);
 		newest_sig = sig;
 		sig = NULL;
 	    }
@@ -487,6 +512,7 @@ pgprRC pgprParseCertificateSubkeys(const uint8_t *pkts, size_t pktslen,
     }
     if (rc == PGPR_OK && p != pend)
 	rc = PGPR_ERROR_INTERNAL;
+    // this line looks unnecessary
     sig = pgprItemFree(sig);
     newest_sig = pgprItemFree(newest_sig);
 

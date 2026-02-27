@@ -12,9 +12,23 @@
 
 static time_t fixed_time;	/* for testing */
 
+// using a dedicated typedef like pgpr_time_t instead of uint32_t would
+// increase the expressiveness of the code
 uint32_t pgprCurrentTime(void)
 {
     time_t t = fixed_time ? fixed_time : time(NULL);
+    /*
+     * you should be careful about mixing time_t and uint32_t here.
+     *
+     * time_t is signed and 32-bit time_t can only holds timestamps up to the
+     * year 2038.
+     *
+     * uint32_t has one bit extra and lasts until the year 2106.
+     *
+     * a sanity check that the returned time is not negative and not bigger
+     * than UINT32_MAX would be prudent here, as well as similar checks in all
+     * other places where these types are converted into each other.
+     */
     return (uint32_t)t;
 }
 

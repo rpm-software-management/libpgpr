@@ -142,6 +142,8 @@ pgprRC pgprParseSigParams(pgprPkt *pkt, pgprItem item)
  */
 static inline size_t pgprSubPktLen(const uint8_t *s, size_t slen, size_t *lenp)
 {
+    // this variable name `lenlen` here and elsewhere feels difficult to
+    // follow. What is it supposed to convey?
     size_t dlen, lenlen;
 
     if (slen > 0 && *s < 192) {
@@ -168,6 +170,8 @@ static pgprRC pgprParseSigSubPkts(const uint8_t *h, size_t hlen, pgprItem item, 
 
     while (hlen > 0) {
 	size_t plen = 0, lenlen;
+	// this could be a `bool` type.
+	// what is `impl` supposed to mean?
 	int impl = 0;
 	lenlen = pgprSubPktLen(p, hlen, &plen);
 	if (lenlen == 0 || plen < 1 || lenlen + plen > hlen)
@@ -192,6 +196,8 @@ static pgprRC pgprParseSigSubPkts(const uint8_t *h, size_t hlen, pgprItem item, 
 	    if (plen - 1 != sizeof(item->keyid))
 		break; /* other lengths not understood */
 	    impl = 1;
+	    // is it a supported scenario that multiple issuer keyids are
+	    // present?
 	    if (!(item->saved & PGPRITEM_SAVED_ID)) {
 		memcpy(item->keyid, p + 1, sizeof(item->keyid));
 		item->saved |= PGPRITEM_SAVED_ID;
@@ -199,6 +205,9 @@ static pgprRC pgprParseSigSubPkts(const uint8_t *h, size_t hlen, pgprItem item, 
 	    break;
 
 	case PGPRSUBTYPE_ISSUER_FINGERPRINT:
+	    // given the amount of `plen - 1` used in this function it might
+	    // make sense to declare a dedicated `const dlen = plen -1` before
+	    // the `switch` statement, which would reduce noise.
 	    if (plen - 1 < 17)
 		break;
 	    impl = 1;
@@ -210,11 +219,20 @@ static pgprRC pgprParseSigSubPkts(const uint8_t *h, size_t hlen, pgprItem item, 
 		    item->saved |= PGPRITEM_SAVED_FP;
 		}
 	    }
+	    // using preprocessor defines or enum values instead of `p[1] ==
+	    // 4` etc. here would be helpful, or at least pointing to the part
+	    // of the RFC that this relates to.
+	    // or simply declare a dedicated variable like `uint8_t key_version = p[1]`,
+	    // which would make things a lot clearer already.
 	    if (p[1] == 4 && plen - 1 == 21 && !(item->saved & PGPRITEM_SAVED_ID)) {
 		memcpy(item->keyid, p + plen - sizeof(item->keyid), sizeof(item->keyid));
 		item->saved |= PGPRITEM_SAVED_ID;
 	    }
 	    if ((p[1] == 5 || p[1] == 6) && plen - 1 == 33 && !(item->saved & PGPRITEM_SAVED_ID)) {
+		// you are truncating keyids to the short 64-bit
+		// representation. this is known to have security implications
+		// and doing this by design in a library these days is likely
+		// not such a good idea.
 		memcpy(item->keyid, p + 2, sizeof(item->keyid));
 		item->saved |= PGPRITEM_SAVED_ID;
 	    }
@@ -226,6 +244,8 @@ static pgprRC pgprParseSigSubPkts(const uint8_t *h, size_t hlen, pgprItem item, 
 	    if (item->saved & PGPRITEM_SAVED_KEY_FLAGS)
 		return PGPR_ERROR_DUPLICATE_DATA;
 	    impl = 1;
+	    // this could use a comment that the RFC says that "unstated flags
+	    // are considered to be zero"
 	    item->key_flags = plen >= 2 ? p[1] : 0;
 	    item->saved |= PGPRITEM_SAVED_KEY_FLAGS;
 	    break;
@@ -269,6 +289,9 @@ static pgprRC pgprParseSigSubPkts(const uint8_t *h, size_t hlen, pgprItem item, 
 	    break;
 
 	case PGPRSUBTYPE_PRIMARY_USERID:
+	    // so why trust unhashed KEYID and FINGERPRINT but not the unhashed
+	    // PRIMARY_USERID?
+	    // the logic behind that should be outlined in a comment.
 	    if (!hashed)
 		break;	/* Subpackets in the unhashed section cannot be trusted */
 	    if (plen - 1 != 1)
@@ -300,6 +323,8 @@ static pgprRC create_sig_trailer(pgprItem item, const uint8_t *p, size_t plen)
     if (item->version == 4 || item->version == 6)
 	item->hashlen = plen + 6;
     else if (item->version == 5)
+	// these literal constants should be replaced by preprocessor defines or
+	// enums instead
 	item->hashlen = plen + (item->sigtype == 0x00 || item->sigtype == 0x01 ? 6 : 0) + 10;
     else
 	return PGPR_ERROR_UNSUPPORTED_VERSION;
@@ -311,6 +336,8 @@ static pgprRC create_sig_trailer(pgprItem item, const uint8_t *p, size_t plen)
 	uint8_t *trailer = item->hash + item->hashlen - 6;
 	trailer[0] = item->version;
 	trailer[1] = 0xff;
+	// using helper functions symmetric to pgprGrab, i.e. something like
+	// pgprPut would increase readability and potential reuse of logic
 	trailer[2] = plen >> 24;
 	trailer[3] = plen >> 16;
 	trailer[4] = plen >> 8;
@@ -341,6 +368,9 @@ static pgprRC create_sig_salt(pgprItem item, const uint8_t *salt, size_t saltlen
 pgprRC pgprParseSigNoParams(pgprPkt *pkt, pgprItem item)
 {
     pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;		/* assume failure */
+    // since these two variables are only used in a special case below, I would
+    // declare them only locally below so that there's no worry about
+    // undefined data being used now or in the future.
     const uint8_t *p;
     size_t plen;
 
@@ -477,6 +507,7 @@ static pgprRC pgprParseKeyFp_V3(pgprPkt *pkt, pgprItem item)
     int mpil1, mpil2;
 
     /* make sure this is a v3 rsa key */
+    // these calculations and literal integer constants should be made transparent
     if (blen < sizeof(struct pgprPktKeyV3_s) + 4 + 8 || p[0] != 3 || p[7] != PGPRPUBKEYALGO_RSA)
 	return PGPR_ERROR_CORRUPT_PGP_PACKET;
     /* find the two rsa mpis */
@@ -489,6 +520,11 @@ static pgprRC pgprParseKeyFp_V3(pgprPkt *pkt, pgprItem item)
     if (mpil2 < 2 + 1 || blen != mpil1 + mpil2)
 	return PGPR_ERROR_CORRUPT_PGP_PACKET;
 
+    /*
+     * these old fingerprints based on MD5 should be rejected for anything
+     * serious. Also thinking of FIPS and crypto algorithm management
+     * frameworks like crypto-policies package.
+     */
     rc = pgprDigestInit(PGPRHASHALGO_MD5, &ctx);
     if (rc != PGPR_OK)
 	return rc;
@@ -511,6 +547,7 @@ static pgprRC pgprParseKeyFp_V3(pgprPkt *pkt, pgprItem item)
 
 pgprRC pgprParseKeyFp(pgprPkt *pkt, pgprItem item)
 {
+    // most of these can be declared below where they are actually used
     pgprRC rc;
     pgprDigCtx ctx = NULL;
     uint8_t *out = NULL;
