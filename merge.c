@@ -54,6 +54,7 @@ static uint32_t pgprMergePktCalcHash(pgprMergePkt *mp)
     return hash;
 }
 
+// can use bool as return type
 static int pgprMergePktIdentical(pgprMergePkt *mp1, pgprMergePkt *mp2)
 {
     if (mp1->pkt.tag != mp2->pkt.tag)
@@ -71,6 +72,7 @@ static int pgprMergePktIdentical(pgprMergePkt *mp1, pgprMergePkt *mp2)
 static pgprRC pgprMergePktNew(pgprPkt *pkt, int source, pgprKeyID_t primaryid, pgprMergePkt **mpptr)
 {
     pgprRC rc = PGPR_OK;
+    // check that `mpptr != NULL` and assign `*mpptr = NULL`
     pgprMergePkt *mp = pgprCalloc(1, sizeof(pgprMergePkt));
 
     if (!mp)
@@ -125,6 +127,7 @@ static pgprMergeKey *pgprMergeKeyNew(void)
 static pgprMergeKey *pgprMergeKeyFree(pgprMergeKey *mk)
 {
     if (mk) {
+	// all loop variables can be declared within `for(...)`.
 	pgprMergePkt *mp, *smp;
 	int i;
 	for (i = 0; i < PGP_NUMSECTIONS; i++) {
@@ -140,6 +143,7 @@ static pgprMergeKey *pgprMergeKeyFree(pgprMergeKey *mk)
 
 static int pgprMergeKeyMaxSource(pgprMergeKey *mk)
 {
+    // all loop variables can be declared within `for()`.
     pgprMergePkt *mp, *smp;
     int i, max = 0;
     for (i = 0; i < PGP_NUMSECTIONS; i++) {
@@ -230,6 +234,7 @@ static pgprRC pgprMergeKeyAddPubkey(pgprMergeKey *mk, int source, const uint8_t 
     pgprMergePkt *mp_section = NULL;
     pgprMergePkt *mp, *omp;
 
+    // `(pend - p)` could simply be `pktlen` here and also further below
     if (pgprDecodePkt(p, (pend - p), &pkt) != PGPR_OK)
 	return PGPR_ERROR_CORRUPT_PGP_PACKET;
     if (pkt.tag != PGPRTAG_PUBLIC_KEY)
@@ -324,13 +329,20 @@ static pgprRC pgprMergeKeyConcat(pgprMergeKey *mk, uint8_t **pktsm, size_t *pktl
     return PGPR_OK;
 }
 
+// `flags` are unused and also not properly typed for flags.
 pgprRC pgprPubkeyMerge(const uint8_t *pkts1, size_t pktlen1, const uint8_t *pkts2, size_t pktlen2, uint8_t **pktsm, size_t *pktlenm, int flags)
 {
     pgprRC rc;
     pgprMergeKey *mk = pgprMergeKeyNew();
 
+    /*
+     * `pktsm` and `pktlenm` should be set to NULL/0 initially.
+     */
+
     if (!mk)
 	return PGPR_ERROR_NO_MEMORY;
+    // so pkts1 may be NULL but pkts2 may not? This should definitely be
+    // documented.
     if (pkts1 != NULL && (rc = pgprMergeKeyAddPubkey(mk, 0, pkts1, pktlen1)) != PGPR_OK)
 	goto exit;
     if ((rc = pgprMergeKeyAddPubkey(mk, 1, pkts2, pktlen2)) != PGPR_OK)
@@ -342,6 +354,10 @@ pgprRC pgprPubkeyMerge(const uint8_t *pkts1, size_t pktlen1, const uint8_t *pkts
 	    *pktsm = newpkts;
 	    *pktlenm = pktlen1;
 	} else {
+            // this is a bit confusing, above the situation of `pkts1 == NULL`
+	    // is considered, but here it seems this is no longer a supported
+	    // scenario. If `pkts1 == NULL` then the `pgprMemdup()` above
+	    // yields NULL, but it wouldn't mean there's no memory.
 	    rc = PGPR_ERROR_NO_MEMORY;
 	}
     } else {

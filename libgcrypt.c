@@ -44,7 +44,8 @@ static int check_gcrypt_supported(const char *sexpstr)
 pgprRC pgprSupportedAlgo(int algo, int curve)
 {
     static int supported_ed25519, supported_ed448, supported_mldsa;
-    pgprRC rc;
+    // use conservative default initialization
+    pgprRC rc = PGPR_ERROR_INTERNAL;
 
     switch (algo) {
     case PGPRPUBKEYALGO_RSA:

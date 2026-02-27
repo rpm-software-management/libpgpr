@@ -22,6 +22,7 @@
  */
 static inline size_t pgprOldLen(const uint8_t *s, size_t slen, size_t *lenp)
 {
+    // why call this `lenlen` here and not `hlen` like in pgprNewLen?
     size_t dlen, lenlen;
 
     if (slen < 2)
@@ -130,6 +131,7 @@ pgprRC pgprSignatureParse(const uint8_t *pkts, size_t pktslen, pgprItem *ret, ch
 	rc = PGPR_ERROR_CORRUPT_PGP_PACKET;
 
 exit:
+    // asigning `*ret = NULL` in error cases might be a good idea
     if (ret && rc == PGPR_OK)
 	*ret = item;
     else {
@@ -163,6 +165,7 @@ pgprRC pgprPubkeyParse(const uint8_t *pkts, size_t pktslen, pgprItem *ret, char 
     /* use specialized certificate parsing implementation */
     rc = pgprParseCertificate(pkts, pktslen, key);
 exit:
+    // same here, assigning `*ret = NULL` in error case
     if (ret && rc == PGPR_OK)
 	*ret = key;
     else {
@@ -206,6 +209,7 @@ static pgprRC parse_key_fp(const uint8_t *pkts, size_t pktslen, pgprItem key)
 	return PGPR_ERROR_CORRUPT_PGP_PACKET;
     if (pkt.tag != PGPRTAG_PUBLIC_KEY && pkt.tag != PGPRTAG_PUBLIC_SUBKEY)
 	return PGPR_ERROR_UNEXPECTED_PGP_PACKET;
+    // the memset should be done right at the beginning
     memset(key, 0, sizeof(*key));
     key->tag = pkt.tag;
     return pgprParseKeyFp(&pkt, key);

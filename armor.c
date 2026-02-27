@@ -147,6 +147,7 @@ pgprRC pgprArmorUnwrap(const char *armortype, const char *armor, uint8_t **pkts,
 	    te++;
 
 	switch (pstate) {
+	// these states could use an expressive enum
 	case 0:
 	    if (strncmp(t, "-----BEGIN PGP ", 15) != 0)
 		continue;
@@ -260,6 +261,8 @@ pgprRC pgprArmorWrap(const char *armortype, const char *keys, const unsigned cha
     char *buf = NULL, *val = NULL, *enc;
     unsigned int crc;
     const char *keysnl = "";
+
+    // assign NULL to *armorp
 
     if (keys && *keys && keys[strlen(keys) - 1] != '\n')
 	keysnl = "\n";

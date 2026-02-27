@@ -1294,6 +1294,9 @@ pgprRC pgprDigestFinal(pgprDigCtx ctx, void **datap, size_t *lenp)
 	    EVP_MD_CTX_free(ctx);
 	    return PGPR_ERROR_NO_MEMORY;
 	}
+	// this cast likely relies on undefined behaviour and is pretty dirty. A
+	// temporary variable `unsigned int ssl_len = len` should be used for
+	// this instead.
 	if (!EVP_DigestFinal_ex(ctx, digest, (unsigned int *)&digestlen)) {
 	    digestlen = 0;
 	} else {

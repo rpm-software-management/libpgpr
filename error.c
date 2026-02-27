@@ -148,6 +148,7 @@ static void pgprAddSigLint(pgprItem sig, char **lints, const char *msg)
 static char *format_expired(uint32_t created, uint32_t expire)
 {
     time_t exptime = (time_t)created + expire;
+    // this would be a good case for __attribute__((__cleanup__(free)))
     char *expdate = format_time(&exptime);
     char *msg = NULL;
     if (!expdate)
@@ -160,9 +161,15 @@ static char *format_expired(uint32_t created, uint32_t expire)
 void pgprAddLint(pgprItem item, char **lints, pgprRC error)
 {
     const char *msg = NULL;
+    // this would be a good case for __attribute__((__cleanup__(free)))
+    // to automatically free the pointer upon return
     char *exp_msg;
     if (error == PGPR_OK || !lints)
 	return;
+    // when looking at pgprVerifySignature() then I believe this spot here
+    // could be a possible memory-leak if pgprAddLint is ever called more
+    // than once for the same `lints`. Instead of storing NULL here it could
+    // be better to `assert(*lints == NULL)`.
     *lints = NULL;
 
     /* if we have a suitable item we can make a better error message */

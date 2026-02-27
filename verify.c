@@ -7,6 +7,8 @@ pgprRC pgprVerifySignatureRaw(pgprItem key, pgprItem sig, const uint8_t *hash, s
 {
     /* make sure the parameters are correct and the pubkey algo matches */
     if (sig == NULL || sig->tag != PGPRTAG_SIGNATURE)
+	// are these really internal errors and not rather usage errors / bad
+	// parameters?
 	return PGPR_ERROR_INTERNAL;
     if (key == NULL || (key->tag != PGPRTAG_PUBLIC_KEY && key->tag != PGPRTAG_PUBLIC_SUBKEY))
 	return PGPR_ERROR_INTERNAL;
@@ -15,6 +17,9 @@ pgprRC pgprVerifySignatureRaw(pgprItem key, pgprItem sig, const uint8_t *hash, s
     if (sig->pubkey_algo != key->pubkey_algo)
 	return PGPR_ERROR_BAD_SIGNATURE;
     /* Compare leading 16 bits of digest for a quick check. */
+    // on `hashlen < 2` this will access out of bounds memory.
+    // this is unlikely due to the `pgprDigestLength()` restriction above. An
+    // `assert()` could still be useful to avoid any unexpected situations.
     if (memcmp(hash, sig->signhash16, 2) != 0)
 	return PGPR_ERROR_BAD_SIGNATURE;
     if (key->version < 4)
@@ -32,6 +37,9 @@ pgprRC pgprVerifySignature(pgprItem key, pgprItem sig, const uint8_t *hash, size
 {
     pgprRC rc = PGPR_ERROR_BAD_SIGNATURE;	/* assume failure */
 
+    // `lints` sounds like this could accumulate multiple messages, but indeed
+    // only one message is ever stored there, older ones are possible
+    // overwritten.
     if (lints)
 	*lints = NULL;
 
@@ -48,6 +56,9 @@ pgprRC pgprVerifySignature(pgprItem key, pgprItem sig, const uint8_t *hash, size
     if ((sig->saved & PGPRITEM_SAVED_SIG_EXPIRE) != 0 && sig->sig_expire) {
 	uint32_t now = pgprCurrentTime();
 	if (now < sig->time) {
+	    // since `pgprAddLint` already returns if `lints == NULL` you
+	    // could simply rely on this property and avoid all these `if
+	    // (lints)` statements which create a lot of noise.
 	    if (lints)
 		pgprAddLint(sig, lints, PGPR_ERROR_SIGNATURE_FROM_FUTURE);
 	    rc = PGPR_ERROR_SIGNATURE_FROM_FUTURE;
@@ -61,6 +72,8 @@ pgprRC pgprVerifySignature(pgprItem key, pgprItem sig, const uint8_t *hash, size
     }
     /* now check the meta information of the key */
     if (key->revoked) {
+	// magic literal int values in `revoked` are hard to read, adding an
+	// `enum` here would really be helpful.
 	rc = key->revoked == 2 ? PGPR_ERROR_PRIMARY_REVOKED : PGPR_ERROR_KEY_REVOKED;
 	if (lints)
 	    pgprAddLint(key, lints, rc);
@@ -68,10 +81,14 @@ pgprRC pgprVerifySignature(pgprItem key, pgprItem sig, const uint8_t *hash, size
 	rc = PGPR_ERROR_KEY_NOT_VALID;
 	if (lints)
 	    pgprAddLint(key, lints, rc);
+	// so what is the 0x02 constant supposed to mean here?
     } else if (key->tag == PGPRTAG_PUBLIC_KEY && (key->saved & PGPRITEM_SAVED_KEY_FLAGS) != 0 && (key->key_flags & 0x02) == 0) {
 	rc = PGPR_ERROR_KEY_NO_SIGNING;
 	if (lints)
 	    pgprAddLint(key, lints, rc);
+	// a macro for checking flags in `key->saved` might increase
+	// readability quite a bit and also reduce the likeliness for hard to
+	// spot logic errors
     } else if (key->tag == PGPRTAG_PUBLIC_SUBKEY && ((key->saved & PGPRITEM_SAVED_KEY_FLAGS) == 0 || (key->key_flags & 0x02) == 0)) {
 	rc = PGPR_ERROR_KEY_NO_SIGNING;
 	if (lints)
