@@ -130,12 +130,18 @@ static pgprMergeKey *pgprMergeKeyFree(pgprMergeKey *mk)
 	int i;
 	for (i = 0; i < PGP_NUMSECTIONS; i++) {
 	    pgprMergePkt *mp, *smp;
-	    for (mp = mk->sections[i]; mp; mp = mp->next) {
-		for (smp = mp->sub; smp; smp = smp->next)
+	    for (mp = mk->sections[i]; mp; ) {
+		pgprMergePkt *mp_next = mp->next;
+		for (smp = mp->sub; smp; ) {
+		    pgprMergePkt *smp_next = smp->next;
 		    pgprMergePktFree(smp);
+		    smp = smp_next;
+		}
 		pgprMergePktFree(mp);
+		mp = mp_next;
 	    }
 	}
+	free(mk);
     }
     return NULL;
 }
