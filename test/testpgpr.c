@@ -10,6 +10,7 @@ static void
 die(const char *str)
 {
     fprintf(stderr, "%s\n", str);
+    exit(1);
 }
 
 static void
@@ -115,10 +116,13 @@ verifysignature(int argc, char **argv)
     void *hash = NULL;
     size_t hashlen;
     int c;
-    int subkey = 0;
+    int subkey = 0, raw = 0;
 
-    while ((c = getopt(argc, argv, "s:")) >= 0) {
+    while ((c = getopt(argc, argv, "rs:")) >= 0) {
 	switch(c) {
+	case 'r':
+	    raw = 1;
+	    break;
 	case 's':
 	    subkey = atoi(optarg);
 	    break;
@@ -129,13 +133,16 @@ verifysignature(int argc, char **argv)
     if (argc - optind != 3)
 	die("usage: testpgpr verifysignature [-s subkey] <pubkey> <sig> <data>");
     pubkey_a = slurp(argv[optind], NULL);
-    signature_a = slurp(argv[optind + 1], NULL);
+    signature_a = raw ? NULL : slurp(argv[optind + 1], NULL);
     data = (unsigned char *)slurp(argv[optind + 2], &datalen);
 
     if ((rc = pgprArmorUnwrap("PUBLIC KEY BLOCK", pubkey_a, &pubkey, &pubkeyl)) != PGPR_OK)
 	die_rc("pubkey unwrap error", rc);
-    if ((rc = pgprArmorUnwrap("SIGNATURE", signature_a, &signature, &signaturel)) != PGPR_OK)
+    if (raw) {
+	signature = (unsigned char *)slurp(argv[optind + 1], &signaturel);
+    } else if ((rc = pgprArmorUnwrap("SIGNATURE", signature_a, &signature, &signaturel)) != PGPR_OK) {
 	die_rc("signature unwrap error", rc);
+    }
     lints = 0;
     if ((rc = pgprPubkeyParse(pubkey, pubkeyl, &key, &lints)) != PGPR_OK) {
 	if (!lints)
