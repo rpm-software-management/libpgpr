@@ -244,6 +244,7 @@ static void pgprFreeKeyRSA(pgprAlg ka)
 	if (key->e)
 	    BN_clear_free(key->e);
 	free(key);
+	ka->data = NULL;
     }
 }
 
@@ -282,6 +283,7 @@ static void pgprFreeSigRSA(pgprAlg sa)
 	if (sig->bn)
 	    BN_clear_free(sig->bn);
 	free(sig);
+	sa->data = NULL;
     }
 }
 
@@ -480,6 +482,7 @@ static void pgprFreeKeyDSA(pgprAlg ka)
 	if (key->y)
 	    BN_clear_free(key->y);
 	free(key);
+	ka->data = NULL;
     }
 }
 
@@ -566,8 +569,9 @@ static void pgprFreeSigDSA(pgprAlg sa)
     if (sig) {
 	free(sig->r);
 	free(sig->s);
+	free(sig);
+	sa->data = NULL;
     }
-    free(sa->data);
 }
 
 static pgprRC pgprVerifySigDSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size_t hashlen, int hash_algo)
@@ -727,6 +731,7 @@ static void pgprFreeKeyECDSA(pgprAlg ka)
 	if (key->evp_pkey)
 	    EVP_PKEY_free(key->evp_pkey);
 	free(key);
+	ka->data = NULL;
     }
 }
 
@@ -776,6 +781,7 @@ static void pgprFreeSigECDSA(pgprAlg sa)
 	free(sig->r);
 	free(sig->s);
 	free(sig);
+	sa->data = NULL;
     }
 }
 
@@ -916,6 +922,7 @@ static void pgprFreeKeyEDDSA(pgprAlg ka)
 	if (key->evp_pkey)
 	    EVP_PKEY_free(key->evp_pkey);
 	free(key);
+	ka->data = NULL;
     }
 }
 
@@ -957,8 +964,10 @@ static pgprRC pgprSetSigMpiEDDSA(pgprAlg sa, int num, const uint8_t *p, int mlen
 static void pgprFreeSigEDDSA(pgprAlg sa)
 {
     struct pgprAlgSigEDDSA_s *sig = sa->data;
-    if (sig)
+    if (sig) {
 	free(sig);
+	sa->data = NULL;
+    }
 }
 
 static pgprRC pgprVerifySigEDDSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size_t hashlen, int hash_algo)
@@ -1056,6 +1065,7 @@ static void pgprFreeKeyMLDSA(pgprAlg ka)
 	if (key->evp_pkey)
 	    EVP_PKEY_free(key->evp_pkey);
 	free(key);
+	ka->data = NULL;
     }
 }
 
@@ -1133,8 +1143,10 @@ static pgprRC pgprSetSigMpiMLDSA(pgprAlg sa, int num, const uint8_t *p, int mlen
 static void pgprFreeSigMLDSA(pgprAlg sa)
 {
     struct pgprAlgSigMLDSA_s *sig = sa->data;
-    if (sig)
+    if (sig) {
 	free(sig);
+	sa->data = NULL;
+    }
 }
 
 static pgprRC pgprVerifySigMLDSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, size_t hashlen, int hash_algo)
