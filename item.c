@@ -18,7 +18,6 @@ pgprItem pgprItemFree(pgprItem item)
 	free(item->userid);
 	free(item->hash);
 	free(item->embedded_sig);
-	memset(item, 0, sizeof(*item));
 	free(item);
     }
     return NULL;
@@ -79,40 +78,41 @@ int pgprItemPubkeyAlgoInfo(pgprItem item)
 
 const uint8_t *pgprItemKeyID(pgprItem item)
 {
-    return item->keyid;
+    return item ? item->keyid : NULL;
 }
 
 const uint8_t *pgprItemKeyFingerprint(pgprItem item, size_t *fp_len, int *fp_version)
 {
-    if (fp_len)
-	*fp_len = item->fp_len;
+    *fp_len = item ? item->fp_len : 0;
     if (fp_version)
-	*fp_version = item->fp_len ? item->fp_version : 0;
-    return item->fp_len ? item->fp : NULL;
+	*fp_version = item && item->fp_len ? item->fp_version : 0;
+    return item && item->fp_len ? item->fp : NULL;
 }
 
 const char *pgprItemUserID(pgprItem item)
 {
-    return item->userid;
+    return item ? item->userid : NULL;
 }
 
 int pgprItemVersion(pgprItem item)
 {
-    return item->version;
+    return item ? item->version : 0;
 }
 
 int64_t pgprItemCreationTime(pgprItem item)
 {
-    return item->time;
+    return item ? item->time : 0;
 }
 
 int64_t pgprItemModificationTime(pgprItem item)
 {
-    return item->tag == PGPRTAG_PUBLIC_KEY ? item->key_mtime : 0;
+    return item && item->tag == PGPRTAG_PUBLIC_KEY ? item->key_mtime : 0;
 }
 
 int64_t pgprItemExpirationTime(pgprItem item)
 {
+    if (!item)
+	return 0;
     if (item->tag == PGPRTAG_SIGNATURE) {
 	if (!(item->saved & PGPRITEM_SAVED_SIG_EXPIRE) || item->sig_expire == 0)
 	    return 0;

@@ -7,11 +7,11 @@ pgprRC pgprVerifySignatureRaw(pgprItem key, pgprItem sig, const uint8_t *hash, s
 {
     /* make sure the parameters are correct and the pubkey algo matches */
     if (sig == NULL || sig->tag != PGPRTAG_SIGNATURE)
-	return PGPR_ERROR_INTERNAL;
+	return PGPR_ERROR_BAD_ARGUMENT;
     if (key == NULL || (key->tag != PGPRTAG_PUBLIC_KEY && key->tag != PGPRTAG_PUBLIC_SUBKEY))
-	return PGPR_ERROR_INTERNAL;
-    if (hash == NULL || hashlen == 0 || hashlen != pgprDigestLength(sig->hash_algo))
-	return PGPR_ERROR_INTERNAL;
+	return PGPR_ERROR_BAD_ARGUMENT;
+    if (hash == NULL || hashlen < 2 || hashlen != pgprDigestLength(sig->hash_algo))
+	return PGPR_ERROR_BAD_ARGUMENT;
     if (sig->pubkey_algo != key->pubkey_algo)
 	return PGPR_ERROR_BAD_SIGNATURE;
     /* Compare leading 16 bits of digest for a quick check. */
@@ -61,18 +61,18 @@ pgprRC pgprVerifySignature(pgprItem key, pgprItem sig, const uint8_t *hash, size
     }
     /* now check the meta information of the key */
     if (key->revoked) {
-	rc = key->revoked == 2 ? PGPR_ERROR_PRIMARY_REVOKED : PGPR_ERROR_KEY_REVOKED;
+	rc = key->revoked == PGPRITEM_REVOKED_MAINKEY ? PGPR_ERROR_PRIMARY_REVOKED : PGPR_ERROR_KEY_REVOKED;
 	if (lints)
 	    pgprAddLint(key, lints, rc);
     } else if ((key->saved & PGPRITEM_SAVED_VALID) == 0) {
 	rc = PGPR_ERROR_KEY_NOT_VALID;
 	if (lints)
 	    pgprAddLint(key, lints, rc);
-    } else if (key->tag == PGPRTAG_PUBLIC_KEY && (key->saved & PGPRITEM_SAVED_KEY_FLAGS) != 0 && (key->key_flags & 0x02) == 0) {
+    } else if (key->tag == PGPRTAG_PUBLIC_KEY && (key->saved & PGPRITEM_SAVED_KEY_FLAGS) != 0 && (key->key_flags & PGPRKEYFLAGS_SIGN) == 0) {
 	rc = PGPR_ERROR_KEY_NO_SIGNING;
 	if (lints)
 	    pgprAddLint(key, lints, rc);
-    } else if (key->tag == PGPRTAG_PUBLIC_SUBKEY && ((key->saved & PGPRITEM_SAVED_KEY_FLAGS) == 0 || (key->key_flags & 0x02) == 0)) {
+    } else if (key->tag == PGPRTAG_PUBLIC_SUBKEY && ((key->saved & PGPRITEM_SAVED_KEY_FLAGS) == 0 || (key->key_flags & PGPRKEYFLAGS_SIGN) == 0)) {
 	rc = PGPR_ERROR_KEY_NO_SIGNING;
 	if (lints)
 	    pgprAddLint(key, lints, rc);

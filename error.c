@@ -163,6 +163,8 @@ void pgprAddLint(pgprItem item, char **lints, pgprRC error)
     char *exp_msg;
     if (error == PGPR_OK || !lints)
 	return;
+    if (*lints)
+	free(*lints);
     *lints = NULL;
 
     /* if we have a suitable item we can make a better error message */

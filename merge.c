@@ -71,8 +71,10 @@ static int pgprMergePktIdentical(pgprMergePkt *mp1, pgprMergePkt *mp2)
 static pgprRC pgprMergePktNew(pgprPkt *pkt, int source, pgprKeyID_t primaryid, pgprMergePkt **mpptr)
 {
     pgprRC rc = PGPR_OK;
-    pgprMergePkt *mp = pgprCalloc(1, sizeof(pgprMergePkt));
+    pgprMergePkt *mp;
 
+    *mpptr = NULL;
+    mp = pgprCalloc(1, sizeof(pgprMergePkt));
     if (!mp)
 	return PGPR_ERROR_NO_MEMORY;
     mp->pkt = *pkt;
@@ -125,9 +127,9 @@ static pgprMergeKey *pgprMergeKeyNew(void)
 static pgprMergeKey *pgprMergeKeyFree(pgprMergeKey *mk)
 {
     if (mk) {
-	pgprMergePkt *mp, *smp;
 	int i;
 	for (i = 0; i < PGP_NUMSECTIONS; i++) {
+	    pgprMergePkt *mp, *smp;
 	    for (mp = mk->sections[i]; mp; mp = mp->next) {
 		for (smp = mp->sub; smp; smp = smp->next)
 		    pgprMergePktFree(smp);
@@ -329,6 +331,8 @@ pgprRC pgprPubkeyMerge(const uint8_t *pkts1, size_t pktlen1, const uint8_t *pkts
     pgprRC rc;
     pgprMergeKey *mk = pgprMergeKeyNew();
 
+    *pktsm = NULL;
+    *pktlenm = 0;
     if (!mk)
 	return PGPR_ERROR_NO_MEMORY;
     if (pkts1 != NULL && (rc = pgprMergeKeyAddPubkey(mk, 0, pkts1, pktlen1)) != PGPR_OK)
@@ -338,7 +342,7 @@ pgprRC pgprPubkeyMerge(const uint8_t *pkts1, size_t pktlen1, const uint8_t *pkts
     if (pgprMergeKeyMaxSource(mk) == 0) {
 	/* no new key material, return old key */
 	uint8_t *newpkts = pgprMemdup(pkts1, pktlen1);
-	if (newpkts) {
+	if (newpkts || pkts1 == NULL) {
 	    *pktsm = newpkts;
 	    *pktlenm = pktlen1;
 	} else {

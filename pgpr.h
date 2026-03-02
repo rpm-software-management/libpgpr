@@ -130,6 +130,13 @@ typedef enum pgprHashAlgo_e {
     PGPRHASHALGO_SHA3_512	= 14,	/*!< SHA3-256 */
 } pgprHashAlgo;
 
+typedef enum pgprKeyFlags_e {
+    PGPRKEYFLAGS_CERTIFY	= 1 << 0,
+    PGPRKEYFLAGS_SIGN		= 1 << 1,
+    PGPRKEYFLAGS_ENCRYPT	= 1 << 2,
+    PGPRKEYFLAGS_AUTHENTICATE	= 1 << 5,
+} pgprKeyFlags;
+
 /*
  * ECC Curves
  *
@@ -236,4 +243,4 @@ size_t pgprDigestLength(int hashalgo);
 const char *pgprErrorStr(pgprRC rc);
 
 /* configuration and testing */
-void pgprSetFixedTime(uint64_t t);
+void pgprSetFixedTime(int64_t t);

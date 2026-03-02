@@ -142,80 +142,85 @@ pgprRC pgprParseSigParams(pgprPkt *pkt, pgprItem item)
  */
 static inline size_t pgprSubPktLen(const uint8_t *s, size_t slen, size_t *lenp)
 {
-    size_t dlen, lenlen;
+    size_t dlen, hlen;
 
     if (slen > 0 && *s < 192) {
-	lenlen = 1;
+	hlen = 1;
 	dlen = *s;
     } else if (slen > 2 && *s < 255) {
-	lenlen = 2;
+	hlen = 2;
 	dlen = (((s[0]) - 192) << 8) + s[1] + 192;
     } else if (slen > 5 && *s == 255 && s[1] == 0) {
-	lenlen = 5;
+	hlen = 5;
 	dlen = s[2] << 16 | s[3] << 8 | s[4];
     } else {
 	return 0;
     }
-    if (slen - lenlen < dlen)
+    if (slen - hlen < dlen)
 	return 0;
     *lenp = dlen;
-    return lenlen;
+    return hlen;
 }
 
-static pgprRC pgprParseSigSubPkts(const uint8_t *h, size_t hlen, pgprItem item, int hashed)
+static pgprRC pgprParseSigSubPkts(const uint8_t *s, size_t slen, pgprItem item, int hashed)
 {
-    const uint8_t *p = h;
+    const uint8_t *p = s;
 
-    while (hlen > 0) {
-	size_t plen = 0, lenlen;
-	int impl = 0;
-	lenlen = pgprSubPktLen(p, hlen, &plen);
-	if (lenlen == 0 || plen < 1 || lenlen + plen > hlen)
+    while (slen > 0) {
+	size_t blen = 0, hlen;
+	int understood = 0, tag;
+	hlen = pgprSubPktLen(p, slen, &blen);
+	if (hlen == 0 || blen < 1 || hlen + blen > slen)
 	    break;
-	p += lenlen;
-	hlen -= lenlen;
+	/* skip header */
+	p += hlen;
+	slen -= hlen;
+	/* remove tag from body */
+	tag = *p++;
+	blen--;
+	slen--;
 
-	switch (*p & ~PGPRSUBTYPE_CRITICAL) {
+	switch (tag & ~PGPRSUBTYPE_CRITICAL) {
 	case PGPRSUBTYPE_SIG_CREATE_TIME:
 	    if (!hashed)
 		break; /* RFC 4880 §5.2.3.4 creation time MUST be hashed */
-	    if (plen - 1 != 4)
+	    if (blen != 4)
 		break; /* other lengths not understood */
 	    if (item->saved & PGPRITEM_SAVED_TIME)
 		return PGPR_ERROR_DUPLICATE_DATA;
-	    impl = 1;
-	    item->time = pgprGrab4(p + 1);
+	    understood = 1;
+	    item->time = pgprGrab4(p);
 	    item->saved |= PGPRITEM_SAVED_TIME;
 	    break;
 
 	case PGPRSUBTYPE_ISSUER_KEYID:
-	    if (plen - 1 != sizeof(item->keyid))
+	    if (blen != sizeof(item->keyid))
 		break; /* other lengths not understood */
-	    impl = 1;
+	    understood = 1;
 	    if (!(item->saved & PGPRITEM_SAVED_ID)) {
-		memcpy(item->keyid, p + 1, sizeof(item->keyid));
+		memcpy(item->keyid, p, sizeof(item->keyid));
 		item->saved |= PGPRITEM_SAVED_ID;
 	    }
 	    break;
 
 	case PGPRSUBTYPE_ISSUER_FINGERPRINT:
-	    if (plen - 1 < 17)
+	    if (blen < 17)
 		break;
-	    impl = 1;
-	    if (!(item->saved & PGPRITEM_SAVED_FP) && plen - 2 <= PGPR_MAX_FP_LENGTH) {
-		if ((p[1] == 4 && plen - 1 == 21) || ((p[1] == 5 || p[1] == 6) && plen - 1 == 33)) {
-		    memcpy(item->fp, p + 2, plen - 2);
-		    item->fp_len = plen - 2;
-		    item->fp_version = p[1];
+	    understood = 1;
+	    if (!(item->saved & PGPRITEM_SAVED_FP) && blen - 1 <= PGPR_MAX_FP_LENGTH) {
+		if ((p[0] == 4 && blen == 21) || ((p[0] == 5 || p[0] == 6) && blen == 33)) {
+		    memcpy(item->fp, p + 1, blen - 1);
+		    item->fp_len = blen - 1;
+		    item->fp_version = p[0];
 		    item->saved |= PGPRITEM_SAVED_FP;
 		}
 	    }
-	    if (p[1] == 4 && plen - 1 == 21 && !(item->saved & PGPRITEM_SAVED_ID)) {
-		memcpy(item->keyid, p + plen - sizeof(item->keyid), sizeof(item->keyid));
+	    if (p[0] == 4 && blen == 21 && !(item->saved & PGPRITEM_SAVED_ID)) {
+		memcpy(item->keyid, p + blen - sizeof(item->keyid), sizeof(item->keyid));
 		item->saved |= PGPRITEM_SAVED_ID;
 	    }
-	    if ((p[1] == 5 || p[1] == 6) && plen - 1 == 33 && !(item->saved & PGPRITEM_SAVED_ID)) {
-		memcpy(item->keyid, p + 2, sizeof(item->keyid));
+	    if ((p[0] == 5 || p[0] == 6) && blen == 33 && !(item->saved & PGPRITEM_SAVED_ID)) {
+		memcpy(item->keyid, p + 1, sizeof(item->keyid));
 		item->saved |= PGPRITEM_SAVED_ID;
 	    }
 	    break;
@@ -225,45 +230,45 @@ static pgprRC pgprParseSigSubPkts(const uint8_t *h, size_t hlen, pgprItem item, 
 		break;	/* Subpackets in the unhashed section cannot be trusted */
 	    if (item->saved & PGPRITEM_SAVED_KEY_FLAGS)
 		return PGPR_ERROR_DUPLICATE_DATA;
-	    impl = 1;
-	    item->key_flags = plen >= 2 ? p[1] : 0;
+	    understood = 1;
+	    item->key_flags = blen >= 1 ? p[0] : 0;	/* we're just storing the first 8 flags */
 	    item->saved |= PGPRITEM_SAVED_KEY_FLAGS;
 	    break;
 
 	case PGPRSUBTYPE_KEY_EXPIRE_TIME:
 	    if (!hashed)
 		break;	/* Subpackets in the unhashed section cannot be trusted */
-	    if (plen - 1 != 4)
+	    if (blen != 4)
 		break; /* other lengths not understood */
 	    if (item->saved & PGPRITEM_SAVED_KEY_EXPIRE)
 		return PGPR_ERROR_DUPLICATE_DATA;
-	    impl = 1;
-	    item->key_expire = pgprGrab4(p + 1);
+	    understood = 1;
+	    item->key_expire = pgprGrab4(p);
 	    item->saved |= PGPRITEM_SAVED_KEY_EXPIRE;
 	    break;
 
 	case PGPRSUBTYPE_SIG_EXPIRE_TIME:
 	    if (!hashed)
 		break;	/* RFC 4880 §5.2.3.4 creation time MUST be hashed */
-	    if (plen - 1 != 4)
+	    if (blen != 4)
 		break;	/* other lengths not understood */
 	    if (item->saved & PGPRITEM_SAVED_SIG_EXPIRE)
 		return PGPR_ERROR_DUPLICATE_DATA;
-	    impl = 1;
-	    item->sig_expire = pgprGrab4(p + 1);
+	    understood = 1;
+	    item->sig_expire = pgprGrab4(p);
 	    item->saved |= PGPRITEM_SAVED_SIG_EXPIRE;
 	    break;
 
 	case PGPRSUBTYPE_EMBEDDED_SIG:
 	    if (item->sigtype != PGPRSIGTYPE_SUBKEY_BINDING)
 		break;	/* do not bother for other types */
-	    if (plen - 1 < 6)
+	    if (blen < 6)
 		break;	/* obviously not a signature */
 	    if (item->embedded_sig)
 		break;	/* just store the first one. we may need to changed this to select the most recent. */
-	    impl = 1;
-	    item->embedded_sig_len = plen - 1;
-	    item->embedded_sig = pgprMemdup(p + 1, plen - 1);
+	    understood = 1;
+	    item->embedded_sig_len = blen;
+	    item->embedded_sig = pgprMemdup(p, blen);
 	    if (!item->embedded_sig)
 		return PGPR_ERROR_NO_MEMORY;
 	    break;
@@ -271,10 +276,10 @@ static pgprRC pgprParseSigSubPkts(const uint8_t *h, size_t hlen, pgprItem item, 
 	case PGPRSUBTYPE_PRIMARY_USERID:
 	    if (!hashed)
 		break;	/* Subpackets in the unhashed section cannot be trusted */
-	    if (plen - 1 != 1)
+	    if (blen != 1)
 		break;	/* other lengths not understood */
-	    impl = 1;
-	    if (p[1])
+	    understood = 1;
+	    if (p[0])
 		item->saved |= PGPRITEM_SAVED_PRIMARY;
 	    break;
 
@@ -282,14 +287,14 @@ static pgprRC pgprParseSigSubPkts(const uint8_t *h, size_t hlen, pgprItem item, 
 	    break;
 	}
 
-	if (!impl && (p[0] & PGPRSUBTYPE_CRITICAL))
+	if (!understood && (tag & PGPRSUBTYPE_CRITICAL))
 	    return PGPR_ERROR_UNKNOWN_CRITICAL_PKT;
 
-	p += plen;
-	hlen -= plen;
+	p += blen;
+	slen -= blen;
     }
 
-    if (hlen != 0)
+    if (slen != 0)
 	return PGPR_ERROR_CORRUPT_PGP_PACKET;
     return PGPR_OK;
 }
@@ -300,7 +305,7 @@ static pgprRC create_sig_trailer(pgprItem item, const uint8_t *p, size_t plen)
     if (item->version == 4 || item->version == 6)
 	item->hashlen = plen + 6;
     else if (item->version == 5)
-	item->hashlen = plen + (item->sigtype == 0x00 || item->sigtype == 0x01 ? 6 : 0) + 10;
+	item->hashlen = plen + (item->sigtype == PGPRSIGTYPE_BINARY || item->sigtype == PGPRSIGTYPE_TEXT ? 6 : 0) + 10;
     else
 	return PGPR_ERROR_UNSUPPORTED_VERSION;
     item->hash = pgprCalloc(1, item->hashlen);
@@ -341,8 +346,6 @@ static pgprRC create_sig_salt(pgprItem item, const uint8_t *salt, size_t saltlen
 pgprRC pgprParseSigNoParams(pgprPkt *pkt, pgprItem item)
 {
     pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;		/* assume failure */
-    const uint8_t *p;
-    size_t plen;
 
     if (item->version || item->saved)
 	return PGPR_ERROR_INTERNAL;
@@ -380,6 +383,8 @@ pgprRC pgprParseSigNoParams(pgprPkt *pkt, pgprItem item)
     case 6:
     {   pgprPktSigV456 v = (pgprPktSigV456)pkt->body;
 	const uint8_t *const hend = pkt->body + pkt->blen;
+	const uint8_t *p;
+	size_t plen;
 	int hashed;
 
 	if (pkt->blen <= sizeof(*v))
@@ -476,14 +481,14 @@ static pgprRC pgprParseKeyFp_V3(pgprPkt *pkt, pgprItem item)
     size_t blen = pkt->blen;
     int mpil1, mpil2;
 
-    /* make sure this is a v3 rsa key */
-    if (blen < sizeof(struct pgprPktKeyV3_s) + 4 + 8 || p[0] != 3 || p[7] != PGPRPUBKEYALGO_RSA)
+    /* make sure this is a v3 rsa key (4: 2 * mpi size) */
+    if (blen < sizeof(struct pgprPktKeyV3_s) + 2 + PGPR_KEYID_LEN + 2 || p[0] != 3 || p[7] != PGPRPUBKEYALGO_RSA)
 	return PGPR_ERROR_CORRUPT_PGP_PACKET;
     /* find the two rsa mpis */
     p += sizeof(struct pgprPktKeyV3_s);
     blen -= sizeof(struct pgprPktKeyV3_s);
     mpil1 = pgprMpiLen(p);
-    if (mpil1 < 2 + 8 || blen < mpil1 + 2)
+    if (mpil1 < 2 + PGPR_KEYID_LEN || blen < mpil1 + 2)
 	return PGPR_ERROR_CORRUPT_PGP_PACKET;
     mpil2 = pgprMpiLen(p + mpil1);
     if (mpil2 < 2 + 1 || blen != mpil1 + mpil2)
@@ -504,7 +509,7 @@ static pgprRC pgprParseKeyFp_V3(pgprPkt *pkt, pgprItem item)
     item->fp_version = 3;
     free(out);
     /* calculate the keyid from the modulus */
-    memcpy(item->keyid, p + mpil1 - 8, 8);
+    memcpy(item->keyid, p + mpil1 - PGPR_KEYID_LEN, PGPR_KEYID_LEN);
     item->saved |= PGPRITEM_SAVED_FP | PGPRITEM_SAVED_ID;
     return PGPR_OK;
 }

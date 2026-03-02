@@ -66,7 +66,7 @@ struct pgprItem_s {
     int saved;			/*!< Various flags. */
 #define	PGPRITEM_SAVED_TIME		(1 << 0)
 #define	PGPRITEM_SAVED_ID		(1 << 1)
-#define	PGPRITEM_SAVED_KEY_FLAGS		(1 << 2)
+#define	PGPRITEM_SAVED_KEY_FLAGS	(1 << 2)
 #define	PGPRITEM_SAVED_KEY_EXPIRE	(1 << 3)
 #define	PGPRITEM_SAVED_PRIMARY		(1 << 4)
 #define	PGPRITEM_SAVED_VALID		(1 << 5)
@@ -85,6 +85,9 @@ struct pgprItem_s {
     size_t mpi_offset;		/* start of mpi data */
     pgprAlg alg;		/*!< algorithm specific data like MPIs */
 };
+
+#define PGPRITEM_REVOKED_KEY		1	/* this key is revoked */
+#define PGPRITEM_REVOKED_MAINKEY	2	/* this key is not revoked, but the main key is */
 
 /*
  * decoded PGP packet

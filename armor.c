@@ -9,6 +9,8 @@
 #define CRC24_INIT	0xb704ce
 #define CRC24_POLY	0x1864cfb
 
+#define MAX_ARMOR_BYTES 0x10000000
+
 static unsigned int r64crc(const uint8_t *octets, size_t len)
 {
     unsigned int crc = CRC24_INIT;
@@ -71,7 +73,7 @@ static inline const char *r64dec1(const char *p, unsigned int *vp, int *eofp)
 static const char *r64dec(const char *in, uint8_t **out, size_t *outlen)
 {
     size_t inlen = strlen(in);
-    unsigned char *obuf = pgprMalloc(inlen * 3 / 4 + 4);	/* can overshoot 3 bytes */
+    unsigned char *obuf = pgprMalloc(inlen / 4 * 3 + 3);	/* can overshoot 3 bytes */
     unsigned char *optr = obuf;
     int eof = 0;
     if (!obuf) {
@@ -103,6 +105,8 @@ static char *r64enc(const unsigned char *data, size_t len)
     size_t olen;
     int a, b, c, linelen = 64 / 4;
     if (data == NULL)
+	return NULL;
+    if (len >= MAX_ARMOR_BYTES)
 	return NULL;
     olen = ((len + 2) / 3) * 4;
     olen += olen / linelen;
@@ -137,6 +141,10 @@ pgprRC pgprArmorUnwrap(const char *armortype, const char *armor, uint8_t **pkts,
     int pstate = 0;
     pgprRC rc = PGPR_ERROR_ARMOR_NO_BEGIN_PGP;	/* XXX assume failure */
 
+    if (pkts)
+	*pkts = NULL;
+    if (pktslen)
+	*pktslen = 0;
     if (!armortype || !armor || !*armor)
 	return rc;
 
@@ -261,6 +269,7 @@ pgprRC pgprArmorWrap(const char *armortype, const char *keys, const unsigned cha
     unsigned int crc;
     const char *keysnl = "";
 
+    *armorp = NULL;
     if (keys && *keys && keys[strlen(keys) - 1] != '\n')
 	keysnl = "\n";
     enc = r64enc(s, ns);

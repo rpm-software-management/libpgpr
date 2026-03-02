@@ -57,7 +57,7 @@ static pgprRC hashUserID(pgprDigCtx ctx, const pgprPkt *pkt, int exptag, int ver
 static pgprRC pgprVerifySelfSig(pgprItem key, pgprItem selfsig,
     const pgprPkt *mainpkt, const pgprPkt *sectionpkt)
 {
-    int rc = PGPR_ERROR_SELFSIG_VERIFICATION;
+    pgprRC rc = PGPR_ERROR_SELFSIG_VERIFICATION;
     pgprDigCtx ctx = NULL;
     uint8_t *hash = NULL;
     size_t hashlen = 0;
@@ -114,7 +114,7 @@ static pgprRC verifyPrimaryBindingSig(pgprPkt *mainpkt, pgprPkt *subkeypkt, pgpr
 {
     pgprItem emb = NULL;
     pgprPkt sigpkt;
-    int rc = PGPR_ERROR_SELFSIG_VERIFICATION;		/* assume failure */
+    pgprRC rc = PGPR_ERROR_SELFSIG_VERIFICATION;		/* assume failure */
     if (!bindsig || !bindsig->embedded_sig)
 	return rc;
     sigpkt.tag = PGPRTAG_SIGNATURE;
@@ -292,7 +292,7 @@ pgprRC pgprParseCertificate(const uint8_t *pkts, size_t pktslen, pgprItem item)
 
 	    /* handle key revokations right away */
 	    if (needsig && sig->sigtype == PGPRSIGTYPE_KEY_REVOKE) {
-		item->revoked = 1;				/* this is final */
+		item->revoked = PGPRITEM_REVOKED_KEY;		/* this is final */
 		item->saved |= PGPRITEM_SAVED_VALID;		/* we have at least one correct self-sig */
 		needsig = 0;
 	    }
@@ -318,7 +318,7 @@ pgprRC pgprParseCertificate(const uint8_t *pkts, size_t pktslen, pgprItem item)
 	    rc = PGPR_ERROR_CORRUPT_PGP_PACKET;
 	    break;		/* not allowed */
 	}
-	p += (pkt.body - pkt.head) + pkt.blen;
+	p = pkt.body + pkt.blen;
     }
     if (rc == PGPR_OK && p != pend)
 	rc = PGPR_ERROR_INTERNAL;
@@ -336,15 +336,15 @@ pgprRC pgprParseCertificateSubkeys(const uint8_t *pkts, size_t pktslen,
     const uint8_t *p = pkts;
     const uint8_t *pend = pkts + pktslen;
     pgprItem *items = NULL, subkey = NULL;
-    pgprItem sig = NULL;
     pgprItem newest_sig = NULL;
     pgprRC rc = PGPR_ERROR_CORRUPT_PGP_PACKET;		/* assume failure */
     int count = 0;
     int alloced = 10;
     pgprPkt mainpkt, subkeypkt, pkt;
-    int i;
     uint32_t now = 0;
 
+    *subkeys = NULL;
+    *subkeysCount = 0;
     if (mainkey->tag != PGPRTAG_PUBLIC_KEY || !mainkey->version)
 	return PGPR_ERROR_INTERNAL;	/* main key must be a parsed pubkey */
 
@@ -354,7 +354,7 @@ pgprRC pgprParseCertificateSubkeys(const uint8_t *pkts, size_t pktslen,
 	return PGPR_ERROR_CORRUPT_PGP_PACKET;
     if (mainpkt.tag != PGPRTAG_PUBLIC_KEY)
 	return PGPR_ERROR_UNEXPECTED_PGP_PACKET;
-    p += (mainpkt.body - mainpkt.head) + mainpkt.blen;
+    p = mainpkt.body + mainpkt.blen;
 
     memset(&subkeypkt, 0, sizeof(subkeypkt));
 
@@ -396,9 +396,10 @@ pgprRC pgprParseCertificateSubkeys(const uint8_t *pkts, size_t pktslen,
 
 	if (p == pend)
 	    break;
-	p += (pkt.body - pkt.head) + pkt.blen;
+	p = pkt.body + pkt.blen;
 
 	if (pkt.tag == PGPRTAG_PUBLIC_SUBKEY) {
+	    subkeypkt = pkt;
 	    subkey = pgprItemNew(PGPRTAG_PUBLIC_SUBKEY);
 	    if (!subkey) {
 		rc = PGPR_ERROR_NO_MEMORY;
@@ -414,7 +415,7 @@ pgprRC pgprParseCertificateSubkeys(const uint8_t *pkts, size_t pktslen,
 		}
 	    }
 	    /* if the main key is revoked, all the subkeys are also revoked */
-	    subkey->revoked = mainkey->revoked ? 2 : 0;
+	    subkey->revoked = mainkey->revoked ? PGPRITEM_REVOKED_MAINKEY : 0;
 	    if (pgprParseKey(&pkt, subkey)) {
 		subkey = pgprItemFree(subkey);
 	    } else {
@@ -434,27 +435,27 @@ pgprRC pgprParseCertificateSubkeys(const uint8_t *pkts, size_t pktslen,
 		    items = newitems;
 		}
 		items[count++] = subkey;
-		subkeypkt = pkt;
 	    }
 	} else if (pkt.tag == PGPRTAG_SIGNATURE && subkey != NULL) {
 	    int needsig = 0;
-	    sig = pgprItemNew(pkt.tag);
+	    pgprItem sig = pgprItemNew(pkt.tag);
 	    if (!sig) {
 		rc = PGPR_ERROR_NO_MEMORY;
 		break;
 	    }
 	    /* we use the NoParams variant because we do not verify */
 	    if (pgprParseSigNoParams(&pkt, sig) != PGPR_OK) {
-		sig = pgprItemFree(sig);
+		pgprItemFree(sig);
+		continue;
 	    }
 
 	    /* check if we understand this signature */
-	    if (sig && sig->sigtype == PGPRSIGTYPE_SUBKEY_REVOKE) {
+	    if (sig->sigtype == PGPRSIGTYPE_SUBKEY_REVOKE) {
 		needsig = 1;
-	    } else if (sig && sig->sigtype == PGPRSIGTYPE_SUBKEY_BINDING) {
+	    } else if (sig->sigtype == PGPRSIGTYPE_SUBKEY_BINDING) {
 		/* insist on a embedded primary key binding signature if this is used for signing */
 		int key_flags = (sig->saved & PGPRITEM_SAVED_KEY_FLAGS) ? sig->key_flags : 0;
-		if (!(key_flags & 0x02) || verifyPrimaryBindingSig(&mainpkt, &subkeypkt, subkey, sig) == PGPR_OK)
+		if (!(key_flags & PGPRKEYFLAGS_SIGN) || verifyPrimaryBindingSig(&mainpkt, &subkeypkt, subkey, sig) == PGPR_OK)
 		    needsig = 1;
 	    }
 	    /* the code in pgprParseCertificate always checks that SUBKEY_BINDING
@@ -470,8 +471,7 @@ pgprRC pgprParseCertificateSubkeys(const uint8_t *pkts, size_t pktslen,
 
 	    /* handle subkey revokations right away */
 	    if (needsig && sig->sigtype == PGPRSIGTYPE_SUBKEY_REVOKE) {
-		if (subkey->revoked != 2)
-		    subkey->revoked = 1;
+		subkey->revoked = PGPRITEM_REVOKED_KEY;
 		subkey->saved |= PGPRITEM_SAVED_VALID;	/* at least one binding sig */
 		needsig = 0;
 	    }
@@ -482,12 +482,11 @@ pgprRC pgprParseCertificateSubkeys(const uint8_t *pkts, size_t pktslen,
 		newest_sig = sig;
 		sig = NULL;
 	    }
-	    sig = pgprItemFree(sig);
+	    pgprItemFree(sig);
 	}
     }
     if (rc == PGPR_OK && p != pend)
 	rc = PGPR_ERROR_INTERNAL;
-    sig = pgprItemFree(sig);
     newest_sig = pgprItemFree(newest_sig);
 
     if (rc == PGPR_OK) {
@@ -502,6 +501,7 @@ pgprRC pgprParseCertificateSubkeys(const uint8_t *pkts, size_t pktslen,
 	*subkeys = items;
 	*subkeysCount = count;
     } else {
+	int i;
 	for (i = 0; i < count; i++)
 	    pgprItemFree(items[i]);
 	free(items);

@@ -1294,7 +1294,7 @@ pgprRC pgprDigestFinal(pgprDigCtx ctx, void **datap, size_t *lenp)
 	    EVP_MD_CTX_free(ctx);
 	    return PGPR_ERROR_NO_MEMORY;
 	}
-	if (!EVP_DigestFinal_ex(ctx, digest, (unsigned int *)&digestlen)) {
+	if (!EVP_DigestFinal_ex(ctx, digest, NULL)) {
 	    digestlen = 0;
 	} else {
 	    if (datap) {

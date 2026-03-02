@@ -22,26 +22,26 @@
  */
 static inline size_t pgprOldLen(const uint8_t *s, size_t slen, size_t *lenp)
 {
-    size_t dlen, lenlen;
+    size_t dlen, hlen;
 
     if (slen < 2)
 	return 0;
-    lenlen = 1 << (s[0] & 0x3);
+    hlen = 1 << (s[0] & 0x3);
     /* Reject indefinite length packets and check bounds */
-    if (lenlen == 8 || slen < lenlen + 1)
+    if (hlen == 8 || slen < hlen + 1)
 	return 0;
-    if (lenlen == 1)
+    if (hlen == 1)
 	dlen = s[1];
-    else if (lenlen == 2)
+    else if (hlen == 2)
 	dlen = s[1] << 8 | s[2];
-    else if (lenlen == 4 && s[1] == 0)
+    else if (hlen == 4 && s[1] == 0)
 	dlen = s[2] << 16 | s[3] << 8 | s[4];
     else
 	return 0;
-    if (slen - (1 + lenlen) < dlen)
+    if (slen - (1 + hlen) < dlen)
 	return 0;
     *lenp = dlen;
-    return lenlen + 1;
+    return hlen + 1;
 }
 
 /** \ingroup pgpr
@@ -202,11 +202,11 @@ static pgprRC parse_key_fp(const uint8_t *pkts, size_t pktslen, pgprItem key)
 {
     pgprPkt pkt;
 
+    memset(key, 0, sizeof(*key));
     if (pgprDecodePkt(pkts, pktslen, &pkt))
 	return PGPR_ERROR_CORRUPT_PGP_PACKET;
     if (pkt.tag != PGPRTAG_PUBLIC_KEY && pkt.tag != PGPRTAG_PUBLIC_SUBKEY)
 	return PGPR_ERROR_UNEXPECTED_PGP_PACKET;
-    memset(key, 0, sizeof(*key));
     key->tag = pkt.tag;
     return pgprParseKeyFp(&pkt, key);
 }
