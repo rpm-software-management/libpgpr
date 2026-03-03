@@ -198,7 +198,7 @@ void pgprAddLint(pgprItem item, char **lints, pgprRC error);
 
 /* certificate parsing */
 PGPR_GNUC_INTERNAL
-pgprRC pgprParseCertificate(const uint8_t *pkts, size_t pktslen, pgprItem item);
+pgprRC pgprParseCertificate(const uint8_t *pkts, size_t pktslen, pgprItem key);
 
 PGPR_GNUC_INTERNAL
 pgprRC pgprParseCertificateSubkeys(const uint8_t *pkts, size_t pktslen, pgprItem mainkey,

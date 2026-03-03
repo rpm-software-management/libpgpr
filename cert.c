@@ -139,7 +139,7 @@ static int is_same_keyid(pgprItem item1, pgprItem item2)
 
 /* Parse a complete pubkey with all associated packets (also called "transferable pubkey") */
 /* This is similar to gnupg's merge_selfsigs_main() function */
-pgprRC pgprParseCertificate(const uint8_t *pkts, size_t pktslen, pgprItem item)
+pgprRC pgprParseCertificate(const uint8_t *pkts, size_t pktslen, pgprItem key)
 {
     const uint8_t *p = pkts;
     const uint8_t *pend = pkts + pktslen;
@@ -152,21 +152,21 @@ pgprRC pgprParseCertificate(const uint8_t *pkts, size_t pktslen, pgprItem item)
     int haveselfsig;
     uint32_t now = 0;
 
-    /* parse the main pubkey */
+    /* decode the main pubkey */
     if (pktslen > PGPR_MAX_OPENPGP_BYTES)
 	return PGPR_ERROR_CORRUPT_PGP_PACKET;
     if (pgprDecodePkt(p, (pend - p), &mainpkt) != PGPR_OK)
 	return PGPR_ERROR_CORRUPT_PGP_PACKET;
     if (mainpkt.tag != PGPRTAG_PUBLIC_KEY)
 	return PGPR_ERROR_UNEXPECTED_PGP_PACKET;
-    p += (mainpkt.body - mainpkt.head) + mainpkt.blen;
+    p = mainpkt.body + mainpkt.blen;
 
-    /* Parse the pubkey packet */
-    if ((rc = pgprParseKey(&mainpkt, item)) != PGPR_OK)
+    /* parse the pubkey packet */
+    if ((rc = pgprParseKey(&mainpkt, key)) != PGPR_OK)
 	return rc;
     sectionpkt = mainpkt;
     haveselfsig = 1;
-    item->key_mtime = item->time;
+    key->key_mtime = key->time;
 
     rc = PGPR_OK;
     while (rc == PGPR_OK) {
@@ -194,11 +194,11 @@ pgprRC pgprParseCertificate(const uint8_t *pkts, size_t pktslen, pgprItem item)
 	    }
 	    /* take the data from the newest signature */
 	    if (newest_sig && (sectionpkt.tag == PGPRTAG_USER_ID || sectionpkt.tag == PGPRTAG_PUBLIC_KEY) && newest_sig->sigtype != PGPRSIGTYPE_CERT_REVOKE) {
-		item->saved |= PGPRITEM_SAVED_VALID;	/* we have a valid binding sig */
+		key->saved |= PGPRITEM_SAVED_VALID;	/* we have a valid binding sig */
 		if ((newest_sig->saved & PGPRITEM_SAVED_KEY_EXPIRE) != 0) {
 		    if ((!key_expire_sig_time || newest_sig->time > key_expire_sig_time)) {
-			item->key_expire = newest_sig->key_expire;
-			item->saved |= PGPRITEM_SAVED_KEY_EXPIRE;
+			key->key_expire = newest_sig->key_expire;
+			key->saved |= PGPRITEM_SAVED_KEY_EXPIRE;
 			key_expire_sig_time = newest_sig->time;
 			if (newest_sig->sigtype == PGPRSIGTYPE_SIGNED_KEY)
 			    key_expire_sig_time = 0xffffffffU;	/* expires from the direct signatures are final */
@@ -206,19 +206,19 @@ pgprRC pgprParseCertificate(const uint8_t *pkts, size_t pktslen, pgprItem item)
 		}
 		if ((newest_sig->saved & PGPRITEM_SAVED_KEY_FLAGS) != 0) {
 		    if ((!key_flags_sig_time || newest_sig->time > key_flags_sig_time)) {
-			item->key_flags = newest_sig->key_flags;
-			item->saved |= PGPRITEM_SAVED_KEY_FLAGS;
+			key->key_flags = newest_sig->key_flags;
+			key->saved |= PGPRITEM_SAVED_KEY_FLAGS;
 			key_flags_sig_time = newest_sig->time;
 			if (newest_sig->sigtype == PGPRSIGTYPE_SIGNED_KEY)
 			    key_flags_sig_time = 0xffffffffU;	/* key flags from the direct signatures are final */
 		    }
 		}
 		if (sectionpkt.tag == PGPRTAG_USER_ID) {
-		    if (!item->userid || ((newest_sig->saved & PGPRITEM_SAVED_PRIMARY) != 0 && (item->saved & PGPRITEM_SAVED_PRIMARY) == 0)) {
-			if ((rc = pgprParseUserID(&sectionpkt, item)) != PGPR_OK)
+		    if (!key->userid || ((newest_sig->saved & PGPRITEM_SAVED_PRIMARY) != 0 && (key->saved & PGPRITEM_SAVED_PRIMARY) == 0)) {
+			if ((rc = pgprParseUserID(&sectionpkt, key)) != PGPR_OK)
 			    break;
 			if ((newest_sig->saved & PGPRITEM_SAVED_PRIMARY) != 0)
-			    item->saved |= PGPRITEM_SAVED_PRIMARY;
+			    key->saved |= PGPRITEM_SAVED_PRIMARY;
 		    }
 		}
 	    }
@@ -238,7 +238,7 @@ pgprRC pgprParseCertificate(const uint8_t *pkts, size_t pktslen, pgprItem item)
 	    /* use the NoParams variant because we want to ignore non self-sigs */
 	    if ((rc = pgprParseSigNoParams(&pkt, sig)) != PGPR_OK)
 		break;
-	    isselfsig = is_same_keyid(item, sig);
+	    isselfsig = is_same_keyid(key, sig);
 
 	    /* check if we understand this signature type and make sure it is in the right section */
 	    if (sig->sigtype == PGPRSIGTYPE_KEY_REVOKE) {
@@ -274,12 +274,12 @@ pgprRC pgprParseCertificate(const uint8_t *pkts, size_t pktslen, pgprItem item)
 		/* add MPIs so we can verify */
 	        if ((rc = pgprParseSigParams(&pkt, sig)) != PGPR_OK)
 		    break;
-		if ((rc = pgprVerifySelfSig(item, sig, &mainpkt, &sectionpkt)) != PGPR_OK)
+		if ((rc = pgprVerifySelfSig(key, sig, &mainpkt, &sectionpkt)) != PGPR_OK)
 		    break;		/* verification failed */
 		if (sig->sigtype != PGPRSIGTYPE_KEY_REVOKE)
 		    haveselfsig = 1;
-		if (sig->time > item->key_mtime)
-		    item->key_mtime = sig->time;
+		if (sig->time > key->key_mtime)
+		    key->key_mtime = sig->time;
 	    }
 
 	    /* check if this signature is expired */
@@ -292,8 +292,8 @@ pgprRC pgprParseCertificate(const uint8_t *pkts, size_t pktslen, pgprItem item)
 
 	    /* handle key revokations right away */
 	    if (needsig && sig->sigtype == PGPRSIGTYPE_KEY_REVOKE) {
-		item->revoked = PGPRITEM_REVOKED_KEY;		/* this is final */
-		item->saved |= PGPRITEM_SAVED_VALID;		/* we have at least one correct self-sig */
+		key->revoked = PGPRITEM_REVOKED_KEY;		/* this is final */
+		key->saved |= PGPRITEM_SAVED_VALID;		/* we have at least one correct self-sig */
 		needsig = 0;
 	    }
 
