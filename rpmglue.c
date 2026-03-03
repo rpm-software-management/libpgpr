@@ -37,22 +37,22 @@ int pgpDigParamsCmp(pgpDigParams p1, pgpDigParams p2)
     pgprItem item1 = (pgprItem)p1, item2 = (pgprItem)p2;
     const unsigned char *keyid1, *keyid2;
     if (!item1 || !item2)
-	return 0;
+	return 1;
     if (pgprItemTag(item1) != PGPRTAG_SIGNATURE || pgprItemTag(item2) != PGPRTAG_SIGNATURE)
-	return 0;
+	return 1;
     if (pgprItemHashAlgo(item1) != pgprItemHashAlgo(item2))
-	return 0;
+	return 1;
     if (pgprItemPubkeyAlgo(item1) != pgprItemPubkeyAlgo(item2))
-	return 0;
+	return 1;
     if (pgprItemVersion(item1) != pgprItemVersion(item2))
-	return 0;
+	return 1;
     if (pgprItemSignatureType(item1) != pgprItemSignatureType(item2))
-	return 0;
+	return 1;
     keyid1 = pgprItemKeyID(item1);
     keyid2 = pgprItemKeyID(item2);
     if (keyid1 && keyid2 && memcmp(keyid1, keyid2, PGPR_KEYID_LEN) != 0)
-	return 0;
-    return 1;
+	return 1;
+    return 0;
 }
 
 int pgpSignatureType(pgpDigParams digp)
