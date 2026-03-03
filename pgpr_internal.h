@@ -172,6 +172,9 @@ pgprRC pgprAlgInitSignature(pgprAlg alg);
 
 /* pgp packet data extraction */
 PGPR_GNUC_INTERNAL
+pgprItem pgprItemNew(uint8_t tag);
+
+PGPR_GNUC_INTERNAL
 pgprRC pgprParseKey(pgprPkt *pkt, pgprItem item);
 
 PGPR_GNUC_INTERNAL

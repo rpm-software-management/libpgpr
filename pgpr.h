@@ -168,14 +168,10 @@ pgprRC pgprFreeCrypto(void);
 pgprRC pgprSupportedAlgo(int algo, int curve);
 
 /* item management */
-pgprItem pgprItemNew(uint8_t tag);
-
 pgprItem pgprItemFree(pgprItem item);
 
 /* item introspection methods */
 int pgprItemTag(pgprItem item);
-
-int pgprItemCmp(pgprItem p1, pgprItem p2);
 
 int pgprItemSignatureType(pgprItem item);
 
