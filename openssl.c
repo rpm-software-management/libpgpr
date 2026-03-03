@@ -507,13 +507,17 @@ static void add_asn1_tag(unsigned char *p, int tag, int len)
     *p++ = len;
 }
 
+static inline int asn1_hlen(int len) {
+    return len < 128 ? 2 : len < 256 ? 3 : 4;
+}
+
 /* create the DER encoding of the SEQUENCE of two INTEGERs r and s */
 /* used by DSA and ECDSA */
 static unsigned char *constructDSASignature(unsigned char *r, int rlen, unsigned char *s, int slen, size_t *siglenp)
 {
-    int len1 = rlen + (!rlen || (*r & 0x80) != 0 ? 1 : 0), hlen1 = len1 < 128 ? 2 : len1 < 256 ? 3 : 4;
-    int len2 = slen + (!slen || (*s & 0x80) != 0 ? 1 : 0), hlen2 = len2 < 128 ? 2 : len2 < 256 ? 3 : 4;
-    int len3 = hlen1 + len1 + hlen2 + len2, hlen3 = len3 < 128 ? 2 : len3 < 256 ? 3 : 4;
+    int len1 = rlen + (!rlen || (*r & 0x80) != 0 ? 1 : 0), hlen1 = asn1_hlen(len1);
+    int len2 = slen + (!slen || (*s & 0x80) != 0 ? 1 : 0), hlen2 = asn1_hlen(len2);
+    int len3 = hlen1 + len1 + hlen2 + len2, hlen3 = asn1_hlen(len3);
     unsigned char *buf;
     if (rlen < 0 || rlen >= 65534 || slen < 0 || slen >= 65534 || len3 > 65535)
 	return 0;	/* should never happen as pgpr's MPIs have a length < 8192 */
