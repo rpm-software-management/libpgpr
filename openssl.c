@@ -501,7 +501,7 @@ static void add_asn1_tag(unsigned char *p, int tag, int len)
     if (len >= 256) {
 	*p++ = 130;
 	*p++ = len >> 8;
-    } else if (len > 128) {
+    } else if (len >= 128) {
 	*p++ = 129;
     }
     *p++ = len;
