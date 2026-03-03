@@ -404,7 +404,7 @@ static pgprRC pgprSetSigMpiECC(pgprAlg sa, int num, const uint8_t *p, int mlen)
 	    rc = PGPR_OK;
 	else if (sa->algo == PGPRPUBKEYALGO_ED448 && mlen == 2 * 57 && !(gerr = gcry_mpi_scan(&sig->r, GCRYMPI_FMT_USG, p, 57, NULL)) && !(gerr = gcry_mpi_scan(&sig->s, GCRYMPI_FMT_USG, p + 57, 57, NULL)))
 	    rc = PGPR_OK;
-	return rc;
+	return check_out_of_mem(rc, gerr);
     }
     switch (num) {
     case 0:
@@ -441,7 +441,7 @@ static pgprRC pgprSetKeyMpiECC(pgprAlg ka, int num, const uint8_t *p, int mlen)
 	    rc = PGPR_OK;
 	else if (ka->curve == PGPRCURVE_ED448 && mlen == 57 && !(gerr = gcry_mpi_scan(&key->q, GCRYMPI_FMT_USG, p, 57, NULL)))
 	    rc = PGPR_OK;
-	return rc;
+	return check_out_of_mem(rc, gerr);
     }
 
     switch (num) {
