@@ -1,7 +1,7 @@
-#include <stdlib.h>
-#include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "../pgpr.h"
@@ -71,7 +71,6 @@ printhex(const char *what, const uint8_t *d, size_t l)
     printf("\n");
 }
 
-
 pgprItem
 select_subkey(const uint8_t *pkts, size_t pktlen, pgprItem key, int subkey)
 {
@@ -119,7 +118,7 @@ verifysignature(int argc, char **argv)
     int subkey = 0, raw = 0;
 
     while ((c = getopt(argc, argv, "rs:")) >= 0) {
-	switch(c) {
+	switch (c) {
 	case 'r':
 	    raw = 1;
 	    break;
@@ -217,7 +216,7 @@ keyinfo(int argc, char **argv)
     int subkey = 0;
 
     while ((c = getopt(argc, argv, "s:")) >= 0) {
-	switch(c) {
+	switch (c) {
 	case 's':
 	    subkey = atoi(optarg);
 	    break;
@@ -270,7 +269,7 @@ certinfo(int argc, char **argv)
     uint8_t *fp = NULL;
     size_t fplen = 0;
     size_t certlen = 0;
-    
+
     if (argc - 1 != 1)
 	die("usage: testpgpr certinfo <pubkey>");
     pubkey_a = slurp(argv[optind], NULL);
@@ -305,7 +304,7 @@ merge(int argc, char **argv)
     unsigned char *pubkeym = NULL;
     size_t pubkeyml = 0;
     char *pubkeym_a = NULL;
-    
+
     if (argc - 1 != 2)
 	die("usage: testpgpr merge <pubkey1> <pubkey2>");
     pubkey1_a = slurp(argv[1], NULL);
@@ -383,7 +382,7 @@ enarmor(int argc, char **argv)
     char *armor = NULL;
 
     while ((c = getopt(argc, argv, "k:")) >= 0) {
-	switch(c) {
+	switch (c) {
 	case 'k':
 	    keys = optarg;
 	    break;
@@ -498,23 +497,23 @@ int main(int argc, char **argv)
     if ((rc = pgprInitCrypto()) != PGPR_OK)
 	die_rc("crypto backend init failed", rc);
     if (!strcmp(argv[1], "verifysignature")) {
-        st = verifysignature(argc - 1, argv + 1);
+	st = verifysignature(argc - 1, argv + 1);
     } else if (!strcmp(argv[1], "keyinfo")) {
-        st = keyinfo(argc - 1, argv + 1);
+	st = keyinfo(argc - 1, argv + 1);
     } else if (!strcmp(argv[1], "siginfo")) {
-        st = siginfo(argc - 1, argv + 1);
+	st = siginfo(argc - 1, argv + 1);
     } else if (!strcmp(argv[1], "certinfo")) {
-        st = certinfo(argc - 1, argv + 1);
+	st = certinfo(argc - 1, argv + 1);
     } else if (!strcmp(argv[1], "enarmor")) {
-        st = enarmor(argc - 1, argv + 1);
+	st = enarmor(argc - 1, argv + 1);
     } else if (!strcmp(argv[1], "dearmor")) {
-        st = dearmor(argc - 1, argv + 1);
+	st = dearmor(argc - 1, argv + 1);
     } else if (!strcmp(argv[1], "digest")) {
-        st = digest(argc - 1, argv + 1);
+	st = digest(argc - 1, argv + 1);
     } else if (!strcmp(argv[1], "merge")) {
-        st = merge(argc - 1, argv + 1);
+	st = merge(argc - 1, argv + 1);
     } else if (!strcmp(argv[1], "feature")) {
-        st = feature(argc - 1, argv + 1);
+	st = feature(argc - 1, argv + 1);
     } else {
 	fprintf(stderr, "unknown command '%s'\n", argv[1]);
 	exit(1);

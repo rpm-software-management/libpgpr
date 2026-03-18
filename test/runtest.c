@@ -1,10 +1,10 @@
-#include <stdlib.h>
-#include <string.h>
+#include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 static void die(const char *msg)
 {
@@ -50,8 +50,7 @@ static char *slurp(const char *fn, size_t *lenp)
     return buf;
 }
 
-void
-do_run(char **args, char **out_p, size_t *outl_p)
+void do_run(char **args, char **out_p, size_t *outl_p)
 {
     int fds[2];
     pid_t pid;
@@ -80,7 +79,7 @@ do_run(char **args, char **out_p, size_t *outl_p)
     }
     close(fds[1]);
     for (;;) {
-        out = realloc(out, outl + 1024);
+	out = realloc(out, outl + 1024);
 	l = read(fds[0], out + outl, 1024);
 	if (l == 0)
 	    break;
@@ -93,7 +92,7 @@ do_run(char **args, char **out_p, size_t *outl_p)
     }
     close(fds[0]);
     for (;;) {
-        pid_t p = waitpid(pid, &status, 0);
+	pid_t p = waitpid(pid, &status, 0);
 	if (p == (pid_t)-1) {
 	    if (errno == EINTR)
 		continue;
@@ -104,7 +103,7 @@ do_run(char **args, char **out_p, size_t *outl_p)
 	break;
     }
     if (outl && out[outl - 1] != '\n') {
-        out = realloc(out, outl + 8);
+	out = realloc(out, outl + 8);
 	memcpy(out + outl, "[noeof]\n", 8);
 	outl += 8;
     }
@@ -113,7 +112,7 @@ do_run(char **args, char **out_p, size_t *outl_p)
 	size_t exitlinelen;
 	sprintf(exitline, "Exit status: %d\n", WIFEXITED(status) ? WEXITSTATUS(status) : status);
 	exitlinelen = strlen(exitline);
-        out = realloc(out, outl + exitlinelen);
+	out = realloc(out, outl + exitlinelen);
 	memmove(out + exitlinelen, out, outl);
 	memcpy(out, exitline, exitlinelen);
 	outl += exitlinelen;
@@ -126,11 +125,10 @@ static inline size_t
 linelen(char *o, size_t l)
 {
     void *p = memchr(o, '\n', l);
-    return p ? (char *)p - o + 1: l;
+    return p ? (char *)p - o + 1 : l;
 }
 
-int
-do_diff(char *out, size_t outl, char *exp, size_t expl)
+int do_diff(char *out, size_t outl, char *exp, size_t expl)
 {
     int hasdiff = 0;
     size_t ol, el, nol, nel;
@@ -173,8 +171,7 @@ do_diff(char *out, size_t outl, char *exp, size_t expl)
     return hasdiff;
 }
 
-void
-add_skip(char *what, char **skipp)
+void add_skip(char *what, char **skipp)
 {
     size_t whatl = strlen(what);
     char *s;
@@ -278,7 +275,7 @@ int main(int argc, char **argv)
 
 	    args[nargs++] = testpgpr;
 	    args[nargs++] = "feature";
-	    nargs += split_into_words(cmd + cmdlen, args + nargs, sizeof(args)/sizeof(*args) - nargs - 1);
+	    nargs += split_into_words(cmd + cmdlen, args + nargs, sizeof(args) / sizeof(*args) - nargs - 1);
 	    args[nargs] = 0;
 	    if (nargs != 3)
 		die("REQUIRE/ALLREQUIRE can only handle one arg");
@@ -287,7 +284,7 @@ int main(int argc, char **argv)
 		die("bad result from feature check");
 	    out[outl - 1] = 0;
 	    if (!strncmp(out, "FAIL", 4))
-		add_skip(args[2], isall ? &allskip :  &skip);
+		add_skip(args[2], isall ? &allskip : &skip);
 	    else if (strncmp(out, "OK", 2) != 0) {
 		fprintf(stderr, "feature check error: %s\n", out);
 		exit(1);
@@ -306,7 +303,7 @@ int main(int argc, char **argv)
 		args[nargs++] = "--fixed-time";
 		args[nargs++] = fixed_time;
 	    }
-	    nargs += split_into_words(cmd + cmdlen, args + nargs, sizeof(args)/sizeof(*args) - nargs - 1);
+	    nargs += split_into_words(cmd + cmdlen, args + nargs, sizeof(args) / sizeof(*args) - nargs - 1);
 	    args[nargs] = 0;
 	    if (!skip && !allskip)
 		do_run(args, &out, &outl);
