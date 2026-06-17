@@ -145,7 +145,7 @@ rpmRC pgpVerifySignature2(pgpDigParams key, pgpDigParams sig, DIGEST_CTX hashctx
     if (key) {
 	rc = pgprVerifySignature((pgprItem)key, (pgprItem)sig, hash, hashlen, lints);
     } else {
-	rc = pgprVerifySignatureNoKey((pgprItem)key, hash, hashlen, lints);
+	rc = pgprVerifySignatureNoKey((pgprItem)sig, hash, hashlen, lints);
 	if (rc == PGPR_OK) {
 	    res = RPMRC_NOKEY;
 	    goto exit;
