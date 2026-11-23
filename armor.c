@@ -214,7 +214,7 @@ pgprRC pgprArmorUnwrap(const char *armortype, const char *armor, uint8_t **pkts,
 	    }
 	    t += 5;
 	    /* XXX permitting \r here is not RFC-2440 compliant <shrug> */
-	    if (*t != '\n' && *t != '\r' && *t == '\0') {
+	    if (*t != '\n' && *t != '\r' && *t != '\0') {
 		rc = PGPR_ERROR_ARMOR_NO_END_PGP;
 		goto exit;
 	    }
