@@ -70,8 +70,15 @@ pgprRC pgprSupportedAlgo(int algo, int curve)
 	return curve ? PGPR_ERROR_UNSUPPORTED_CURVE : PGPR_OK;
     case PGPRPUBKEYALGO_INTERNAL_MLDSA65:
     case PGPRPUBKEYALGO_INTERNAL_MLDSA87:
-	if (!supported_mldsa)
+	if (!supported_mldsa) {
 	    supported_mldsa = check_gcrypt_supported("(public-key (dilithium3))");
+	    /* libgcrypt 1.12.4 broke using an empty label */
+	    if (supported_mldsa > 0) {
+		const char *ver = gcry_check_version(NULL);
+		if (ver && !strcmp(ver, "1.12.4"))
+		    supported_mldsa = -1;
+	    }
+	}
 	return supported_mldsa > 0 ? PGPR_OK : PGPR_ERROR_UNSUPPORTED_ALGORITHM;
     case PGPRPUBKEYALGO_MLDSA65_ED25519:
 	rc = pgprSupportedAlgo(PGPRPUBKEYALGO_INTERNAL_MLDSA65, 0);
