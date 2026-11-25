@@ -70,15 +70,8 @@ pgprRC pgprSupportedAlgo(int algo, int curve)
 	return curve ? PGPR_ERROR_UNSUPPORTED_CURVE : PGPR_OK;
     case PGPRPUBKEYALGO_INTERNAL_MLDSA65:
     case PGPRPUBKEYALGO_INTERNAL_MLDSA87:
-	if (!supported_mldsa) {
+	if (!supported_mldsa)
 	    supported_mldsa = check_gcrypt_supported("(public-key (dilithium3))");
-	    /* libgcrypt 1.12.4 broke using an empty label */
-	    if (supported_mldsa > 0) {
-		const char *ver = gcry_check_version(NULL);
-		if (ver && !strcmp(ver, "1.12.4"))
-		    supported_mldsa = -1;
-	    }
-	}
 	return supported_mldsa > 0 ? PGPR_OK : PGPR_ERROR_UNSUPPORTED_ALGORITHM;
     case PGPRPUBKEYALGO_MLDSA65_ED25519:
 	rc = pgprSupportedAlgo(PGPRPUBKEYALGO_INTERNAL_MLDSA65, 0);
@@ -99,6 +92,18 @@ static pgprRC check_out_of_mem(pgprRC rc, gcry_error_t gerr)
 	return PGPR_ERROR_NO_MEMORY;
     }
     return rc;
+}
+
+static int need_mldsa_workaround()
+{
+    static int mldsa_workaround_needed;
+    if (!mldsa_workaround_needed) {
+	const char *ver = gcry_check_version(NULL);
+	mldsa_workaround_needed = -1;
+	if (ver && !strcmp(ver, "1.12.4"))
+	    mldsa_workaround_needed = 1;
+    }
+    return mldsa_workaround_needed > 0 ? 1 : 0;
 }
 
 /****************************** RSA **************************************/
@@ -652,7 +657,14 @@ static pgprRC pgprVerifySigMLDSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, si
 
     if (!sig || !key || !sig->s || !key->p)
 	return rc;
-    gerr = gcry_sexp_build(&sexp_data, NULL, "(data (raw) (value %b))", (int)hashlen, (const char *)hash);
+    if (need_mldsa_workaround() && hashlen <= 256) {
+	uint8_t data[256 + 2];
+	data[0] = data[1] = 0;
+	memcpy(data + 2, hash, hashlen);
+	gerr = gcry_sexp_build(&sexp_data, NULL, "(data (flags raw no-prefix) (value %b))", (int)hashlen + 2, (const char *)data);
+    } else {
+	gerr = gcry_sexp_build(&sexp_data, NULL, "(data (raw) (value %b))", (int)hashlen, (const char *)hash);
+    }
     if (!gerr && ka->algo == PGPRPUBKEYALGO_INTERNAL_MLDSA65) {
 	gerr = gcry_sexp_build(&sexp_sig, NULL, "(sig-val (dilithium3 (s %M)))", sig->s);
 	if (!gerr)
