@@ -100,7 +100,8 @@ static int need_mldsa_workaround()
     if (!mldsa_workaround_needed) {
 	const char *ver = gcry_check_version(NULL);
 	mldsa_workaround_needed = -1;
-	if (ver && !strcmp(ver, "1.12.4"))
+	if (ver && (!strcmp(ver, "1.12.0") || !strcmp(ver, "1.12.1") || !strcmp(ver, "1.12.2")
+		|| !strcmp(ver, "1.12.3") || !strcmp(ver, "1.12.4")))
 	    mldsa_workaround_needed = 1;
     }
     return mldsa_workaround_needed > 0 ? 1 : 0;
