@@ -664,7 +664,7 @@ static pgprRC pgprVerifySigMLDSA(pgprAlg sa, pgprAlg ka, const uint8_t *hash, si
 	memcpy(data + 2, hash, hashlen);
 	gerr = gcry_sexp_build(&sexp_data, NULL, "(data (flags raw no-prefix) (value %b))", (int)hashlen + 2, (const char *)data);
     } else {
-	gerr = gcry_sexp_build(&sexp_data, NULL, "(data (raw) (value %b))", (int)hashlen, (const char *)hash);
+	gerr = gcry_sexp_build(&sexp_data, NULL, "(data (flags raw) (value %b))", (int)hashlen, (const char *)hash);
     }
     if (!gerr && ka->algo == PGPRPUBKEYALGO_INTERNAL_MLDSA65) {
 	gerr = gcry_sexp_build(&sexp_sig, NULL, "(sig-val (dilithium3 (s %M)))", sig->s);
